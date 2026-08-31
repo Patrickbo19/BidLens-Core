@@ -1,0 +1,17 @@
+{
+  "as_of_date": "2026-08-30",
+  "solicitation_text": "CITY OF EXAMPLE REQUEST FOR QUOTATION\nResponses must be submitted by September 18, 2026 at 2:00 PM ET through the procurement portal.\nThe contractor shall hold an active state electrical license at submission.\nThe contractor must maintain $2,000,000 general liability insurance.\nOfferors shall provide three examples of comparable work completed in the past five years.\nTechnical approach will be evaluated for best value.\nThe estimated contract value is $180,000.",
+  "company_profile": {
+    "services": ["electrical installation", "commercial maintenance"],
+    "keywords": ["electrical", "maintenance", "commercial"],
+    "licenses": ["active state electrical license"],
+    "certifications": [],
+    "states": ["Tennessee"],
+    "delivery_capacity": true,
+    "minimum_contract_value": 50000,
+    "minimum_margin_percent": 20,
+    "minimum_days_to_bid": 10,
+    "past_performance": ["Municipal facility lighting retrofit"],
+    "complete_fields": ["licenses"]
+  }
+}
