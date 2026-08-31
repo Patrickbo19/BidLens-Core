@@ -1,0 +1,75 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BidLens Core API",
+    "version": "1.0.0",
+    "description": "Deterministic RFP knockout screening, explainable fit scoring, deadline extraction, evidence-gap analysis, and compliance-matrix generation. No external AI API is required."
+  },
+  "servers": [
+    { "url": "https://YOUR-SERVICE.createos.sh" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Service health",
+        "responses": { "200": { "description": "Healthy" } }
+      }
+    },
+    "/v1/analyze": {
+      "post": {
+        "operationId": "scoreRfpFit",
+        "summary": "Score an RFP and screen mandatory knockouts",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnalysisInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Analysis result" },
+          "400": { "description": "Invalid input" },
+          "413": { "description": "Input too large" }
+        }
+      }
+    },
+    "/v1/compliance": {
+      "post": {
+        "operationId": "extractComplianceMatrix",
+        "summary": "Extract a source-linked compliance matrix",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnalysisInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Compliance matrix result" },
+          "400": { "description": "Invalid input" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnalysisInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "solicitation_text": { "type": "string", "minLength": 1, "maxLength": 250000 },
+          "company_profile": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Only factual, supplied company evidence is used. Missing facts remain UNKNOWN."
+          },
+          "as_of_date": { "type": "string", "format": "date" }
+        },
+        "required": ["solicitation_text"]
+      }
+    }
+  }
+}
