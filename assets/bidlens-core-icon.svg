@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">BidLens Core icon</title>
+  <desc id="desc">A document inside a focused inspection lens with a decisive check mark.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1F33"/>
+      <stop offset="1" stop-color="#123B5D"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#35D6B1"/>
+      <stop offset="1" stop-color="#4BB7FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="216" fill="url(#bg)"/>
+  <path d="M300 188h292l152 152v358c0 52-42 94-94 94H300c-52 0-94-42-94-94V282c0-52 42-94 94-94Z" fill="#F7FAFC"/>
+  <path d="M592 188v116c0 32 26 58 58 58h94" fill="#DDEAF2"/>
+  <path d="M318 420h314M318 506h250M318 592h176" fill="none" stroke="#7B91A4" stroke-width="36" stroke-linecap="round"/>
+  <circle cx="630" cy="630" r="190" fill="#0B1F33" fill-opacity=".94" stroke="url(#accent)" stroke-width="42"/>
+  <path d="m540 633 62 63 126-142" fill="none" stroke="url(#accent)" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m766 770 100 100" stroke="#4BB7FF" stroke-width="58" stroke-linecap="round"/>
+</svg>
