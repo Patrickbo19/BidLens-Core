@@ -2,6 +2,7 @@ const http = require('http');
 
 const PORT = Number(process.env.PORT || 3000);
 const MCP_URL = String(process.env.EARN_MCP_URL || 'https://earn-chat-mcp.onrender.com/mcp');
+const MCP_HEALTH_URL = new URL('/health', MCP_URL).toString();
 const CREATE_BETA = String(process.env.EARN_CREATE_BETA_ACCOUNT || '') === '1';
 
 const state = {
@@ -10,6 +11,7 @@ const state = {
   protocolEra: null,
   tools: [],
   earningOptions: null,
+  ledgerStatus: null,
   betaAccount: null,
   error: null,
 };
@@ -17,12 +19,25 @@ const state = {
 async function openClient() {
   const { Client, StreamableHTTPClientTransport } = await import('@modelcontextprotocol/client');
   const client = new Client(
-    { name: 'earn-mcp-verifier', version: '0.3.0' },
+    { name: 'earn-mcp-verifier', version: '0.4.0' },
     { versionNegotiation: { mode: 'auto' } },
   );
   const transport = new StreamableHTTPClientTransport(new URL(MCP_URL));
   await client.connect(transport);
   return client;
+}
+
+async function fetchLedgerStatus() {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const r = await fetch(MCP_HEALTH_URL, { signal: ctl.signal });
+    if (!r.ok) throw new Error(`health status ${r.status}`);
+    const data = await r.json();
+    return data?.ledger || null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function verifyMcp() {
@@ -41,6 +56,7 @@ async function verifyMcp() {
     state.protocolEra = typeof client.getProtocolEra === 'function' ? client.getProtocolEra() : 'connected';
     state.tools = toolNames;
     state.earningOptions = options?.structuredContent || options?.content || null;
+    state.ledgerStatus = await fetchLedgerStatus();
     state.error = null;
     console.log(JSON.stringify({ type: 'earn_mcp_verified', ...state }));
   } catch (error) {
