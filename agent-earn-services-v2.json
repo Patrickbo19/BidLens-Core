@@ -1,0 +1,9 @@
+{
+  "marketplace": "the402",
+  "webhook_url": "https://earn-agent-worker.onrender.com/webhook/the402",
+  "services": [
+    {"env_key":"THE402_SERVICE_JSON_QA","name":"Structured JSON Quality Audit","price":{"fixed":"$1.00"},"service_type":"automated_service","pricing_model":"fixed","fulfillment_type":"automated","estimated_delivery":"1m","category":"developer-tools"},
+    {"env_key":"THE402_SERVICE_PROMPT_SCAN","name":"Prompt Injection & Tool-Abuse Risk Scan","price":{"fixed":"$0.50"},"service_type":"automated_service","pricing_model":"fixed","fulfillment_type":"automated","estimated_delivery":"1m","category":"security"},
+    {"env_key":"THE402_SERVICE_URL_AUDIT","name":"Public URL Health & Metadata Audit","price":{"fixed":"$0.75"},"service_type":"automated_service","pricing_model":"fixed","fulfillment_type":"automated","estimated_delivery":"1m","category":"developer-tools"}
+  ]
+}
