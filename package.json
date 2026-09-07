@@ -1,10 +1,10 @@
 {
   "name": "earn-router",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
-  "description": "Earn Router: human and autonomous earning rails with a ChatGPT MCP app and x402 paid agent tools.",
+  "description": "INCOME 2 router: human and autonomous earning rails with a ChatGPT MCP app and x402 paid agent tools.",
   "scripts": {
-    "start": "node server.js",
+    "start": "node robust-router.js",
     "start:mcp": "node mcp-server.mjs",
     "start:seller": "node seller-backend.js"
   },
