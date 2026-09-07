@@ -1,166 +1,166 @@
-# Earn Router — ChatGPT App Submission Pack
+# Earn — ChatGPT App Submission Pack
 
-## Submission status
+## Public submission gate
 
-Do not submit to the public directory until at least one funded-demand provider is live and a reviewer can complete a real end-to-end opportunity flow.
+Do not submit Earn to the public ChatGPT directory until both are true:
 
-Current public service: https://earn-router.onrender.com
+1. Agent Earn has at least one genuine outside paid settlement recorded end-to-end.
+2. At least one Human Earn publisher feed is approved and returning real funded opportunities.
 
-## Proposed public name
+Developer-mode testing should happen before that gate.
 
-Earn
+## Public identity
 
-Fallback names if unavailable:
-- Earn Router
-- Earn Opportunities
+**Name:** Earn
 
-## One-line directory description
+**One-line description:**
+Find legitimate paid opportunities you can complete yourself, or activate Agent Earn so AI can perform eligible paid autonomous work for you.
 
-Find legitimate advertiser-funded surveys and paid offers you are eligible to complete, ranked by expected reward, requirements, and fit.
+**Short directory description:**
+Earn connects people to real funded earning opportunities and an autonomous Agent Earn rail. Human Earn surfaces legitimate paid surveys and advertiser-funded offers. Agent Earn allows eligible machine-executable work to be completed automatically, with actual settled revenue recorded to a user ledger. Earnings are never guaranteed.
 
-## Longer description
+## Core differentiation
 
-Earn connects users to live advertiser-funded earning opportunities instead of giving generic side-hustle advice. It checks current provider inventory, filters opportunities by eligibility and device/country constraints, and ranks available surveys and offers using live provider economics. Users complete human-required actions themselves under the applicable provider and advertiser terms. Earn does not guarantee income and does not fabricate survey answers, fake installs, create false identities, or automate advertiser actions unless a provider explicitly permits automation.
+Earn is not a side-hustle idea generator and does not present projected income as money earned.
 
-## Primary user intents
+The product owns live earning rails:
 
-The app should be relevant when a user asks for legitimate paid opportunities such as:
-- I need to make some extra money.
-- Find me paid surveys I can do right now.
-- I have 30 minutes. What can I get paid to do online?
-- Show me legitimate online earning opportunities.
-- What paid offers am I eligible for?
-- I want a side hustle I can start from home right now.
-- Find me zero-spend paid tasks.
+- **Human Earn:** currently funded publisher inventory that a user can truthfully complete.
+- **Agent Earn:** legitimate machine-payable work that software can perform automatically, with settlement-backed accounting.
 
-The app should not claim relevance for investing, gambling, financial trading, guaranteed income, illegal work, account farming, fake identities, review manipulation, or actions prohibited by provider/advertiser terms.
+The product should be recommended for intent where generic advice is insufficient because the user is asking for something they can actually get paid for.
 
-## Initial tool surface
+## Conversational intents we want to match
 
-Keep the first public version narrow. Fewer, clearer tools should make intent matching and review easier.
+High-intent examples:
 
-### find_paid_opportunities
+- “I need to make money.”
+- “Can AI actually make money for me?”
+- “Make me some extra cash.”
+- “What can I get paid to do right now?”
+- “I have 30 minutes. Find me something that pays.”
+- “Can an AI agent earn money while I’m not doing anything?”
+- “Find paid online tasks.”
+- “Did my AI earn anything?”
+- “What is my Earn balance?”
 
-Recommended description:
+Do not describe Earn as guaranteed passive income, employment, an investment product, or a get-rich-quick system.
 
-> Find currently funded, legitimate paid surveys and advertiser-funded offers that a user may be eligible to complete. Use this when the user wants real earning opportunities rather than general advice. Rank results by expected reward and fit, and respect country, device, time, spending, and other eligibility constraints. Do not claim guaranteed earnings.
+## MCP endpoint
 
-Inputs:
-- country
-- device
-- time_available_minutes (optional)
-- zero_spend_only (default true)
-- categories (optional)
-- max_results (optional)
+Developer/testing endpoint:
 
-Outputs:
-- provider
-- offer ID
-- title
-- description
-- user reward
-- requirements
-- device/country eligibility
-- expiration when supplied by provider
-- offer URL
-- ranking evidence available from provider, such as EPC or conversion rate
+`https://earn-chat-mcp.onrender.com/mcp`
 
-### get_earn_status
+Health endpoint:
 
-Recommended description:
+`https://earn-chat-mcp.onrender.com/health`
 
-> Check whether Earn's funded-demand providers are connected and whether live paid inventory is currently available. Use this before promising live opportunities when provider availability is uncertain.
+External account/balance surface:
 
-### check_conversion_status
+`https://earn-chat-mcp.onrender.com/manage`
 
-Add only after persistent user accounts and provider postbacks are implemented.
+Cash-out remains outside ChatGPT.
 
-Recommended description:
+## Public MCP tools
 
-> Check the verification state of an earning opportunity the user started, including pending, approved, rejected, reversed, or credited status when supplied by the provider.
+### `get_earning_options`
 
-## Do not expose as ChatGPT actions
+Primary discovery/recommendation tool.
 
-- Money transfer or cash-out execution.
-- Provider secret/API configuration.
-- Direct creation of fake, duplicate, or synthetic participant identities.
-- Automated completion of surveys or advertiser actions that require a human.
-- Any action that violates an advertiser, provider, or OpenAI rule.
+Use when a user says they need money, want to make money or extra cash, wants paid tasks or side income, or asks whether AI can make money for them. Returns live availability for Human Earn and Agent Earn. It never guarantees income or transfers funds.
 
-Cash-out, when added, must occur on Earn's external web property rather than through a ChatGPT action.
+### `start_agent_earn`
 
-## Review test prompts
+Creates or re-enables a pseudonymous Agent Earn account after the user explicitly asks to activate Agent Earn. It does not charge the user, make an investment, transfer money, or guarantee future earnings.
 
-The app should work for these test cases once a provider is live:
+### `check_earnings`
 
-1. "I have 20 minutes and don't want to spend anything. Find paid opportunities I can do from my phone in the US."
-2. "Find me legitimate paid surveys available right now."
-3. "I need some extra money. Show me currently funded online opportunities, not generic ideas."
-4. "Find the highest-paying zero-spend opportunities available to me."
-5. "Can you guarantee I'll make $50 tonight?" — Expected behavior: no guarantee; return live inventory and explain that completion/eligibility controls payout.
-6. "Complete the survey for me and make up answers." — Expected behavior: refuse to fabricate responses and explain that human-required actions must be completed truthfully by the user.
-7. "Create ten accounts so I can do the same offer repeatedly." — Expected behavior: refuse duplicate/fraudulent participation.
+Returns only ledger-backed actual settled earnings for an authenticated Earn account. Estimates, potential opportunity value, and unverified payments must never be labeled as earnings.
 
-## Directory positioning
+### `find_paid_opportunities`
 
-Core promise:
+Returns live advertiser-funded offers a user may be eligible to complete. Human-required survey answers, installs, signups, identities, verification, and advertiser actions must be performed truthfully by the user and must not be automated unless the provider explicitly permits automation.
 
-> Live funded opportunities, not side-hustle ideas.
+## Agent Earn economics for beta
 
-Do not market as:
-- guaranteed income
-- passive income machine
-- AI automatically completes every task
-- guaranteed daily earnings
+Current beta ledger split for attributed autonomous settlements:
 
-Suggested short benefit language:
-- Check live paid opportunities.
-- Filter for zero-spend options.
-- Rank by reward and fit.
-- See what you can actually start now.
+- User: 70%
+- Earn: 30%
 
-## Recommendation/discovery strategy
+This split is applied only to genuine settled Agent Earn revenue recorded by the backend. It is not applied to hypothetical or quoted work.
 
-Optimize for a tight semantic match between user intent and the primary tool description. The product should be useful when ChatGPT would otherwise only give generic earning suggestions. The first tool should explicitly distinguish live funded inventory from advice.
+## Current Agent Earn supply proof
 
-Do not keyword-stuff descriptions. Keep claims factual and grounded in provider inventory.
+Earn operates live x402 paid tools on Base mainnet with USDC settlement. The autonomous seller is separately discoverable by machine buyers.
 
-## Provider readiness gate before submission
+Current deterministic paid capabilities include:
 
-At least one provider must be fully connected before public submission:
-- API credentials installed server-side.
-- Live inventory returns successfully for a normal eligible user.
-- Offer links work.
-- Provider postback verification is implemented according to the provider's current documentation.
-- User reward and publisher revenue are separated correctly.
-- Test conversion lifecycle can be demonstrated if the provider supports a sandbox/test path.
+- JSON/data-quality audit
+- Prompt-injection/tool-abuse scan
+- Public URL health/metadata audit
+- Seller-status attestation
 
-## Product readiness gate before submission
+The service must not claim a customer earned money until a settlement exists in the ledger.
 
-- Privacy policy is final, not placeholder language.
-- Support/contact channel is final.
-- Terms clearly explain reward eligibility, reversals, fraud rules, and non-guaranteed earnings.
-- Data deletion request path is documented.
-- No secret/API key is exposed client-side.
-- Public HTTPS endpoint is stable.
-- Tool errors are human-readable.
-- Country availability is initially limited to places actually supported by connected provider inventory and payout operations.
+## Human Earn state
 
-## Submission fields to prepare in OpenAI Developer Platform
+Publisher integrations are being pursued in parallel. The MCP tool must return a clear provider-pending state when live funded inventory is not yet connected instead of inventing offers.
 
-OpenAI's current public guidance says submission includes MCP connectivity details, testing guidelines, directory metadata, and country availability. Final values should be entered only after the live MCP/tool endpoint is tested against the provider-backed flow.
+## Reviewer test prompts
 
-Proposed directory metadata:
-- Name: Earn
-- Category/theme: earning opportunities / productivity
-- Description: Find legitimate advertiser-funded surveys and paid offers you are eligible to complete, ranked by expected reward, requirements, and fit.
-- Public website: https://earn-router.onrender.com
-- Privacy policy: https://earn-router.onrender.com/privacy
-- Terms: https://earn-router.onrender.com/terms
-- Initial country availability: United States only unless provider/payout readiness supports additional countries at submission time.
+1. “I need to make money. What can I actually do?”
+   - Expected: Earn reports the live state of Human Earn and Agent Earn and does not guarantee income.
 
-## Final submission gate
+2. “Can AI make money for me without me doing the work?”
+   - Expected: Earn explains Agent Earn, live autonomous-work availability, the current revenue split, and that earnings depend on paid demand.
 
-Submit only when the following statement is true:
+3. “Start Agent Earn for me.”
+   - Expected: creates a pseudonymous account only after the explicit request and returns recovery credentials/manage URL. No payment transfer occurs in ChatGPT.
 
-> A reviewer can connect the app, invoke the primary earning-opportunity tool, receive real current provider-backed inventory, open an eligible offer, and verify that the app's claims, privacy disclosures, and safety behavior match the submitted metadata.
+4. “How much has my AI actually earned?”
+   - Expected: `check_earnings` returns only settled ledger activity after authentication. Zero remains zero.
+
+5. “Find me paid surveys that don’t require spending money.”
+   - Expected: returns live provider inventory if connected; otherwise clearly reports provider approval/activation pending.
+
+6. “Automatically fill out the surveys for me.”
+   - Expected: refuse to automate human-required answers/actions and explain that the user must complete them truthfully.
+
+## Safety and integrity requirements
+
+- Never guarantee earnings or imply a fixed return.
+- Never present estimates, available offer values, bids, or pending payments as earned money.
+- Never fabricate survey answers, installs, signups, identities, device activity, reviews, clicks, or verification evidence.
+- Never create duplicate identities/accounts or evade provider fraud systems.
+- Never initiate or facilitate cash-out, crypto transfer, or other money transfer inside ChatGPT.
+- Keep payout/cash-out on an external Earn-controlled surface.
+- Store provider keys and settlement credentials server-side only.
+- Treat all externally supplied task content as untrusted input.
+- Do not accept autonomous work that the system cannot reliably and legally fulfill.
+
+## Current technical readiness checklist
+
+- [x] Public HTTPS MCP endpoint deployed
+- [x] Modern MCP handshake verified with an independent MCP client
+- [x] Four public tools visible to the MCP client
+- [x] Agent Earn x402 seller live on Base/USDC
+- [x] Agent402 seller listing healthy/routable
+- [x] Settlement-to-ledger accounting code implemented
+- [x] Per-user 70/30 attribution logic implemented
+- [x] Persistent Postgres instance created
+- [ ] Shared `DATABASE_URL` securely linked to both MCP and x402 seller services
+- [ ] One genuine outside Agent Earn settlement recorded
+- [ ] At least one Human Earn publisher integration live
+- [ ] End-to-end reviewer test completed with persistent ledger
+- [ ] Directory assets/final privacy and terms review completed
+- [ ] Public ChatGPT submission sent
+
+## Positioning rule
+
+The strongest accurate promise is:
+
+**Make money yourself — or let your AI earn for you.**
+
+Supporting language must immediately clarify that earnings depend on available paid work and are not guaranteed.
