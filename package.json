@@ -1,12 +1,18 @@
 {
   "name": "earn-router",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Earn Router: routes users to verified funded earning opportunities and tracks publisher/user economics.",
+  "description": "Earn Router: human and autonomous earning rails with x402 paid agent tools.",
   "scripts": {
     "start": "node server.js"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "@x402/core": "2.25.0",
+    "@x402/evm": "2.25.0",
+    "@x402/express": "2.25.0",
+    "express": "5.2.1"
   }
 }
