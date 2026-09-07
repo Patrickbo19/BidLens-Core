@@ -1,0 +1,1 @@
+Unavoidable owner gate: create the402 provider account in the dashboard and obtain the provider API key. Do not place seed phrases, private keys, passwords, or 2FA codes in chat or source control. The intended next step is to store only the provider API key as a Render secret on earn-agent-worker.
