@@ -1,1 +1,0 @@
-{"required_secret":"THE402_API_KEY","worker":"https://earn-agent-worker.onrender.com","webhook":"https://earn-agent-worker.onrender.com/webhook/the402","auto_bid_default":true,"bid_cap_usd":25,"service_names":["Structured JSON Quality Audit","Prompt Injection & Tool-Abuse Risk Scan","Public URL Health & Metadata Audit"]}
