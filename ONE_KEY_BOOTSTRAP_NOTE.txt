@@ -1,0 +1,1 @@
+Implementation target: only THE402_API_KEY should be required in Render. Worker derives participant id from GET /v1/referrals/code, updates its webhook, creates missing services, caches ids, subscribes to request.created, and exact-match auto-bids unless THE402_AUTO_BID=false.
