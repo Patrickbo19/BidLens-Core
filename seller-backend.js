@@ -9,11 +9,12 @@ const FACILITATOR_URL = 'https://facilitator.payai.network';
 const PAY_TO = String(process.env.EARN_RECEIVE_ADDRESS || '').trim();
 const ORIGIN = String(process.env.PUBLIC_ORIGIN || 'https://earn-tools-backend.onrender.com').replace(/\/$/, '');
 
+// First-sale mode: use the practical $0.001 floor until we establish external settlement history.
 const PRICES = {
   sellerStatus: '$0.001',
-  jsonQa: '$0.004',
-  promptScan: '$0.002',
-  urlAudit: '$0.003',
+  jsonQa: '$0.001',
+  promptScan: '$0.001',
+  urlAudit: '$0.001',
 };
 
 function assertConfig() {
@@ -118,7 +119,7 @@ async function urlAudit(raw) {
   const timer = setTimeout(() => ctl.abort(), 10000);
   const start = Date.now();
   try {
-    const r = await fetch(u, { redirect: 'follow', signal: ctl.signal, headers: { 'user-agent': 'Earn-Agent/0.5' } });
+    const r = await fetch(u, { redirect: 'follow', signal: ctl.signal, headers: { 'user-agent': 'Earn-Agent/0.6' } });
     const type = r.headers.get('content-type') || '';
     let html = '';
     if (/text\/html|application\/xhtml\+xml/i.test(type)) html = (await r.text()).slice(0, 500000);
@@ -141,15 +142,38 @@ function manifest() {
   return {
     x402Version: 2,
     name: 'Earn Agent Tools',
-    description: 'Low-cost deterministic utilities sold directly to AI agents over x402. Payments settle in USDC on Base to the Earn receive wallet.',
+    description: 'Ultra-low-cost deterministic tools for AI agents: prompt injection security scans, JSON data quality audits, and website URL health and metadata audits. Pay per call in USDC on Base.',
     homepage: 'https://earn-router.onrender.com',
     openapi: `${ORIGIN}/openapi.json`,
     rails: [{ rail: 'evm', network: NETWORK, asset: 'USDC', payTo: PAY_TO, facilitator: FACILITATOR_URL }],
     resources: [
-      { resource: 'GET /seller-status', url: `${ORIGIN}/seller-status`, price: PRICES.sellerStatus, description: 'Live paid attestation that Earn Agent Tools is online, x402-enabled, and serving Base mainnet.', tags: ['x402','status','health','base','seller'], accepts: accepts(PRICES.sellerStatus) },
-      { resource: 'POST /json-qa', url: `${ORIGIN}/json-qa`, price: PRICES.jsonQa, description: 'Deterministic JSON dataset quality audit: columns, missing values, type consistency, duplicate rows, and SHA-256 fingerprint. Up to 500 records.', tags: ['json','data-quality','qa','validation','audit'], inputSchema: { type: 'object', required: ['records'], properties: { records: { type: 'array', maxItems: 500 } } }, accepts: accepts(PRICES.jsonQa) },
-      { resource: 'POST /prompt-scan', url: `${ORIGIN}/prompt-scan`, price: PRICES.promptScan, description: 'Deterministic prompt-injection and tool-abuse risk scan for untrusted text, including risk score and matched indicators.', tags: ['prompt-injection','security','llm','ai-safety','scan'], inputSchema: { type: 'object', required: ['text'], properties: { text: { type: 'string', minLength: 1, maxLength: 100000 } } }, accepts: accepts(PRICES.promptScan) },
-      { resource: 'POST /url-audit', url: `${ORIGIN}/url-audit`, price: PRICES.urlAudit, description: 'Safe public-URL health and metadata audit: status, latency, HTTPS, title, description, content type, HSTS and cache headers.', tags: ['url','website','http','metadata','health','audit'], inputSchema: { type: 'object', required: ['url'], properties: { url: { type: 'string', format: 'uri' } } }, accepts: accepts(PRICES.urlAudit) },
+      {
+        name: 'x402 Seller Status', category: 'status',
+        resource: 'GET /seller-status', url: `${ORIGIN}/seller-status`, price: PRICES.sellerStatus,
+        description: 'Live x402 seller health and Base network status attestation.',
+        tags: ['x402','status','health','base','seller'], accepts: accepts(PRICES.sellerStatus),
+      },
+      {
+        name: 'JSON Data Quality Audit', category: 'data',
+        resource: 'POST /json-qa', url: `${ORIGIN}/json-qa`, price: PRICES.jsonQa,
+        description: 'JSON data quality audit and JSON quality checker for missing values, type consistency, duplicate rows, schema columns, and SHA-256 fingerprint. Up to 500 records.',
+        tags: ['json','data','data-quality','quality-check','qa','validation','duplicates','missing-values','audit'],
+        inputSchema: { type: 'object', required: ['records'], properties: { records: { type: 'array', maxItems: 500 } } }, accepts: accepts(PRICES.jsonQa),
+      },
+      {
+        name: 'Prompt Injection Security Scan', category: 'security',
+        resource: 'POST /prompt-scan', url: `${ORIGIN}/prompt-scan`, price: PRICES.promptScan,
+        description: 'Prompt injection security scan for LLM and AI-agent untrusted text. Detects instruction hijacking, tool abuse, secret-exfiltration requests, role override patterns, and encoded-payload indicators.',
+        tags: ['prompt-injection','prompt-security','security','llm','ai-agent','ai-safety','tool-abuse','scan'],
+        inputSchema: { type: 'object', required: ['text'], properties: { text: { type: 'string', minLength: 1, maxLength: 100000 } } }, accepts: accepts(PRICES.promptScan),
+      },
+      {
+        name: 'Website Health and Metadata Audit', category: 'web',
+        resource: 'POST /url-audit', url: `${ORIGIN}/url-audit`, price: PRICES.urlAudit,
+        description: 'Website URL health check and metadata audit: HTTP status, latency, HTTPS, page title, meta description, content type, HSTS, and cache headers for a public URL.',
+        tags: ['website','url','web','http','health-check','metadata','seo','latency','https','audit'],
+        inputSchema: { type: 'object', required: ['url'], properties: { url: { type: 'string', format: 'uri' } } }, accepts: accepts(PRICES.urlAudit),
+      },
     ],
     updatedAt: new Date().toISOString(),
   };
@@ -158,13 +182,13 @@ function manifest() {
 function openApi() {
   return {
     openapi: '3.1.0',
-    info: { title: 'Earn Agent Tools', version: '0.5.0', description: 'Deterministic pay-per-call tools for AI agents over x402.' },
+    info: { title: 'Earn Agent Tools', version: '0.6.0', description: 'Ultra-low-cost deterministic pay-per-call tools for AI agents over x402.' },
     servers: [{ url: ORIGIN }],
     paths: {
-      '/seller-status': { get: { summary: 'Paid x402 seller status', responses: { '200': { description: 'Live status' }, '402': { description: 'x402 payment required' } } } },
-      '/json-qa': { post: { summary: 'Audit JSON data quality', responses: { '200': { description: 'Quality report' }, '402': { description: 'x402 payment required' } } } },
-      '/prompt-scan': { post: { summary: 'Scan text for prompt injection', responses: { '200': { description: 'Risk report' }, '402': { description: 'x402 payment required' } } } },
-      '/url-audit': { post: { summary: 'Audit a public URL', responses: { '200': { description: 'URL audit' }, '402': { description: 'x402 payment required' } } } },
+      '/seller-status': { get: { summary: 'x402 seller health and Base status', responses: { '200': { description: 'Live status' }, '402': { description: 'x402 payment required' } } } },
+      '/json-qa': { post: { summary: 'JSON data quality audit and duplicate/missing-value check', responses: { '200': { description: 'JSON quality report' }, '402': { description: 'x402 payment required' } } } },
+      '/prompt-scan': { post: { summary: 'Prompt injection security scan for LLM and AI-agent text', responses: { '200': { description: 'Prompt security risk report' }, '402': { description: 'x402 payment required' } } } },
+      '/url-audit': { post: { summary: 'Website URL health check and metadata audit', responses: { '200': { description: 'Website health and metadata report' }, '402': { description: 'x402 payment required' } } } },
     },
   };
 }
@@ -199,7 +223,7 @@ function settlementRef(ctx) {
   app.disable('x-powered-by');
   app.use(express.json({ limit: '2mb' }));
 
-  app.get('/health', async (_req, res) => res.json({ ok: true, service: 'earn-tools-backend', version: '0.5.0', x402: true, network: NETWORK, facilitator: 'payai', ledger: await ledger.systemStatus().catch(() => ({ persistent: false })) }));
+  app.get('/health', async (_req, res) => res.json({ ok: true, service: 'earn-tools-backend', version: '0.6.0', x402: true, network: NETWORK, facilitator: 'payai', firstSaleMode: true, prices: PRICES, ledger: await ledger.systemStatus().catch(() => ({ persistent: false })) }));
   app.get('/.well-known/x402', (_req, res) => res.json(manifest()));
   app.get('/.well-known/x402.json', (_req, res) => res.json(manifest()));
   app.get('/openapi.json', (_req, res) => res.json(openApi()));
@@ -237,16 +261,15 @@ function settlementRef(ctx) {
       });
       console.log(JSON.stringify({ type: 'agent_earn_settlement', grossUsd, sourceRef: ref, ...recorded }));
     } catch (error) {
-      // Never block a buyer's successful paid response because the accounting sidecar failed.
       console.error(JSON.stringify({ type: 'agent_earn_ledger_error', error: String(error?.message || error).slice(0, 500) }));
     }
   });
 
   app.use(paymentMiddleware({
-    'GET /seller-status': { accepts: [{ scheme: 'exact', price: PRICES.sellerStatus, network: NETWORK, payTo: PAY_TO }], description: 'Live paid Base x402 seller status attestation.', mimeType: 'application/json' },
-    'POST /json-qa': { accepts: [{ scheme: 'exact', price: PRICES.jsonQa, network: NETWORK, payTo: PAY_TO }], description: 'Deterministic JSON data-quality audit for up to 500 records.', mimeType: 'application/json' },
-    'POST /prompt-scan': { accepts: [{ scheme: 'exact', price: PRICES.promptScan, network: NETWORK, payTo: PAY_TO }], description: 'Deterministic prompt-injection and tool-abuse risk scan.', mimeType: 'application/json' },
-    'POST /url-audit': { accepts: [{ scheme: 'exact', price: PRICES.urlAudit, network: NETWORK, payTo: PAY_TO }], description: 'Safe public URL health and metadata audit.', mimeType: 'application/json' },
+    'GET /seller-status': { accepts: [{ scheme: 'exact', price: PRICES.sellerStatus, network: NETWORK, payTo: PAY_TO }], description: 'Live x402 seller health and Base status.', mimeType: 'application/json' },
+    'POST /json-qa': { accepts: [{ scheme: 'exact', price: PRICES.jsonQa, network: NETWORK, payTo: PAY_TO }], description: 'JSON data quality audit for missing values, type consistency and duplicate rows.', mimeType: 'application/json' },
+    'POST /prompt-scan': { accepts: [{ scheme: 'exact', price: PRICES.promptScan, network: NETWORK, payTo: PAY_TO }], description: 'Prompt injection security scan for LLM and AI-agent untrusted text.', mimeType: 'application/json' },
+    'POST /url-audit': { accepts: [{ scheme: 'exact', price: PRICES.urlAudit, network: NETWORK, payTo: PAY_TO }], description: 'Website URL health check and metadata audit.', mimeType: 'application/json' },
   }, resourceServer));
 
   app.get('/seller-status', (_req, res) => res.json({ ok: true, seller: 'Earn Agent Tools', network: NETWORK, asset: 'USDC', paidAttestation: true, at: new Date().toISOString() }));
@@ -260,7 +283,7 @@ function settlementRef(ctx) {
   });
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Earn x402 tools listening on ${PORT}; payTo=${PAY_TO}; network=${NETWORK}`);
+    console.log(`Earn x402 tools listening on ${PORT}; payTo=${PAY_TO}; network=${NETWORK}; firstSaleMode=true`);
   });
 })().catch(error => {
   console.error(error);
