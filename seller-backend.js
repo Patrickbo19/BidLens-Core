@@ -9,6 +9,7 @@ const FACILITATOR_URL = 'https://facilitator.payai.network';
 const PAY_TO = String(process.env.EARN_RECEIVE_ADDRESS || '').trim();
 const ORIGIN = String(process.env.PUBLIC_ORIGIN || 'https://earn-tools-backend.onrender.com').replace(/\/$/, '');
 const AGENT402_REGISTER_URL = 'https://agent402.tools/api/index/register';
+const X402_ARENA_REGISTER_URL = 'https://core.x402arena.gg/register';
 
 const PRICES = { sellerStatus: '$0.001', hashEncode: '$0.001', jsonQa: '$0.001', promptScan: '$0.001', urlAudit: '$0.001' };
 
@@ -135,6 +136,22 @@ async function registerAgent402() {
     console.log(JSON.stringify({ type: 'agent402_registration', ok: r.ok, status: r.status, origin: ORIGIN, response: text, at: new Date().toISOString() }));
   } catch (error) { console.error(JSON.stringify({ type: 'agent402_registration_error', origin: ORIGIN, error: String(error?.message || error).slice(0, 500) })); }
 }
+async function registerX402Arena() {
+  try {
+    const payload = {
+      name: 'earn-agent-tools',
+      endpoint: `${ORIGIN}/seller-status`,
+      description: 'Ultra-low-cost x402 utility and developer tools for AI agents on Base USDC.',
+      niche: 'developer-tools',
+      walletAddress: PAY_TO,
+      method: 'GET',
+      resourceType: 'http',
+    };
+    const r = await fetch(X402_ARENA_REGISTER_URL, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(payload) });
+    const text = (await r.text()).slice(0, 1200);
+    console.log(JSON.stringify({ type: 'x402_arena_registration', ok: r.ok, status: r.status, endpoint: payload.endpoint, response: text, at: new Date().toISOString() }));
+  } catch (error) { console.error(JSON.stringify({ type: 'x402_arena_registration_error', error: String(error?.message || error).slice(0, 500) })); }
+}
 
 (async () => {
   assertConfig();
@@ -173,5 +190,9 @@ async function registerAgent402() {
   app.post('/prompt-scan', (req, res) => res.json({ ok: true, result: promptScan(req.body.text) }));
   app.post('/url-audit', async (req, res) => res.json({ ok: true, result: await urlAudit(req.body.url || req.body.site_url) }));
   app.use((err, _req, res, _next) => { console.error(err); res.status(500).json({ ok: false, message: 'internal error' }); });
-  app.listen(PORT, '0.0.0.0', () => { console.log(`Earn x402 tools listening on ${PORT}; payTo=${PAY_TO}; network=${NETWORK}; firstSaleMode=true`); setTimeout(registerAgent402, 2500).unref(); });
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Earn x402 tools listening on ${PORT}; payTo=${PAY_TO}; network=${NETWORK}; firstSaleMode=true`);
+    setTimeout(registerAgent402, 2500).unref();
+    setTimeout(registerX402Arena, 5000).unref();
+  });
 })().catch(error => { console.error(error); process.exit(1); });
