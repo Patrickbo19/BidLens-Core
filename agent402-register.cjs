@@ -1,23 +1,32 @@
 const origin = String(process.env.PUBLIC_ORIGIN || '').replace(/\/$/, '');
 const isSellerProcess = String(process.argv[1] || '').endsWith('seller-backend.js');
 
-async function logQuote() {
+function decodeB64Json(value) {
+  if (!value) return null;
+  try {
+    const normalized = String(value).replace(/-/g, '+').replace(/_/g, '/');
+    const pad = normalized.length % 4 ? '='.repeat(4 - (normalized.length % 4)) : '';
+    return JSON.parse(Buffer.from(normalized + pad, 'base64').toString('utf8'));
+  } catch { return null; }
+}
+
+async function verifyChallenge() {
   try {
     const target = `${origin}/seller-status`;
-    const url = `https://agent402.tools/api/x402-quote?url=${encodeURIComponent(target)}&method=GET`;
-    const r = await fetch(url);
-    const text = await r.text();
+    const r = await fetch(target, { method: 'GET', redirect: 'manual' });
+    const raw = r.headers.get('payment-required') || r.headers.get('x-payment-required');
+    const decoded = decodeB64Json(raw);
     console.log(JSON.stringify({
-      type: 'agent402_x402_quote',
-      ok: r.ok,
+      type: 'earn_live_402_challenge',
       status: r.status,
       target,
-      response: text.slice(0, 2500),
+      hasPaymentRequiredHeader: Boolean(raw),
+      decoded,
       at: new Date().toISOString(),
     }));
   } catch (e) {
     console.error(JSON.stringify({
-      type: 'agent402_x402_quote_failed',
+      type: 'earn_live_402_challenge_failed',
       origin,
       error: String(e.message || e).slice(0, 500),
       at: new Date().toISOString(),
@@ -50,6 +59,6 @@ if (isSellerProcess && origin) {
         at: new Date().toISOString(),
       }));
     }
-    await logQuote();
+    await verifyChallenge();
   }, 12000);
 }
