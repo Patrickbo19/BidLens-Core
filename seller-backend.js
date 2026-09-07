@@ -158,7 +158,7 @@ async function registerX402Arena() {
   const ledgerState = await ledger.init(); console.log(JSON.stringify({ type: 'ledger_init', ...ledgerState }));
   const expressModule = await import('@x402/express'), evmModule = await import('@x402/evm/exact/server'), coreModule = await import('@x402/core/server');
   const express = require('express'), { paymentMiddleware, x402ResourceServer } = expressModule, { ExactEvmScheme } = evmModule, { HTTPFacilitatorClient } = coreModule;
-  const app = express(); app.disable('x-powered-by'); app.use(express.json({ limit: '2mb' }));
+  const app = express(); app.set('trust proxy', true); app.disable('x-powered-by'); app.use(express.json({ limit: '2mb' }));
 
   app.get('/health', async (_req, res) => res.json({ ok: true, service: 'earn-tools-backend', version: '0.7.0', x402: true, network: NETWORK, facilitator: 'payai', firstSaleMode: true, prices: PRICES, ledger: await ledger.systemStatus().catch(() => ({ persistent: false })) }));
   app.get('/.well-known/x402', (_req, res) => res.json(manifest())); app.get('/.well-known/x402.json', (_req, res) => res.json(manifest())); app.get('/openapi.json', (_req, res) => res.json(openApi()));
