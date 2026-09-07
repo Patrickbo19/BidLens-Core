@@ -10,8 +10,20 @@ const PAY_TO = String(process.env.EARN_RECEIVE_ADDRESS || '').trim();
 const ORIGIN = String(process.env.PUBLIC_ORIGIN || 'https://earn-tools-backend.onrender.com').replace(/\/$/, '');
 const AGENT402_REGISTER_URL = 'https://agent402.tools/api/index/register';
 const X402_ARENA_REGISTER_URL = 'https://core.x402arena.gg/register';
-
-const PRICES = { sellerStatus: '$0.001', hashEncode: '$0.001', jsonQa: '$0.001', promptScan: '$0.001', urlAudit: '$0.001' };
+const UNIT_PRICE = '$0.001';
+const PRICES = {
+  sellerStatus: UNIT_PRICE,
+  hashEncode: UNIT_PRICE,
+  sha256: UNIT_PRICE,
+  sha512: UNIT_PRICE,
+  hmacSha256: UNIT_PRICE,
+  base64Encode: UNIT_PRICE,
+  base64Decode: UNIT_PRICE,
+  jwtDecode: UNIT_PRICE,
+  jsonQa: UNIT_PRICE,
+  promptScan: UNIT_PRICE,
+  urlAudit: UNIT_PRICE,
+};
 
 function assertConfig() {
   if (!/^0x[a-fA-F0-9]{40}$/.test(PAY_TO)) throw new Error('EARN_RECEIVE_ADDRESS must be a valid public EVM address');
@@ -41,6 +53,10 @@ function hashEncode(body) {
     return { operation, header: decode(parts[0]), payload: decode(parts[1]), signatureVerified: false };
   }
   throw new Error('operation must be sha256, sha512, hmac-sha256, base64-encode, base64-decode, or jwt-decode');
+}
+function runAlias(operation, body) {
+  const input = operation === 'jwt-decode' ? (body?.token ?? body?.input ?? '') : (body?.input ?? '');
+  return hashEncode({ ...body, operation, input });
 }
 function jsonQa(records) {
   if (!Array.isArray(records) || records.length > 500) throw new Error('records must be an array of at most 500 items');
@@ -91,7 +107,7 @@ async function safeUrl(raw) {
 async function urlAudit(raw) {
   const u = await safeUrl(raw), ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 10000), start = Date.now();
   try {
-    const r = await fetch(u, { redirect: 'follow', signal: ctl.signal, headers: { 'user-agent': 'Earn-Agent/0.7' } });
+    const r = await fetch(u, { redirect: 'follow', signal: ctl.signal, headers: { 'user-agent': 'Earn-Agent/0.8' } });
     const type = r.headers.get('content-type') || ''; let html = '';
     if (/text\/html|application\/xhtml\+xml/i.test(type)) html = (await r.text()).slice(0, 500000);
     const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '').replace(/\s+/g, ' ').trim().slice(0, 300);
@@ -100,14 +116,25 @@ async function urlAudit(raw) {
   } finally { clearTimeout(timer); }
 }
 function accepts(price) { return [{ scheme: 'exact', network: NETWORK, asset: 'USDC', payTo: PAY_TO, price }]; }
+const schemas = {
+  input: { type: 'object', required: ['input'], properties: { input: { type: 'string', maxLength: 500000 } } },
+  hmac: { type: 'object', required: ['input','key'], properties: { input: { type: 'string', maxLength: 500000 }, key: { type: 'string', maxLength: 10000 } } },
+  jwt: { type: 'object', required: ['token'], properties: { token: { type: 'string', maxLength: 500000 } } },
+};
 function manifest() {
   return {
     x402Version: 2, name: 'Earn Agent Tools',
-    description: 'Ultra-low-cost deterministic tools for AI agents: SHA256/SHA512 hashing, HMAC, Base64, JWT decode, prompt injection security scans, JSON data quality audits, and website URL health and metadata audits. Pay per call in USDC on Base.',
+    description: 'Ultra-low-cost deterministic tools for AI agents. Dedicated SHA-256, SHA-512, HMAC-SHA256, Base64 encode/decode and JWT decode endpoints plus JSON QA, prompt-injection scanning and URL audits. Pay per call in USDC on Base.',
     homepage: 'https://earn-router.onrender.com', openapi: `${ORIGIN}/openapi.json`, rails: [{ rail: 'evm', network: NETWORK, asset: 'USDC', payTo: PAY_TO, facilitator: FACILITATOR_URL }],
     resources: [
       { name: 'x402 Seller Status', category: 'status', resource: 'GET /seller-status', url: `${ORIGIN}/seller-status`, price: PRICES.sellerStatus, description: 'Live x402 seller health and Base network status attestation.', tags: ['x402','status','health','base','seller'], accepts: accepts(PRICES.sellerStatus) },
-      { name: 'SHA256 SHA512 HMAC Base64 JWT Decode', category: 'utilities', resource: 'POST /hash-encode', url: `${ORIGIN}/hash-encode`, price: PRICES.hashEncode, description: 'Fast deterministic hashing and encoding utility for agent loops: SHA-256, SHA-512, HMAC-SHA256, Base64 encode/decode, and JWT header/payload decode without signature verification.', tags: ['sha256','sha512','hash','hashing','hmac','base64','encode','decode','jwt','utilities'], inputSchema: { type: 'object', required: ['operation','input'], properties: { operation: { type: 'string', enum: ['sha256','sha512','hmac-sha256','base64-encode','base64-decode','jwt-decode'] }, input: { type: 'string', maxLength: 500000 }, key: { type: 'string', maxLength: 10000 } } }, accepts: accepts(PRICES.hashEncode) },
+      { name: 'SHA256 hash', category: 'encoding', resource: 'POST /sha256', url: `${ORIGIN}/sha256`, price: PRICES.sha256, description: 'Compute a SHA-256 hexadecimal digest for agent workflows and integrity checks.', tags: ['sha256','sha-256','hash','hashing','digest','checksum'], inputSchema: schemas.input, accepts: accepts(PRICES.sha256) },
+      { name: 'SHA512 hash', category: 'encoding', resource: 'POST /sha512', url: `${ORIGIN}/sha512`, price: PRICES.sha512, description: 'Compute a SHA-512 hexadecimal digest for agent workflows and integrity checks.', tags: ['sha512','sha-512','hash','hashing','digest','checksum'], inputSchema: schemas.input, accepts: accepts(PRICES.sha512) },
+      { name: 'HMAC SHA256', category: 'encoding', resource: 'POST /hmac-sha256', url: `${ORIGIN}/hmac-sha256`, price: PRICES.hmacSha256, description: 'Compute HMAC-SHA256 from an input string and key.', tags: ['hmac','hmac-sha256','sha256','signature','mac','hash'], inputSchema: schemas.hmac, accepts: accepts(PRICES.hmacSha256) },
+      { name: 'Base64 encode', category: 'encoding', resource: 'POST /base64-encode', url: `${ORIGIN}/base64-encode`, price: PRICES.base64Encode, description: 'Encode UTF-8 text as Base64.', tags: ['base64','encode','encoding','text'], inputSchema: schemas.input, accepts: accepts(PRICES.base64Encode) },
+      { name: 'Base64 decode', category: 'encoding', resource: 'POST /base64-decode', url: `${ORIGIN}/base64-decode`, price: PRICES.base64Decode, description: 'Decode Base64 into UTF-8 text.', tags: ['base64','decode','decoding','text'], inputSchema: schemas.input, accepts: accepts(PRICES.base64Decode) },
+      { name: 'JWT decode', category: 'encoding', resource: 'POST /jwt-decode', url: `${ORIGIN}/jwt-decode`, price: PRICES.jwtDecode, description: 'Decode JWT header and payload without verifying its signature.', tags: ['jwt','json-web-token','decode','token','header','payload'], inputSchema: schemas.jwt, accepts: accepts(PRICES.jwtDecode) },
+      { name: 'Hash and Encode Multi-Tool', category: 'utilities', resource: 'POST /hash-encode', url: `${ORIGIN}/hash-encode`, price: PRICES.hashEncode, description: 'One endpoint for SHA-256, SHA-512, HMAC-SHA256, Base64 encode/decode and JWT decode.', tags: ['sha256','sha512','hash','hmac','base64','encode','decode','jwt','utilities'], inputSchema: { type: 'object', required: ['operation','input'], properties: { operation: { type: 'string', enum: ['sha256','sha512','hmac-sha256','base64-encode','base64-decode','jwt-decode'] }, input: { type: 'string', maxLength: 500000 }, key: { type: 'string', maxLength: 10000 } } }, accepts: accepts(PRICES.hashEncode) },
       { name: 'JSON Data Quality Audit', category: 'data', resource: 'POST /json-qa', url: `${ORIGIN}/json-qa`, price: PRICES.jsonQa, description: 'JSON data quality audit and JSON quality checker for missing values, type consistency, duplicate rows, schema columns, and SHA-256 fingerprint. Up to 500 records.', tags: ['json','data','data-quality','quality-check','qa','validation','duplicates','missing-values','audit'], inputSchema: { type: 'object', required: ['records'], properties: { records: { type: 'array', maxItems: 500 } } }, accepts: accepts(PRICES.jsonQa) },
       { name: 'Prompt Injection Security Scan', category: 'security', resource: 'POST /prompt-scan', url: `${ORIGIN}/prompt-scan`, price: PRICES.promptScan, description: 'Prompt injection security scan for LLM and AI-agent untrusted text. Detects instruction hijacking, tool abuse, secret-exfiltration requests, role override patterns, and encoded-payload indicators.', tags: ['prompt-injection','prompt-security','security','llm','ai-agent','ai-safety','tool-abuse','scan'], inputSchema: { type: 'object', required: ['text'], properties: { text: { type: 'string', minLength: 1, maxLength: 100000 } } }, accepts: accepts(PRICES.promptScan) },
       { name: 'Website Health and Metadata Audit', category: 'web', resource: 'POST /url-audit', url: `${ORIGIN}/url-audit`, price: PRICES.urlAudit, description: 'Website URL health check and metadata audit: HTTP status, latency, HTTPS, page title, meta description, content type, HSTS, and cache headers for a public URL.', tags: ['website','url','web','http','health-check','metadata','seo','latency','https','audit'], inputSchema: { type: 'object', required: ['url'], properties: { url: { type: 'string', format: 'uri' } } }, accepts: accepts(PRICES.urlAudit) },
@@ -115,12 +142,19 @@ function manifest() {
   };
 }
 function openApi() {
-  return { openapi: '3.1.0', info: { title: 'Earn Agent Tools', version: '0.7.0', description: 'Ultra-low-cost deterministic pay-per-call tools for AI agents over x402.' }, servers: [{ url: ORIGIN }], paths: {
-    '/seller-status': { get: { summary: 'x402 seller health and Base status', responses: { '200': { description: 'Live status' }, '402': { description: 'x402 payment required' } } } },
-    '/hash-encode': { post: { summary: 'SHA256 SHA512 HMAC Base64 encode/decode and JWT decode', responses: { '200': { description: 'Hash or encoded/decoded result' }, '402': { description: 'x402 payment required' } } } },
-    '/json-qa': { post: { summary: 'JSON data quality audit and duplicate/missing-value check', responses: { '200': { description: 'JSON quality report' }, '402': { description: 'x402 payment required' } } } },
-    '/prompt-scan': { post: { summary: 'Prompt injection security scan for LLM and AI-agent text', responses: { '200': { description: 'Prompt security risk report' }, '402': { description: 'x402 payment required' } } } },
-    '/url-audit': { post: { summary: 'Website URL health check and metadata audit', responses: { '200': { description: 'Website health and metadata report' }, '402': { description: 'x402 payment required' } } } },
+  const paid = { '200': { description: 'Result' }, '402': { description: 'x402 payment required' } };
+  return { openapi: '3.1.0', info: { title: 'Earn Agent Tools', version: '0.8.0', description: 'Ultra-low-cost deterministic pay-per-call tools for AI agents over x402.' }, servers: [{ url: ORIGIN }], paths: {
+    '/seller-status': { get: { summary: 'x402 seller health and Base status', responses: paid } },
+    '/sha256': { post: { summary: 'SHA-256 hash', responses: paid } },
+    '/sha512': { post: { summary: 'SHA-512 hash', responses: paid } },
+    '/hmac-sha256': { post: { summary: 'HMAC-SHA256', responses: paid } },
+    '/base64-encode': { post: { summary: 'Base64 encode', responses: paid } },
+    '/base64-decode': { post: { summary: 'Base64 decode', responses: paid } },
+    '/jwt-decode': { post: { summary: 'JWT header/payload decode without signature verification', responses: paid } },
+    '/hash-encode': { post: { summary: 'Hashing and encoding multi-tool', responses: paid } },
+    '/json-qa': { post: { summary: 'JSON data quality audit and duplicate/missing-value check', responses: paid } },
+    '/prompt-scan': { post: { summary: 'Prompt injection security scan for LLM and AI-agent text', responses: paid } },
+    '/url-audit': { post: { summary: 'Website URL health check and metadata audit', responses: paid } },
   } };
 }
 function amountToUsd(requirements) { const atomic = Number(requirements?.amount || requirements?.maxAmountRequired || 0); return Number.isFinite(atomic) && atomic > 0 ? Number((atomic / 1_000_000).toFixed(6)) : 0; }
@@ -138,15 +172,7 @@ async function registerAgent402() {
 }
 async function registerX402Arena() {
   try {
-    const payload = {
-      name: 'earn-agent-tools',
-      endpoint: `${ORIGIN}/seller-status`,
-      description: 'Ultra-low-cost x402 utility and developer tools for AI agents on Base USDC.',
-      niche: 'developer-tools',
-      walletAddress: PAY_TO,
-      method: 'GET',
-      resourceType: 'http',
-    };
+    const payload = { name: 'earn-agent-tools', endpoint: `${ORIGIN}/seller-status`, description: 'Ultra-low-cost x402 utility and developer tools for AI agents on Base USDC.', niche: 'developer-tools', walletAddress: PAY_TO, method: 'GET', resourceType: 'http' };
     const r = await fetch(X402_ARENA_REGISTER_URL, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(payload) });
     const text = (await r.text()).slice(0, 1200);
     console.log(JSON.stringify({ type: 'x402_arena_registration', ok: r.ok, status: r.status, endpoint: payload.endpoint, response: text, at: new Date().toISOString() }));
@@ -160,8 +186,18 @@ async function registerX402Arena() {
   const express = require('express'), { paymentMiddleware, x402ResourceServer } = expressModule, { ExactEvmScheme } = evmModule, { HTTPFacilitatorClient } = coreModule;
   const app = express(); app.set('trust proxy', true); app.disable('x-powered-by'); app.use(express.json({ limit: '2mb' }));
 
-  app.get('/health', async (_req, res) => res.json({ ok: true, service: 'earn-tools-backend', version: '0.7.0', x402: true, network: NETWORK, facilitator: 'payai', firstSaleMode: true, prices: PRICES, ledger: await ledger.systemStatus().catch(() => ({ persistent: false })) }));
-  app.get('/.well-known/x402', (_req, res) => res.json(manifest())); app.get('/.well-known/x402.json', (_req, res) => res.json(manifest())); app.get('/openapi.json', (_req, res) => res.json(openApi()));
+  app.get('/health', async (_req, res) => res.json({ ok: true, service: 'earn-tools-backend', version: '0.8.0', x402: true, network: NETWORK, facilitator: 'payai', firstSaleMode: true, prices: PRICES, resourceCount: manifest().resources.length, ledger: await ledger.systemStatus().catch(() => ({ persistent: false })) }));
+  app.get('/.well-known/x402', (_req, res) => res.json(manifest()));
+  app.get('/.well-known/x402.json', (_req, res) => res.json(manifest()));
+  app.get('/openapi.json', (_req, res) => res.json(openApi()));
+
+  const aliasValidator = operation => (req, res, next) => { try { runAlias(operation, req.body); next(); } catch (e) { return res.status(422).json({ ok: false, message: String(e.message || 'invalid input').slice(0, 300) }); } };
+  app.post('/sha256', aliasValidator('sha256'));
+  app.post('/sha512', aliasValidator('sha512'));
+  app.post('/hmac-sha256', aliasValidator('hmac-sha256'));
+  app.post('/base64-encode', aliasValidator('base64-encode'));
+  app.post('/base64-decode', aliasValidator('base64-decode'));
+  app.post('/jwt-decode', aliasValidator('jwt-decode'));
   app.post('/hash-encode', (req, res, next) => { try { hashEncode(req.body); next(); } catch (e) { return res.status(422).json({ ok: false, message: String(e.message || 'invalid input').slice(0, 300) }); } });
   app.post('/json-qa', (req, res, next) => { if (!Array.isArray(req.body?.records) || req.body.records.length > 500) return res.status(422).json({ ok: false, message: 'records must be an array of at most 500 items' }); next(); });
   app.post('/prompt-scan', (req, res, next) => { if (typeof req.body?.text !== 'string' || req.body.text.length < 1 || req.body.text.length > 100000) return res.status(422).json({ ok: false, message: 'text must be 1-100000 characters' }); next(); });
@@ -177,21 +213,35 @@ async function registerX402Arena() {
     } catch (error) { console.error(JSON.stringify({ type: 'agent_earn_ledger_error', error: String(error?.message || error).slice(0, 500) })); }
   });
 
+  const pay = (price, description) => ({ accepts: [{ scheme: 'exact', price, network: NETWORK, payTo: PAY_TO }], description, mimeType: 'application/json' });
   app.use(paymentMiddleware({
-    'GET /seller-status': { accepts: [{ scheme: 'exact', price: PRICES.sellerStatus, network: NETWORK, payTo: PAY_TO }], description: 'Live x402 seller health and Base status.', mimeType: 'application/json' },
-    'POST /hash-encode': { accepts: [{ scheme: 'exact', price: PRICES.hashEncode, network: NETWORK, payTo: PAY_TO }], description: 'SHA256 SHA512 HMAC Base64 encode/decode and JWT decode utility.', mimeType: 'application/json' },
-    'POST /json-qa': { accepts: [{ scheme: 'exact', price: PRICES.jsonQa, network: NETWORK, payTo: PAY_TO }], description: 'JSON data quality audit for missing values, type consistency and duplicate rows.', mimeType: 'application/json' },
-    'POST /prompt-scan': { accepts: [{ scheme: 'exact', price: PRICES.promptScan, network: NETWORK, payTo: PAY_TO }], description: 'Prompt injection security scan for LLM and AI-agent untrusted text.', mimeType: 'application/json' },
-    'POST /url-audit': { accepts: [{ scheme: 'exact', price: PRICES.urlAudit, network: NETWORK, payTo: PAY_TO }], description: 'Website URL health check and metadata audit.', mimeType: 'application/json' },
+    'GET /seller-status': pay(PRICES.sellerStatus, 'Live x402 seller health and Base status.'),
+    'POST /sha256': pay(PRICES.sha256, 'SHA-256 hash.'),
+    'POST /sha512': pay(PRICES.sha512, 'SHA-512 hash.'),
+    'POST /hmac-sha256': pay(PRICES.hmacSha256, 'HMAC-SHA256.'),
+    'POST /base64-encode': pay(PRICES.base64Encode, 'Base64 encode.'),
+    'POST /base64-decode': pay(PRICES.base64Decode, 'Base64 decode.'),
+    'POST /jwt-decode': pay(PRICES.jwtDecode, 'JWT header and payload decode without signature verification.'),
+    'POST /hash-encode': pay(PRICES.hashEncode, 'SHA256 SHA512 HMAC Base64 encode/decode and JWT decode multi-tool.'),
+    'POST /json-qa': pay(PRICES.jsonQa, 'JSON data quality audit for missing values, type consistency and duplicate rows.'),
+    'POST /prompt-scan': pay(PRICES.promptScan, 'Prompt injection security scan for LLM and AI-agent untrusted text.'),
+    'POST /url-audit': pay(PRICES.urlAudit, 'Website URL health check and metadata audit.'),
   }, resourceServer));
+
   app.get('/seller-status', (_req, res) => res.json({ ok: true, seller: 'Earn Agent Tools', network: NETWORK, asset: 'USDC', paidAttestation: true, at: new Date().toISOString() }));
+  app.post('/sha256', (req, res) => res.json({ ok: true, result: runAlias('sha256', req.body) }));
+  app.post('/sha512', (req, res) => res.json({ ok: true, result: runAlias('sha512', req.body) }));
+  app.post('/hmac-sha256', (req, res) => res.json({ ok: true, result: runAlias('hmac-sha256', req.body) }));
+  app.post('/base64-encode', (req, res) => res.json({ ok: true, result: runAlias('base64-encode', req.body) }));
+  app.post('/base64-decode', (req, res) => res.json({ ok: true, result: runAlias('base64-decode', req.body) }));
+  app.post('/jwt-decode', (req, res) => res.json({ ok: true, result: runAlias('jwt-decode', req.body) }));
   app.post('/hash-encode', (req, res) => res.json({ ok: true, result: hashEncode(req.body) }));
   app.post('/json-qa', (req, res) => res.json({ ok: true, result: jsonQa(req.body.records) }));
   app.post('/prompt-scan', (req, res) => res.json({ ok: true, result: promptScan(req.body.text) }));
   app.post('/url-audit', async (req, res) => res.json({ ok: true, result: await urlAudit(req.body.url || req.body.site_url) }));
   app.use((err, _req, res, _next) => { console.error(err); res.status(500).json({ ok: false, message: 'internal error' }); });
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Earn x402 tools listening on ${PORT}; payTo=${PAY_TO}; network=${NETWORK}; firstSaleMode=true`);
+    console.log(`Earn x402 tools listening on ${PORT}; payTo=${PAY_TO}; network=${NETWORK}; firstSaleMode=true; resources=${manifest().resources.length}`);
     setTimeout(registerAgent402, 2500).unref();
     setTimeout(registerX402Arena, 5000).unref();
   });
