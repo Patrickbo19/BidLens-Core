@@ -1,0 +1,1 @@
+Agent Earn is the autonomous earning subsystem. The live worker is https://earn-agent-worker.onrender.com. Human-required offer actions are never automated. Agent work is limited to tasks the marketplace permits automated providers to perform.
