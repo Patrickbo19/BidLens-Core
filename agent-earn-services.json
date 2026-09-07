@@ -1,0 +1,72 @@
+{
+  "marketplace": "the402",
+  "webhook_url": "https://earn-router.onrender.com/webhook/the402",
+  "services": [
+    {
+      "env_key": "THE402_SERVICE_JSON_QA",
+      "name": "Structured JSON Quality Audit",
+      "description": "Deterministic QA for up to 500 JSON records. Returns schema columns, missing-value counts, per-column observed types, duplicate-row count, and a reproducible SHA-256 fingerprint. No credentials or private data sources required.",
+      "price": {"fixed": "$1.00"},
+      "service_type": "automated_service",
+      "pricing_model": "fixed",
+      "fulfillment_type": "automated",
+      "estimated_delivery": "1m",
+      "category": "developer-tools",
+      "tags": ["json", "data-quality", "qa", "automation"],
+      "input_schema": {
+        "type": "object",
+        "required": ["records"],
+        "properties": {
+          "records": {"type": "array", "maxItems": 500, "description": "Array of JSON values/objects to audit."}
+        }
+      },
+      "deliverable_schema": {
+        "quality_report": {"type": "object", "description": "Deterministic quality report including counts, types, duplicates and SHA-256 fingerprint."}
+      }
+    },
+    {
+      "env_key": "THE402_SERVICE_PROMPT_SCAN",
+      "name": "Prompt Injection & Tool-Abuse Risk Scan",
+      "description": "Deterministic scan of untrusted text for prompt-injection, secret-exfiltration, role-override, encoded-payload, and tool-abuse indicators. Returns a risk score, concrete matched findings, fingerprint, and safe-handling guidance.",
+      "price": {"fixed": "$0.50"},
+      "service_type": "automated_service",
+      "pricing_model": "fixed",
+      "fulfillment_type": "automated",
+      "estimated_delivery": "1m",
+      "category": "security",
+      "tags": ["prompt-injection", "security", "ai-safety", "automation"],
+      "input_schema": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": {"type": "string", "maxLength": 100000, "description": "Untrusted text to scan."}
+        }
+      },
+      "deliverable_schema": {
+        "risk_report": {"type": "object", "description": "Risk score, findings, SHA-256 fingerprint, and safe-handling guidance."}
+      }
+    },
+    {
+      "env_key": "THE402_SERVICE_URL_AUDIT",
+      "name": "Public URL Health & Metadata Audit",
+      "description": "Safe automated audit for a public HTTP/HTTPS URL. Returns final URL, status, response time, HTTPS posture, selected response headers, title, and meta description. Private/local network targets are blocked.",
+      "price": {"fixed": "$0.75"},
+      "service_type": "automated_service",
+      "pricing_model": "fixed",
+      "fulfillment_type": "automated",
+      "estimated_delivery": "1m",
+      "category": "developer-tools",
+      "tags": ["url", "website", "http", "metadata", "monitoring"],
+      "input_schema": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {"type": "string", "description": "Public HTTP or HTTPS URL to audit."}
+        }
+      },
+      "deliverable_schema": {
+        "audit": {"type": "object", "description": "HTTP/HTTPS health, timing, selected headers, and page metadata."}
+      }
+    }
+  ]
+}
