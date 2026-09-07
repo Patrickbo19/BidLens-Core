@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const dns = require('dns').promises;
 const net = require('net');
+const ledger = require('./ledger.cjs');
 
 const PORT = process.env.PORT || 3000;
 const NETWORK = 'eip155:8453';
@@ -117,7 +118,7 @@ async function urlAudit(raw) {
   const timer = setTimeout(() => ctl.abort(), 10000);
   const start = Date.now();
   try {
-    const r = await fetch(u, { redirect: 'follow', signal: ctl.signal, headers: { 'user-agent': 'Earn-Agent/0.4' } });
+    const r = await fetch(u, { redirect: 'follow', signal: ctl.signal, headers: { 'user-agent': 'Earn-Agent/0.5' } });
     const type = r.headers.get('content-type') || '';
     let html = '';
     if (/text\/html|application\/xhtml\+xml/i.test(type)) html = (await r.text()).slice(0, 500000);
@@ -145,56 +146,47 @@ function manifest() {
     openapi: `${ORIGIN}/openapi.json`,
     rails: [{ rail: 'evm', network: NETWORK, asset: 'USDC', payTo: PAY_TO, facilitator: FACILITATOR_URL }],
     resources: [
-      {
-        resource: 'GET /seller-status', url: `${ORIGIN}/seller-status`, price: PRICES.sellerStatus,
-        description: 'Live paid attestation that Earn Agent Tools is online, x402-enabled, and serving Base mainnet.',
-        tags: ['x402', 'status', 'health', 'base', 'seller'], accepts: accepts(PRICES.sellerStatus),
-      },
-      {
-        resource: 'POST /json-qa', url: `${ORIGIN}/json-qa`, price: PRICES.jsonQa,
-        description: 'Deterministic JSON dataset quality audit: columns, missing values, type consistency, duplicate rows, and SHA-256 fingerprint. Up to 500 records.',
-        tags: ['json', 'data-quality', 'qa', 'validation', 'audit'],
-        inputSchema: { type: 'object', required: ['records'], properties: { records: { type: 'array', maxItems: 500 } } }, accepts: accepts(PRICES.jsonQa),
-      },
-      {
-        resource: 'POST /prompt-scan', url: `${ORIGIN}/prompt-scan`, price: PRICES.promptScan,
-        description: 'Deterministic prompt-injection and tool-abuse risk scan for untrusted text, including risk score and matched indicators.',
-        tags: ['prompt-injection', 'security', 'llm', 'ai-safety', 'scan'],
-        inputSchema: { type: 'object', required: ['text'], properties: { text: { type: 'string', minLength: 1, maxLength: 100000 } } }, accepts: accepts(PRICES.promptScan),
-      },
-      {
-        resource: 'POST /url-audit', url: `${ORIGIN}/url-audit`, price: PRICES.urlAudit,
-        description: 'Safe public-URL health and metadata audit: status, latency, HTTPS, title, description, content type, HSTS and cache headers.',
-        tags: ['url', 'website', 'http', 'metadata', 'health', 'audit'],
-        inputSchema: { type: 'object', required: ['url'], properties: { url: { type: 'string', format: 'uri' } } }, accepts: accepts(PRICES.urlAudit),
-      },
+      { resource: 'GET /seller-status', url: `${ORIGIN}/seller-status`, price: PRICES.sellerStatus, description: 'Live paid attestation that Earn Agent Tools is online, x402-enabled, and serving Base mainnet.', tags: ['x402','status','health','base','seller'], accepts: accepts(PRICES.sellerStatus) },
+      { resource: 'POST /json-qa', url: `${ORIGIN}/json-qa`, price: PRICES.jsonQa, description: 'Deterministic JSON dataset quality audit: columns, missing values, type consistency, duplicate rows, and SHA-256 fingerprint. Up to 500 records.', tags: ['json','data-quality','qa','validation','audit'], inputSchema: { type: 'object', required: ['records'], properties: { records: { type: 'array', maxItems: 500 } } }, accepts: accepts(PRICES.jsonQa) },
+      { resource: 'POST /prompt-scan', url: `${ORIGIN}/prompt-scan`, price: PRICES.promptScan, description: 'Deterministic prompt-injection and tool-abuse risk scan for untrusted text, including risk score and matched indicators.', tags: ['prompt-injection','security','llm','ai-safety','scan'], inputSchema: { type: 'object', required: ['text'], properties: { text: { type: 'string', minLength: 1, maxLength: 100000 } } }, accepts: accepts(PRICES.promptScan) },
+      { resource: 'POST /url-audit', url: `${ORIGIN}/url-audit`, price: PRICES.urlAudit, description: 'Safe public-URL health and metadata audit: status, latency, HTTPS, title, description, content type, HSTS and cache headers.', tags: ['url','website','http','metadata','health','audit'], inputSchema: { type: 'object', required: ['url'], properties: { url: { type: 'string', format: 'uri' } } }, accepts: accepts(PRICES.urlAudit) },
     ],
     updatedAt: new Date().toISOString(),
   };
 }
 
 function openApi() {
-  const schemas = {
-    JsonQaInput: { type: 'object', required: ['records'], properties: { records: { type: 'array', maxItems: 500, items: {} } } },
-    PromptScanInput: { type: 'object', required: ['text'], properties: { text: { type: 'string', minLength: 1, maxLength: 100000 } } },
-    UrlAuditInput: { type: 'object', required: ['url'], properties: { url: { type: 'string', format: 'uri' } } },
-  };
   return {
     openapi: '3.1.0',
-    info: { title: 'Earn Agent Tools', version: '0.4.0', description: 'Deterministic pay-per-call tools for AI agents over x402.' },
+    info: { title: 'Earn Agent Tools', version: '0.5.0', description: 'Deterministic pay-per-call tools for AI agents over x402.' },
     servers: [{ url: ORIGIN }],
     paths: {
-      '/seller-status': { get: { summary: 'Paid x402 seller/network status attestation', responses: { '200': { description: 'Live status' }, '402': { description: 'x402 payment required' } } } },
-      '/json-qa': { post: { summary: 'Audit JSON data quality', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/JsonQaInput' } } } }, responses: { '200': { description: 'Quality report' }, '402': { description: 'x402 payment required' }, '422': { description: 'Invalid input' } } } },
-      '/prompt-scan': { post: { summary: 'Scan text for prompt injection', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/PromptScanInput' } } } }, responses: { '200': { description: 'Risk report' }, '402': { description: 'x402 payment required' }, '422': { description: 'Invalid input' } } } },
-      '/url-audit': { post: { summary: 'Audit a public URL', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UrlAuditInput' } } } }, responses: { '200': { description: 'URL audit' }, '402': { description: 'x402 payment required' }, '422': { description: 'Invalid input' } } } },
+      '/seller-status': { get: { summary: 'Paid x402 seller status', responses: { '200': { description: 'Live status' }, '402': { description: 'x402 payment required' } } } },
+      '/json-qa': { post: { summary: 'Audit JSON data quality', responses: { '200': { description: 'Quality report' }, '402': { description: 'x402 payment required' } } } },
+      '/prompt-scan': { post: { summary: 'Scan text for prompt injection', responses: { '200': { description: 'Risk report' }, '402': { description: 'x402 payment required' } } } },
+      '/url-audit': { post: { summary: 'Audit a public URL', responses: { '200': { description: 'URL audit' }, '402': { description: 'x402 payment required' } } } },
     },
-    components: { schemas },
   };
+}
+
+function amountToUsd(requirements) {
+  const atomic = Number(requirements?.amount || requirements?.maxAmountRequired || 0);
+  if (!Number.isFinite(atomic) || atomic <= 0) return 0;
+  return Number((atomic / 1_000_000).toFixed(6));
+}
+
+function settlementRef(ctx) {
+  const result = ctx?.result || ctx?.settleResponse || {};
+  const tx = result.transaction || result.transactionHash || result.txHash || result.signature || null;
+  if (tx) return String(tx);
+  return `x402_${crypto.createHash('sha256').update(JSON.stringify({ result, payload: ctx?.paymentPayload || null, requirements: ctx?.requirements || null })).digest('hex')}`;
 }
 
 (async () => {
   assertConfig();
+  const ledgerState = await ledger.init();
+  console.log(JSON.stringify({ type: 'ledger_init', ...ledgerState }));
+
   const expressModule = await import('@x402/express');
   const evmModule = await import('@x402/evm/exact/server');
   const coreModule = await import('@x402/core/server');
@@ -207,12 +199,11 @@ function openApi() {
   app.disable('x-powered-by');
   app.use(express.json({ limit: '2mb' }));
 
-  app.get('/health', (_req, res) => res.json({ ok: true, service: 'earn-tools-backend', version: '0.4.0', x402: true, network: NETWORK, facilitator: 'payai' }));
+  app.get('/health', async (_req, res) => res.json({ ok: true, service: 'earn-tools-backend', version: '0.5.0', x402: true, network: NETWORK, facilitator: 'payai', ledger: await ledger.systemStatus().catch(() => ({ persistent: false })) }));
   app.get('/.well-known/x402', (_req, res) => res.json(manifest()));
   app.get('/.well-known/x402.json', (_req, res) => res.json(manifest()));
   app.get('/openapi.json', (_req, res) => res.json(openApi()));
 
-  // Keep malformed business requests from charging before they can succeed.
   app.post('/json-qa', (req, res, next) => {
     if (!Array.isArray(req.body?.records) || req.body.records.length > 500) return res.status(422).json({ ok: false, message: 'records must be an array of at most 500 items' });
     next();
@@ -229,26 +220,36 @@ function openApi() {
   const facilitatorClient = new HTTPFacilitatorClient({ url: FACILITATOR_URL });
   const resourceServer = new x402ResourceServer(facilitatorClient).register(NETWORK, new ExactEvmScheme());
 
+  resourceServer.onAfterSettle(async (ctx) => {
+    try {
+      const requirements = ctx?.requirements || ctx?.paymentRequirements || {};
+      const result = ctx?.result || ctx?.settleResponse || {};
+      const grossUsd = amountToUsd(requirements);
+      const ref = settlementRef(ctx);
+      const recorded = await ledger.recordAgentSettlement({
+        sourceRef: ref,
+        grossUsd,
+        payer: result.payer || ctx?.paymentPayload?.payer || null,
+        transaction: result.transaction || result.transactionHash || result.txHash || null,
+        network: requirements.network || NETWORK,
+        asset: requirements.asset || 'USDC',
+        metadata: { scheme: requirements.scheme || 'exact' },
+      });
+      console.log(JSON.stringify({ type: 'agent_earn_settlement', grossUsd, sourceRef: ref, ...recorded }));
+    } catch (error) {
+      // Never block a buyer's successful paid response because the accounting sidecar failed.
+      console.error(JSON.stringify({ type: 'agent_earn_ledger_error', error: String(error?.message || error).slice(0, 500) }));
+    }
+  });
+
   app.use(paymentMiddleware({
-    'GET /seller-status': {
-      accepts: [{ scheme: 'exact', price: PRICES.sellerStatus, network: NETWORK, payTo: PAY_TO }],
-      description: 'Live paid Base x402 seller status attestation.', mimeType: 'application/json',
-    },
-    'POST /json-qa': {
-      accepts: [{ scheme: 'exact', price: PRICES.jsonQa, network: NETWORK, payTo: PAY_TO }],
-      description: 'Deterministic JSON data-quality audit for up to 500 records.', mimeType: 'application/json',
-    },
-    'POST /prompt-scan': {
-      accepts: [{ scheme: 'exact', price: PRICES.promptScan, network: NETWORK, payTo: PAY_TO }],
-      description: 'Deterministic prompt-injection and tool-abuse risk scan.', mimeType: 'application/json',
-    },
-    'POST /url-audit': {
-      accepts: [{ scheme: 'exact', price: PRICES.urlAudit, network: NETWORK, payTo: PAY_TO }],
-      description: 'Safe public URL health and metadata audit.', mimeType: 'application/json',
-    },
+    'GET /seller-status': { accepts: [{ scheme: 'exact', price: PRICES.sellerStatus, network: NETWORK, payTo: PAY_TO }], description: 'Live paid Base x402 seller status attestation.', mimeType: 'application/json' },
+    'POST /json-qa': { accepts: [{ scheme: 'exact', price: PRICES.jsonQa, network: NETWORK, payTo: PAY_TO }], description: 'Deterministic JSON data-quality audit for up to 500 records.', mimeType: 'application/json' },
+    'POST /prompt-scan': { accepts: [{ scheme: 'exact', price: PRICES.promptScan, network: NETWORK, payTo: PAY_TO }], description: 'Deterministic prompt-injection and tool-abuse risk scan.', mimeType: 'application/json' },
+    'POST /url-audit': { accepts: [{ scheme: 'exact', price: PRICES.urlAudit, network: NETWORK, payTo: PAY_TO }], description: 'Safe public URL health and metadata audit.', mimeType: 'application/json' },
   }, resourceServer));
 
-  app.get('/seller-status', (_req, res) => res.json({ ok: true, seller: 'Earn Agent Tools', network: NETWORK, asset: 'USDC', facilitator: 'PayAI', paidAttestation: true, at: new Date().toISOString() }));
+  app.get('/seller-status', (_req, res) => res.json({ ok: true, seller: 'Earn Agent Tools', network: NETWORK, asset: 'USDC', paidAttestation: true, at: new Date().toISOString() }));
   app.post('/json-qa', (req, res) => res.json({ ok: true, result: jsonQa(req.body.records) }));
   app.post('/prompt-scan', (req, res) => res.json({ ok: true, result: promptScan(req.body.text) }));
   app.post('/url-audit', async (req, res) => res.json({ ok: true, result: await urlAudit(req.body.url || req.body.site_url) }));
@@ -258,5 +259,10 @@ function openApi() {
     res.status(500).json({ ok: false, message: 'internal error' });
   });
 
-  app.listen(PORT, '0.0.0.0', () => console.log(`Earn x402 tools listening on ${PORT}; payTo=${PAY_TO}; network=${NETWORK}`));
-})().catch(err => { console.error(err); process.exit(1); });
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Earn x402 tools listening on ${PORT}; payTo=${PAY_TO}; network=${NETWORK}`);
+  });
+})().catch(error => {
+  console.error(error);
+  process.exit(1);
+});
