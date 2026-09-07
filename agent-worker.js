@@ -4,6 +4,7 @@ const PORT = Number(process.env.PORT || 3000);
 const MCP_URL = String(process.env.EARN_MCP_URL || 'https://earn-chat-mcp.onrender.com/mcp');
 const MCP_HEALTH_URL = new URL('/health', MCP_URL).toString();
 const CREATE_BETA = String(process.env.EARN_CREATE_BETA_ACCOUNT || '') === '1';
+const EARN_SELLER_ORIGIN = 'https://earn-tools-backend.onrender.com';
 
 const state = {
   ok: false,
@@ -12,6 +13,7 @@ const state = {
   tools: [],
   earningOptions: null,
   ledgerStatus: null,
+  buyerSearch: null,
   betaAccount: null,
   error: null,
 };
@@ -19,7 +21,7 @@ const state = {
 async function openClient() {
   const { Client, StreamableHTTPClientTransport } = await import('@modelcontextprotocol/client');
   const client = new Client(
-    { name: 'earn-mcp-verifier', version: '0.4.0' },
+    { name: 'earn-mcp-verifier', version: '0.5.0' },
     { versionNegotiation: { mode: 'auto' } },
   );
   const transport = new StreamableHTTPClientTransport(new URL(MCP_URL));
@@ -27,17 +29,45 @@ async function openClient() {
   return client;
 }
 
-async function fetchLedgerStatus() {
+async function fetchJson(url, timeoutMs = 8000) {
   const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), 8000);
+  const timer = setTimeout(() => ctl.abort(), timeoutMs);
   try {
-    const r = await fetch(MCP_HEALTH_URL, { signal: ctl.signal });
-    if (!r.ok) throw new Error(`health status ${r.status}`);
-    const data = await r.json();
-    return data?.ledger || null;
+    const r = await fetch(url, { signal: ctl.signal, headers: { accept: 'application/json' } });
+    if (!r.ok) throw new Error(`${new URL(url).host} status ${r.status}`);
+    return await r.json();
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function fetchLedgerStatus() {
+  const data = await fetchJson(MCP_HEALTH_URL);
+  return data?.ledger || null;
+}
+
+async function checkBuyerDiscovery() {
+  const queries = [
+    'prompt injection security scan',
+    'json data quality audit',
+    'website url health metadata audit',
+  ];
+  const checks = [];
+  for (const query of queries) {
+    try {
+      const url = `https://agent402.tools/api/find?q=${encodeURIComponent(query)}`;
+      const data = await fetchJson(url, 10000);
+      const raw = JSON.stringify(data);
+      checks.push({
+        query,
+        earnPresent: raw.includes(EARN_SELLER_ORIGIN),
+        responsePreview: raw.slice(0, 900),
+      });
+    } catch (error) {
+      checks.push({ query, earnPresent: false, error: String(error?.message || error).slice(0, 300) });
+    }
+  }
+  return checks;
 }
 
 async function verifyMcp() {
@@ -57,6 +87,7 @@ async function verifyMcp() {
     state.tools = toolNames;
     state.earningOptions = options?.structuredContent || options?.content || null;
     state.ledgerStatus = await fetchLedgerStatus();
+    state.buyerSearch = await checkBuyerDiscovery();
     state.error = null;
     console.log(JSON.stringify({ type: 'earn_mcp_verified', ...state }));
   } catch (error) {
