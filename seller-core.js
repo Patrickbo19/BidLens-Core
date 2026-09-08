@@ -80,4 +80,6 @@ global.fetch = async (url, options = {}) => {
   }
   return baseFetch(url, options);
 };
+
+require('./moltbook-bootstrap.cjs');
 require('./seller-v2.js');
