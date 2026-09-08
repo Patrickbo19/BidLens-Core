@@ -106,10 +106,10 @@ function manageUrl(handle, token) {
 
 function buildServer({ requestInfo } = {}) {
   const server = new McpServer(
-    { name: 'INCOME 2', version: '0.2.0' },
+    { name: 'INCOME 2', version: '0.2.1' },
     {
       instructions:
-        'INCOME 2 connects users to legitimate paid opportunities and autonomous agent work. A user may use Human Earn, Agent Earn, or both. Never guarantee income. Never describe projected earnings as earned money. Human-required surveys, installs, signups, or advertiser actions must be completed truthfully by the user. Cash-out and money transfers are external to ChatGPT.',
+        'INCOME 2 connects users to legitimate paid opportunities and autonomous agent work, and includes a free non-custodial Agent Purchase Guard for retry-safe x402 purchase preflight. A user may use Human Earn, Agent Earn, or both. Never guarantee income. Never describe projected earnings as earned money. Human-required surveys, installs, signups, or advertiser actions must be completed truthfully by the user. Purchase Guard never signs, sends, settles, or custodies funds. Cash-out and money transfers are external to ChatGPT.',
     },
   );
 
@@ -261,6 +261,58 @@ function buildServer({ requestInfo } = {}) {
     },
   );
 
+  server.registerTool(
+    'guard_x402_purchase',
+    {
+      title: 'Guard an x402 purchase',
+      description:
+        'Free INCOME 2 beta for an AI agent preparing to call a paid x402 endpoint. It probes the unpaid challenge, enforces a caller-set maximum USD spend, creates a durable idempotent purchase intent and receipt, and helps a retry map back to the same intent. It never signs, sends, settles, or custodies funds.',
+      inputSchema: z.object({
+        url: z.string().url().describe('Public HTTPS x402 endpoint the agent intends to call.'),
+        max_usd: z.number().positive().max(1000000).describe('Maximum USD amount the caller authorizes for this purchase intent.'),
+        idempotency_key: z.string().min(8).max(200).describe('Stable caller-generated key reused for retries of the same intended purchase.'),
+        method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).default('GET'),
+        body: z.record(z.string(), z.unknown()).optional().describe('Optional JSON body for the intended paid call.'),
+        expected_network: z.string().optional().describe('Optional expected CAIP-2 network such as eip155:8453.'),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    },
+    async ({ url, max_usd, idempotency_key, method, body, expected_network }) => {
+      const result = await fetchJson(`${SELLER_ORIGIN}/purchase-guard`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-forwarded-for': requestIp(requestInfo),
+          'x-income2-client': 'mcp-purchase-guard',
+        },
+        body: JSON.stringify({
+          url,
+          max_usd,
+          idempotency_key,
+          method,
+          ...(body !== undefined ? { body } : {}),
+          ...(expected_network ? { expected_network } : {}),
+        }),
+      }, 30000);
+
+      if (!result.ok) {
+        const message = result.status === 409
+          ? 'That idempotency key was already used with different purchase parameters. No payment was executed.'
+          : (result.data?.message || 'Purchase Guard could not evaluate this purchase intent. No payment was executed.');
+        return textResult(message, { ok: false, httpStatus: result.status, ...(result.data || {}), paymentExecuted: false });
+      }
+
+      const guard = result.data?.result || result.data || {};
+      const decision = String(guard.decision || guard.status || 'evaluated');
+      const amount = guard.quote?.amountUsd ?? guard.amountUsd ?? null;
+      const amountText = Number.isFinite(Number(amount)) ? ` Quoted amount: $${Number(amount).toFixed(6)}.` : '';
+      return textResult(
+        `Purchase Guard decision: ${decision}.${amountText} The intent is recorded for retry recognition. No payment was signed or sent.`,
+        { ...guard, paymentExecuted: false, beta: true },
+      );
+    },
+  );
+
   return server;
 }
 
@@ -310,11 +362,18 @@ const httpServer = createServer(async (req, res) => {
       return res.end(JSON.stringify({
         ok: true,
         service: 'income2-chat-mcp',
-        version: '0.2.0',
+        version: '0.2.1',
         brand: 'INCOME 2',
         motto: 'Your second income. Powered by you or your AI.',
         mcp: `${PUBLIC_ORIGIN}/mcp`,
         accountSystem: 'canonical_seller_ledger',
+        purchaseGuard: {
+          enabled: true,
+          beta: true,
+          free: true,
+          tool: 'guard_x402_purchase',
+          paymentExecution: false,
+        },
         status,
         ledger: seller?.ledger || null,
       }));
