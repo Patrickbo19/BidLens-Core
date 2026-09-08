@@ -1,8 +1,8 @@
 # INCOME 2 — Canonical State
 
-Last reconciled: 2026-09-08 17:22 America/New_York
+Last reconciled: 2026-09-08 17:43 America/New_York
 
-This is the canonical **non-secret** state summary for INCOME 2. Before a material decision, reconcile it against latest GitHub main, live Render services, provider messages, external markets, official MCP Registry state, and current Moltbook state. Never place API keys, recovery tokens, private keys, seed phrases, claim secrets, solver keys, or other credentials here.
+This is the canonical **non-secret** state summary for INCOME 2. Before a material decision, reconcile it against latest GitHub `main`, live Render services, provider messages, external markets, official MCP Registry state, and current Moltbook state. Never place API keys, recovery tokens, private keys, seed phrases, claim secrets, solver keys, passwords, or other credentials here.
 
 ## Product
 
@@ -10,25 +10,14 @@ This is the canonical **non-secret** state summary for INCOME 2. Before a materi
 **Motto:** Your second income. Powered by you or your AI.  
 **Core promise:** Make money yourself — or let your AI earn for you.
 
-Current modes:
+Current product surfaces:
 
 - **Human Earn:** legitimate human-required paid opportunities completed truthfully by the user.
 - **Agent Earn / Auto Make Me:** eligible machine-doable paid work performed autonomously.
-- **Buyer intent / Outcome Router:** an agent states the result it wants plus a maximum budget; INCOME 2 autonomously finds a supported fulfillment route and executes when possible.
+- **Outcome Router:** buyer or agent provides a desired result plus maximum budget; INCOME 2 autonomously finds a supported fulfillment route and executes when possible.
+- **Purchase Guard:** free, non-custodial x402 retry/idempotency/max-spend safety layer.
 
-INCOME 2 is a two-sided earning/fulfillment thesis: humans and agents can supply work; humans or agents can buy completed outcomes; INCOME 2 sits in the transaction/routing layer.
-
-## HYDRA identity
-
-**HYDRA is only the internal codename for the autonomous Outcome Router inside INCOME 2.** Public feature name: **INCOME 2 Outcome Router**.
-
-The older standalone HYDRA Agent Seller is retired:
-
-- legacy repo `Patrickbo19/promisekeeper` is stripped to a decommission notice + 410 tombstone + minimal dependencies;
-- `hydra-agent-seller` was already suspended;
-- `hydra-agent-market-clean` was redeployed as the tombstone;
-- Git history remains only for audit/recovery;
-- never resume development there.
+HYDRA is only the internal codename for the Outcome Router inside INCOME 2. The old standalone HYDRA project is retired.
 
 ## Revenue truth
 
@@ -42,60 +31,53 @@ Current verified state:
 - Human Earn live provider conversions: **0**
 - HYDRA platform fee: **$0 during beta**
 
-Do not count listings, registry publication, requests, quotes, self-tests, proof-of-work calls, buyer-to-supplier/router payment volume, or the existing unverified 0.003 ledger row as INCOME 2 revenue.
+The canonical ledger still reports one 0.003 settlement row, but it is not independently proven to be an outside buyer and therefore does **not** count as verified revenue.
 
-## Live INCOME 2 services
+Do not count listings, registry publication, directory registration, requests, quotes, self-tests, proof-of-work fulfillment, buyer-to-supplier payment volume, or unverified rows as INCOME 2 revenue.
+
+## Live services
 
 Repository: `Patrickbo19/BidLens-Core`, branch `main`, Render auto-deploy enabled.
 
 - `earn-router` — public website / Human Earn router
-- `earn-tools-backend` — canonical ledger, x402 seller, Purchase Guard, HYDRA Outcome Router, TaskBounty bridge, Moltbook vault/status
+- `earn-tools-backend` — canonical ledger, x402 seller, Purchase Guard, Outcome Router, TaskBounty bridge, Moltbook vault/status
 - `earn-chat-mcp` — ChatGPT/MCP surface
-- `earn-agent-worker` — MCP/TaskBounty/discovery verifier
+- `earn-agent-worker` — independent MCP/TaskBounty/discovery verifier
 
-All four services were live on the latest sweep deployment.
+Second closure sweep verified all four live on current `main` after maintenance changes.
 
-## Public website — sweep 2026-09-08
+Current public router version: **0.6.1**.
+
+## Public website
 
 Website: `https://earn-router.onrender.com`
 
-Production source of truth is `robust-router.js`; current router version is **0.6.1**. The duplicate old `server.js` implementation was removed and is now only a compatibility shim requiring `robust-router.js`.
+Public positioning:
 
-The public page now exposes the actual current product instead of the old Agent Earn/Human Earn-only prototype:
+> **Earn from work. Or buy the result.**
 
-- hero positioning: **Earn from work. Or buy the result.**
-- Agent Earn card
-- highlighted Outcome Router card with desired-result + maximum-budget form
-- Human Earn card
-- live seller catalog with per-resource prices; removed the false blanket "$0.001 per call" statement
-- direct MCP and REST entrypoints for agents
-- links to `skill.md`, OpenAPI, x402 manifest and agents.txt
-- `/agents.txt`, `/llms.txt`, `/robots.txt`
-- updated privacy and terms for external routing and buyer-signed x402
-- HTML escaping/safe URL handling for provider/manifest content
-- hardened response headers including CSP, nosniff, frame denial and referrer policy
-- `/api/outcome` and `/api/outcome/{id}` web proxies
-- paid Outcome Router execution links normalized to absolute seller URLs and returned execution body exposed to the web caller
-- dormant Lootably `/postback/lootably` compatibility endpoint restored, but deliberately **unattributed** until exact provider signing/reversal/idempotency semantics are known.
+The page exposes Agent Earn, Outcome Router, Human Earn, live seller resources/prices, direct MCP/REST agent entrypoints, privacy/terms, and machine documentation links. Production source is `robust-router.js`; `server.js` is only a compatibility shim.
 
-Minor non-blocking cleanup: `/robots.txt` currently uses the seller OpenAPI URL as a `Sitemap:` value even though it is not an XML sitemap. This does not affect the app; remove/replace when ordinary SEO becomes a priority.
+The web Outcome Router normalizes paid execution URLs to absolute seller URLs and returns the exact execution body required for a buyer-signed x402 retry.
 
-## HYDRA / Outcome Router
+Lootably `/postback/lootably` exists for compatibility but deliberately does **not** credit the ledger until the provider's exact signing, reversal, attribution, and idempotency semantics are verified.
+
+## Outcome Router / HYDRA
 
 Definition:
 
-> desired result + maximum budget → autonomous routing → safe execution → result, or abstract unmet-demand signal
+> desired result + maximum budget → autonomous routing → safe execution → result, or abstract unmet-demand state
 
 Hard rules:
 
 - autonomous only; no manual brokerage
-- never spend owner working capital on anonymous buyer jobs
-- never request or retain a buyer private key/seed phrase
+- never use owner working capital for buyer jobs
+- never request or retain buyer private keys/seed phrases
 - do not retain raw task or raw params in the demand ledger
-- retain only abstract request metadata such as category, budget, route, status, timestamps and result digest
 - block credential-like inputs from external routing
 - idempotency binds one request to one parameter set
-- do not silently raise caller budget or auto-escalate to higher paid tiers
+- never silently raise caller budget
+- do not auto-escalate higher paid tiers
 
 Seller surfaces:
 
@@ -104,65 +86,52 @@ Seller surfaces:
 - `GET /outcome-router/{requestId}`
 - `POST /outcome-router/execute/{requestId}`
 
-MCP tool:
-
-- `request_agent_outcome`
+MCP tool: `request_agent_outcome`.
 
 ### Free path
 
-HYDRA attempts compatible Agent402 proof-of-work execution where possible with $0 upstream dollar spend.
+HYDRA first attempts compatible Agent402 proof-of-work execution with **$0 upstream dollar spend**.
 
-### Paid path — live beta
+### Paid path
 
-Paid fulfillment uses the official Agent402 Smart Order Router basic route:
+Paid beta fulfillment uses Agent402 Smart Order Router basic execution:
 
 `POST https://agent402.tools/api/route/execute`
 
-Flow:
+The buyer wallet signs the x402 challenge locally. HYDRA relays `PAYMENT-REQUIRED`, enforces the budget, accepts the buyer-created `PAYMENT-SIGNATURE`, forwards the proof, and returns the routed result. HYDRA does not receive the private key and does not subsidize the job.
 
-1. buyer supplies desired result + max budget + idempotency key + optional params;
-2. HYDRA tries free fulfillment first;
-3. HYDRA probes paid routing without signing or paying;
-4. HYDRA parses the x402 v2 `PAYMENT-REQUIRED` challenge and enforces budget;
-5. if within budget, HYDRA returns its execution URL/body;
-6. buyer wallet signs locally;
-7. buyer retries with `PAYMENT-SIGNATURE`;
-8. HYDRA forwards proof and matching request to Agent402;
-9. Agent402 routes/executes supplier and returns result/receipt;
-10. HYDRA returns the result and records abstract execution state only.
+Latest no-payment live self-test:
 
-Latest live no-payment safety self-test:
-
-- upstream `agent402_route_execute`
+- upstream: `agent402_route_execute`
 - x402 challenge observed: true
-- observed basic quote: **$0.01 USDC**
+- observed quote: **$0.01 USDC**
 - owner funds spent: **$0**
-- payment signed during test: false
+- payment signed: false
 
-Higher paid Agent402 tiers are not automatically escalated. If payment may have settled but fulfillment is unresolved, use `payment_settled_fulfillment_unresolved` and reconcile the original attempt before any new spending authorization.
+Current platform fee remains **$0** until real external paid usage demonstrates willingness to pay for the routing layer.
 
-Current platform fee: **$0** while real buyer demand is validated.
+If payment may have settled but fulfillment is unresolved, use `payment_settled_fulfillment_unresolved` and reconcile the original attempt before any new spending authorization.
 
 ## Purchase Guard
 
-Free non-custodial retry-safety wedge:
+Free, non-custodial retry-safety wedge:
 
 - `GET /purchase-guard`
 - `POST /purchase-guard`
 - `GET /purchase-guard/{receiptId}`
 - MCP tool `guard_x402_purchase`
 
-Purpose: one intended purchase → hard max spend → stable idempotent intent → durable receipt → retry recognition.
+MCP supports methods `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`. Machine-facing OpenAPI is runtime-hardened to match this full method set.
 
-It never signs, sends, settles or custodies funds; `paymentExecuted=false` remains hard.
+Purchase Guard never signs, sends, settles, or custodies funds. `paymentExecuted=false` is a hard property.
 
-## ChatGPT / MCP
+## MCP
 
 Endpoint: `https://earn-chat-mcp.onrender.com/mcp`  
 Health: `https://earn-chat-mcp.onrender.com/health`  
-Current intended MCP version: **0.3.1**
+Registry/MCP version: **0.3.1**
 
-Six tools:
+All six tools are required by the independent verifier:
 
 1. `get_earning_options`
 2. `start_agent_earn`
@@ -171,127 +140,176 @@ Six tools:
 5. `guard_x402_purchase`
 6. `request_agent_outcome`
 
-The worker verifier was hardened during the sweep: all six tools are now required for health. Previously it required only five and could have missed an Outcome Router regression. Current worker verification reports modern MCP, all six tools, Agent Earn live, canonical ledger persistent, and Human Earn provider pending.
+Latest verifier state:
 
-Public ChatGPT directory submission has not been sent.
+- modern MCP: true
+- all six tools present
+- Agent Earn live
+- canonical ledger persistent
+- Human Earn provider pending
+- TaskBounty authenticated
 
-Launch gate remains BOTH:
+`zod` was upgraded from 4.1.5 to **4.2.0** during the second sweep to satisfy the current MCP SDK JSON-schema capability. The prior `~standard.jsonSchema` compatibility warning no longer appears on the current MCP startup.
+
+Public ChatGPT directory submission is still gated on BOTH:
 
 1. one genuine outside Agent Earn settlement recorded end-to-end;
 2. one Human Earn provider approved and returning real funded inventory.
 
-## Official MCP Registry distribution
+## Official MCP Registry
 
-INCOME 2 now publishes to the **official MCP Registry** as a remote Streamable HTTP server.
+INCOME 2 is published as:
 
-Repo metadata file:
+- name: `io.github.Patrickbo19/income2`
+- version: `0.3.1`
+- remote: `https://earn-chat-mcp.onrender.com/mcp`
+
+Files:
 
 - `server.json`
-- registry name `io.github.Patrickbo19/income2`
-- version `0.3.1`
-- remote `https://earn-chat-mcp.onrender.com/mcp`
-
-Automated workflow:
-
 - `.github/workflows/publish-mcp-registry.yml`
-- validates with the official publisher
-- authenticates using GitHub OIDC (`id-token: write`)
-- publishes without a long-lived registry secret
 
-First publication workflow run `34279889558` completed successfully on 2026-09-08. Treat this as successful publication/distribution work, **not revenue**. Registry/UI search indexing can lag and should be monitored separately.
+The first official publish workflow completed successfully using GitHub OIDC with no long-lived registry secret. Treat publication as distribution, not revenue.
 
-## x402 / Agent402 distribution
+## x402 seller / distribution
 
-Seller origin: `https://earn-tools-backend.onrender.com`  
+Seller: `https://earn-tools-backend.onrender.com`  
 Network: Base mainnet `eip155:8453`  
 Asset: USDC
 
 Primary first-sale route:
 
 - `POST /web-extract`
-- 0.003 USDC
-- public static page → clean Markdown + metadata/links
+- **0.003 USDC**
+- public static webpage/article → clean Markdown + metadata/links
 
-Paid seller manifest remains **13 paid resources**. Agent402 may report a larger discovery count because free/docs/Outcome Router surfaces are included; do not conflate discovered surfaces with paid resources.
+Underlying paid seller manifest remains **13 paid resources**. Free Purchase Guard and Outcome Router surfaces are additional discovery capabilities, not paid seller resources.
 
-Existing distribution includes Agent402, x402 Arena, Market402, 402Index and now the official MCP Registry.
+Current legitimate discovery rails include Agent402, x402 Arena, Market402, 402Index, and the official MCP Registry.
 
-### Current discovery bottleneck
+### Second sweep: directory registration hardening
 
-Latest verifier search probes found INCOME 2 was **not in the top five Agent402 natural-search results** for tested queries covering hash/encoding, prompt-security, JSON/data audit, URL health, x402 buyer preflight, and outcome routing/procurement.
+The second sweep found that `seller-v2.js` re-submitted directory registration requests on every Render deploy. This caused unnecessary Agent402/Market402/402Index rate-limit responses and x402 Arena duplicate-name responses.
 
-This means the immediate bottleneck is **distribution/search visibility**, not missing fulfillment architecture. Do not self-pay or manipulate ranking. Improve legitimate standardized discovery and wait for external usage evidence before adding more product plumbing.
+This is now hardened:
 
-Ordinary web search indexing of the `onrender.com` site is also weak/new. Do not expect consumer SEO to produce immediate agent buyers.
+- `seller-startup-hardening.cjs` is preloaded on `earn-tools-backend` through `NODE_OPTIONS`;
+- `EARN_DIRECTORY_REGISTER_ON_BOOT=0` is the production default;
+- known directory-registration POSTs are skipped locally instead of sent on each boot;
+- existing external listings are **not** removed;
+- explicit intentional registration can still be enabled with `EARN_DIRECTORY_REGISTER_ON_BOOT=1` when a real refresh is needed;
+- `agent402-register.cjs` was also changed to require the same explicit opt-in.
 
-## Canonical account / ledger
+Fresh production logs confirm Agent402, x402 Arena, Market402, and 402Index registration attempts are now reported as `registration_on_boot_disabled` instead of hitting the external services.
 
-Website and MCP share the Postgres-backed canonical seller ledger.
+The live seller 402 challenge and HYDRA no-spend paid-rail self-test still pass after this change.
 
-Latest verified worker view:
+### Machine-facing discovery truth
 
-- persistent true
-- activeAccounts 2
-- activeIncome2Accounts 1
-- settlements 1
-- grossUsd 0.003
+The second sweep found stale base strings in `seller-core.js` that predated buyer-signed paid HYDRA and could describe paid external execution as disabled. Production output is now hardened at startup so public OpenAPI, x402 descriptor, `skill.md`, `llms.txt`, and `agents.txt` reflect the current truth:
 
-That 0.003 remains **unverified as a genuine outside settlement** and therefore does not count as revenue.
+- free proof-of-work first;
+- buyer-signed x402 paid execution supported within caller budget;
+- buyer signs locally;
+- no owner working capital;
+- no private-key custody;
+- no manual brokerage;
+- beta platform fee $0.
 
-Cash-out is not production-enabled.
+The production x402 descriptor also exposes free Purchase Guard and Outcome Router discovery resources in addition to the 13 paid resources.
+
+## Discovery bottleneck
+
+Latest independent Agent402 natural-search probes still do **not** place INCOME 2 in the top five for tested buyer phrases covering encoding, prompt security, JSON audit, URL health, x402 preflight, or outcome procurement.
+
+That means the present bottleneck remains **distribution/search visibility**, not missing fulfillment architecture.
+
+Do not self-pay, spam directories, mass-submit duplicate listings, or manipulate rankings. Improve legitimate standardized discovery and measure outside requests.
+
+## Canonical ledger
+
+Website and MCP share the same Postgres-backed seller ledger.
+
+Latest worker view:
+
+- persistent: true
+- activeAccounts: 2
+- activeIncome2Accounts: 1
+- settlements: 1
+- grossUsd: 0.003
+
+Again: the existing 0.003 row remains unverified as genuine outside revenue.
+
+Customer cash-out is not production-enabled.
 
 ## Human Earn
 
-Funded provider inventory is not live.
+Fresh Gmail sweep on 2026-09-08:
 
-Known provider state:
+- Lootably — application sent; no approval/rejection response found
+- TapResearch — application sent; no approval/rejection response found
+- ayeT Studios — request acknowledged and under review; no approval yet
+- no new approval or action-required message found for BitLabs, CPX, or inBrain
 
-- Lootably — applied, no approval confirmed
-- TapResearch — applied, no approval confirmed
-- ayeT Studios — acknowledged/reviewing, no approval confirmed
-
-Do not claim any other provider is applied/approved without fresh verification.
-
-The production router now again exposes `/postback/lootably`, but conversion attribution remains intentionally disabled until the provider's exact security/reversal/idempotency contract is known.
+Funded Human Earn inventory therefore remains **not live**.
 
 ## TaskBounty / Task Hunter
 
 Brainbase Task Hunter ID: `66070003-c3eb-4ccc-80e4-4ead96bf402b`
 
-Latest verified posture:
+Latest verified production state:
 
-- connected true
-- authReady true
-- HTTP 200
-- persistent/configured true
-- openTaskCount 0
+- connected: true
+- authReady: true
+- auth HTTP: 200
+- persistent/configured: true
+- openTaskCount: **0**
 
-Only wake paid managed compute for a legitimate, well-scoped, safe candidate with gross >= $25 and expected proceeds materially above compute cost.
+Do not wake paid managed compute unless a legitimate, well-scoped, safe candidate has gross >= $25 and expected proceeds materially above compute cost.
 
 ## Moltbook
 
-Agent `Income2` remains claimed. Compliance-first rules remain hard:
+Agent `Income2` remains claimed. Fresh seller logs show the neutral profile unchanged, claim HTTP 200, original research post already present, and automated product promotion still skipped for policy compliance.
+
+Hard rules remain:
 
 - official supported access only
 - no broad scraping/crawling/mass-search
-- no third-party content/identity harvesting or republication
+- no harvesting or republishing third-party content/identities
 - no automated promotion/spam/mass-DM/comment/follow/vote
-- no duplicate identities, impersonation or safety/rate-limit evasion
+- no duplicate identities, impersonation, rate-limit evasion, or safety-control evasion
 
-Current automated product promotion remains disabled.
+## Repo cleanup from the second sweep
 
-## Repo/document cleanup from sweep
+Second sweep changes:
 
-The following stale/conflicting instructions were removed or corrected:
+- added `seller-startup-hardening.cjs` for discovery truth + directory-registration control;
+- changed `agent402-register.cjs` to explicit opt-in registration;
+- upgraded `zod` to 4.2.0;
+- fixed the Docker fallback so it installs dependencies and starts canonical `robust-router.js` directly;
+- deleted retired `agent-earn-services-v2.json` the402 configuration;
+- retained `server.js` only as the compatibility shim;
+- official MCP registry automation remains active and successful.
 
-- `server.js` duplicate router → compatibility shim only
-- root README → current three-part INCOME 2 product
-- `CHATGPT_APP_SUBMISSION.md` → current six MCP tools + Outcome Router + Purchase Guard
-- `AGENT_EARN_BOOTSTRAP.md` → old the402 auto-bid plan marked historical/non-production
-- `ACTIVATION_OWNER_GATE.md` → obsolete the402 account gate removed
-- `package.json` description → current product
+One external metadata mismatch still exists: the GitHub repository description shown by GitHub still contains the old BidLens/RFP description. The connected GitHub controls available in this session do not expose repository-description editing. This does not affect runtime or MCP/x402 behavior, but should be manually changed in GitHub repository settings when convenient.
 
-One remaining external metadata mismatch: the GitHub repository description shown in GitHub metadata still contains the old BidLens/RFP description. The connected GitHub controls available in this session do not expose repository-description editing. Update that metadata manually in GitHub when convenient; it does not affect runtime.
+## Benign startup notices deliberately not changed
+
+Two startup-only notices remain and were judged non-blocking:
+
+1. a brief wrapper-to-core `ECONNREFUSED 127.0.0.1:3901` can occur while the internal seller core is still starting; the core then comes up and Render marks the service live;
+2. the x402 discovery/schema validator logs that JSON Schema `format: "uri"` is unknown/ignored for some nested fields; URL safety is still enforced by application code and this does not break service startup or routing.
+
+Do not destabilize production merely to silence these notices unless they begin causing failed health checks, user-visible errors, or discovery rejection.
+
+## Legacy HYDRA
+
+Legacy repo: `Patrickbo19/promisekeeper`.
+
+- `hydra-agent-seller` is suspended;
+- `hydra-agent-market-clean` is deployed as a tombstone;
+- current legacy app returns HTTP 410 and points callers to INCOME 2;
+- never resume standalone HYDRA development there.
 
 ## Working capital
 
@@ -308,19 +326,21 @@ Frequency: hourly condition watch
 
 Monitor:
 
-- genuine outside settlements / revenue truth
-- `/web-extract` health/discovery
+- verified outside revenue/settlements
+- `/web-extract` health and discovery
 - Purchase Guard outside usage/WTP
-- HYDRA free and paid usage
-- external paid fulfillment and payment uncertainty
+- free and paid Outcome Router activity
+- externally completed paid fulfillment
+- payment/fulfillment uncertainty
 - repeated abstract unmet-demand categories
-- requests blocked only by budget/tier limitations
 - TaskBounty status/inventory
 - all-six-tool MCP health
 - Human Earn provider changes
-- Moltbook aggregate compliance-safe status
-- official MCP Registry publication/visibility regressions
-- meaningful discovery changes, especially natural Agent402 visibility
+- Moltbook aggregate compliance-safe state
+- official MCP Registry publication/visibility
+- natural Agent402 discovery changes
+
+Do not treat intentionally skipped per-boot directory registration as a failure.
 
 For HYDRA distinguish:
 
@@ -328,31 +348,31 @@ For HYDRA distinguish:
 2. buyer-paid fulfillment volume
 3. **INCOME 2 fee revenue**
 
-Only #3 is INCOME 2 revenue. During zero-fee beta it remains $0 even if #2 starts.
+Only #3 is INCOME 2 revenue. During the zero-fee beta it remains $0 even if #2 starts.
 
 ## Current strategic judgment
 
-The architecture sweep did not reveal another major missing subsystem. The central buyer-side routing/payment architecture is implemented in beta form.
+After **two full closure sweeps**, no additional major missing subsystem has been identified.
 
-The immediate priorities are now:
+The product/payment architecture is sufficient to test the thesis. The immediate sequence is:
 
-**distribution → first outside request → first paid fulfillment → second unrelated buyer → repeat demand → add fee/spread → scale**
+> **distribution → first outside request → first paid fulfillment → second unrelated buyer → repeat demand → add fee/spread → scale**
 
-Do not return to architecture-building simply because traffic is initially quiet. If external requests arrive but do not convert, fix conversion. If no requests arrive despite meaningful discovery exposure, improve distribution. If paid use occurs but does not repeat, revisit product fit.
+Do not return to architecture-building because traffic is quiet. If discovery exposure rises but requests do not, fix positioning/distribution. If requests arrive but paid execution does not convert, fix conversion. If paid use happens but does not repeat, revisit product fit.
 
 ## Continuity rule
 
-When switching chats, read this file and then reconcile against:
+When switching chats, read this file and reconcile it against:
 
-- latest GitHub main
-- live Render health/deploys
-- official MCP Registry publication/visibility
+- latest GitHub `main`
+- all four Render services/deploys/logs
+- official MCP Registry publication
 - HYDRA request/payment state
-- canonical ledger / verified settlements
+- canonical ledger / verified external settlements
 - Agent402/x402 discovery
 - TaskBounty
 - Human Earn provider inbox/status
 - Moltbook aggregate state
 - enabled Earn Watch
 
-Update this file after material architecture, payment, revenue, provider, distribution, Moltbook, TaskBounty, Purchase Guard, HYDRA, website, or automation changes. Never let stale chat context override verified live state.
+Update this file after material architecture, payment, revenue, provider, distribution, Moltbook, TaskBounty, Purchase Guard, HYDRA, website, registry, or automation changes. Never let stale chat context override verified live state.
