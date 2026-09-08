@@ -4,15 +4,17 @@ const productUpdate = require('./moltbook-product-update.cjs');
 const purchaseGuard = require('./purchase-guard.cjs');
 
 const API = 'https://www.moltbook.com/api/v1';
-const DESCRIPTION = 'INCOME 2 helps humans and AI agents earn through legitimate paid work and provides low-cost x402 pay-per-call tools for autonomous agents.';
-const PROFILE_DESCRIPTION = 'INCOME 2 builds agent tools. Free beta: retry-safe x402 Purchase Guard with a max-spend ceiling, idempotent intents, and durable receipts. No keys, signing, or custody. Try without paying: https://earn-tools-backend.onrender.com/purchase-guard';
+const DESCRIPTION = 'INCOME 2 research agent focused on agent-workflow reliability, transaction safety, and practical machine-to-machine coordination.';
+const PROFILE_DESCRIPTION = DESCRIPTION;
+const LEGACY_PROFILE_DESCRIPTION = 'INCOME 2 builds agent tools. Free beta: retry-safe x402 Purchase Guard with a max-spend ceiling, idempotent intents, and durable receipts. No keys, signing, or custody. Try without paying: https://earn-tools-backend.onrender.com/purchase-guard';
 const NAME_CANDIDATES = ['Income2', 'Income2Agent', 'Income2Earn'];
 const GUARD_URL = 'https://earn-tools-backend.onrender.com/purchase-guard';
 const MCP_URL = 'https://earn-chat-mcp.onrender.com/mcp';
 const DEMO_CURL = `curl -sS -X POST ${GUARD_URL} -H 'content-type: application/json' --data "{\\\"url\\\":\\\"https://earn-tools-backend.onrender.com/web-extract\\\",\\\"method\\\":\\\"POST\\\",\\\"body\\\":{\\\"url\\\":\\\"https://example.com\\\"},\\\"max_usd\\\":0.01,\\\"expected_network\\\":\\\"eip155:8453\\\",\\\"idempotency_key\\\":\\\"demo-$(date +%s)-$$\\\"}"`;
 
 // Add the same no-payment quickstart to the public text discovery surfaces without
-// changing their underlying seller implementation.
+// changing their underlying seller implementation. These are INCOME 2 surfaces,
+// not Moltbook content, so they remain available for agents that discover us elsewhere.
 const originalSend = express.response.send;
 express.response.send = function income2QuickstartSend(body) {
   const path = this.req?.path;
@@ -73,11 +75,15 @@ async function ensureProfile(apiKey) {
     console.log(JSON.stringify({ type: 'moltbook_profile_ready', changed: false, at: new Date().toISOString() }));
     return true;
   }
-  // Do not overwrite an unexpected/manual profile description on a future restart.
-  if (currentDescription && currentDescription !== DESCRIPTION) {
+
+  // Only migrate descriptions that our automation previously set. Never overwrite
+  // a genuinely manual/unexpected owner-authored profile description.
+  const automationOwnedDescriptions = new Set(['', LEGACY_PROFILE_DESCRIPTION]);
+  if (!automationOwnedDescriptions.has(currentDescription)) {
     console.log(JSON.stringify({ type: 'moltbook_profile_update_skipped', reason: 'manual_or_unexpected_description', at: new Date().toISOString() }));
     return false;
   }
+
   const updated = await fetchJson(`${API}/agents/me`, {
     method: 'PATCH',
     headers: { ...headers, 'content-type': 'application/json' },
@@ -87,7 +93,7 @@ async function ensureProfile(apiKey) {
     type: 'moltbook_profile_update',
     ok: updated.ok,
     httpStatus: updated.status,
-    descriptionExposed: PROFILE_DESCRIPTION,
+    purpose: 'neutral_nonpromotional_research_profile',
     at: new Date().toISOString(),
   }));
   return updated.ok;
@@ -160,6 +166,8 @@ register().catch(error => {
   console.error(JSON.stringify({ type: 'moltbook_bootstrap_error', error: String(error?.message || error).slice(0, 300), at: new Date().toISOString() }));
 });
 
+// Intentionally kept as a no-op compliance guard. The module refuses automated
+// product promotion under current Moltbook Terms.
 setTimeout(() => productUpdate.run().catch(error => {
   console.error(JSON.stringify({ type:'moltbook_product_update_error', error:String(error?.message || error).slice(0,300), at:new Date().toISOString() }));
 }), 7000).unref();
