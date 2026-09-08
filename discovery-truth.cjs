@@ -5,6 +5,29 @@ const OUTCOME_EXECUTION_PATH = '/outcome-router/execute/{requestId}';
 const CURRENT_OUTCOME_DESCRIPTION = 'Submit a desired result plus maximum budget. HYDRA, the internal autonomous engine, tries zero-dollar proof-of-work fulfillment first, then can route supported paid work through buyer-signed non-custodial x402 pass-through to the Agent402 Smart Order Router. The buyer wallet signs locally; HYDRA never receives a buyer private key and never uses owner working capital. Higher paid tiers are not auto-escalated.';
 const PAID_BLOCK = `Buyer-signed paid HYDRA execution\n- Outcome request: POST ${ORIGIN}/outcome-router\n- Paid execution: POST ${ORIGIN}/outcome-router/execute/{requestId}\n- First execution call returns the relayed Agent402 Smart Order Router x402 PAYMENT-REQUIRED challenge.\n- An x402-capable buyer wallet signs locally and retries with PAYMENT-SIGNATURE.\n- HYDRA forwards the proof and returns the routed result.\n- HYDRA never receives the buyer private key or uses owner working capital.\n- Current beta platform fee: $0. Higher paid tiers are not auto-escalated.`;
 
+// Directory publication is an intentional action, not a deploy side effect. Keep
+// existing listings intact while preventing every Render restart from resubmitting
+// the same seller and consuming directory rate limits. Set EARN_DIRECTORY_REGISTER_ON_BOOT=1
+// only for a deliberate refresh.
+const directoryRegistrationUrls = new Set([
+  'https://agent402.tools/api/index/register',
+  'https://core.x402arena.gg/register',
+  'https://market402.com/submit',
+  'https://402index.io/api/v1/register',
+]);
+const nativeFetch = global.fetch;
+global.fetch = async function income2DiscoveryFetch(url, options = {}) {
+  const target = String(url);
+  if (directoryRegistrationUrls.has(target) && String(process.env.EARN_DIRECTORY_REGISTER_ON_BOOT || '') !== '1') {
+    console.log(JSON.stringify({ type:'directory_registration_skipped', target, reason:'registration_on_boot_disabled', at:new Date().toISOString() }));
+    return new Response(JSON.stringify({ ok:true, skipped:true, reason:'registration_on_boot_disabled' }), {
+      status:200,
+      headers:{ 'content-type':'application/json' },
+    });
+  }
+  return nativeFetch(url, options);
+};
+
 function correctText(text) {
   let out = String(text || '');
   out = out
