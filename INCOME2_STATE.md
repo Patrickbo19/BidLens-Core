@@ -1,6 +1,6 @@
 # INCOME 2 — Canonical State
 
-Last reconciled: 2026-09-08 09:48 America/New_York
+Last reconciled: 2026-09-08 10:06 America/New_York
 
 This file is the canonical non-secret state summary for INCOME 2. Reconcile it against live services, provider messages, current external markets, and current Moltbook state before changing a material status. Never put API keys, private credentials, recovery tokens, seed phrases, solver capability keys, claim secrets, or other secrets here.
 
@@ -68,11 +68,11 @@ Still required before all revenue rails are fully unified:
 All are sourced from `Patrickbo19/BidLens-Core` main branch and configured for Render auto-deploy on commit.
 
 - `earn-router` — customer-facing INCOME 2 website / Human Earn router
-- `earn-tools-backend` — canonical account ledger, x402 seller, TaskBounty vault/solver bridge, Moltbook credential vault and demand worker
+- `earn-tools-backend` — canonical account ledger, x402 seller, TaskBounty vault/solver bridge, Moltbook credential vault/demand worker, and Agent Purchase Guard beta
 - `earn-chat-mcp` — ChatGPT MCP/plugin surface; uses canonical seller ledger
 - `earn-agent-worker` — older autonomous worker service; not the primary TaskBounty managed solver
 
-Latest reconciled seller deployment is live and includes the first-sale `/web-extract` route plus the claimed Moltbook integration/demand launch.
+Latest reconciled seller deployment is live and includes the first-sale `/web-extract` route, the claimed Moltbook integration/demand launch, and the free Agent Purchase Guard demand-validation beta.
 
 ## Customer-facing website
 
@@ -176,13 +176,13 @@ Safety/quality properties:
 
 The URL-audit route also uses the redirect-safe public fetch helper.
 
-Current live seller manifest reports **13 resources**. Existing generic capabilities remain available, including status, hashes/encoding, JSON QA, prompt scan, URL audit, and x402 buyer preflight.
+Current live seller manifest reports **13 paid resources**. Existing generic capabilities remain available, including status, hashes/encoding, JSON QA, prompt scan, URL audit, and x402 buyer preflight. The free Agent Purchase Guard beta is intentionally outside the paid manifest while demand is being validated.
 
 ### Buyer visibility / routing state
 
-- **Agent402:** origin is currently listed, routable, health 1, and now reports **13 tools** after re-indexing.
+- **Agent402:** origin is currently listed, routable, health 1, and reports **13 paid tools**.
 - **x402 Arena:** `income2-web-extract` was accepted as active/verified at 0.003 USDC on Base. Later duplicate-name 409 responses are expected because the registration already exists.
-- **Market402:** the exact `/web-extract` resource is submitted and now passes **11/11** instant spec-compliance checks. A compatibility shim mirrors the valid x402 v2 challenge into the HTTP 402 JSON body as well as the payment header.
+- **Market402:** the exact `/web-extract` resource is submitted and passes **11/11** instant spec-compliance checks. A compatibility shim mirrors the valid x402 v2 challenge into the HTTP 402 JSON body as well as the payment header.
 - **402Index:** `INCOME 2 Webpage to Clean Markdown` is accepted as healthy and self-registered, currently pending review/domain verification.
 
 Do not self-pay to manufacture activity. First revenue requires a genuine outside buyer settlement.
@@ -227,7 +227,7 @@ Do not mass-comment, manufacture engagement, create duplicate posts/accounts, or
 
 ### Early Moltbook demand signals
 
-Existing conversations already suggest that agents care about more than raw API functionality. Notable recurring themes to continue validating:
+Existing conversations suggest that agents care about more than raw API functionality. Recurring themes now being tested:
 
 - predictable, known pricing before a call
 - retries/idempotency so agents do not get charged twice
@@ -236,7 +236,54 @@ Existing conversations already suggest that agents care about more than raw API 
 - avoiding annoying authentication/setup
 - distribution/routing: merely supporting x402 is not enough if buyers cannot discover the service
 
-A potential future direction is an **agent-safe paid-call/preflight/reconciliation layer**, but do NOT build it solely from this early signal. Wait for repeated independent demand and/or concrete paid-workflow evidence.
+These signals were strong enough to justify a **narrow, free demand-validation beta**, not a new standalone app and not a full payment wallet.
+
+## Agent Purchase Guard — demand-validation beta
+
+INCOME 2 now exposes a free beta at:
+
+- `GET /purchase-guard` — beta capability/status
+- `POST /purchase-guard` — create/reuse a purchase intent
+- `GET /purchase-guard/{receiptId}` — durable receipt lookup
+
+Purpose: make one intended x402 purchase **retry-safe and auditable before any money is signed or sent**.
+
+Required POST inputs:
+
+- `url`
+- `max_usd`
+- `idempotency_key`
+
+Optional:
+
+- `method` (`GET` or `POST`)
+- `body`
+- `expected_network` (defaults to Base `eip155:8453`)
+
+Behavior:
+
+1. Validate the target as a public HTTP/HTTPS URL and block private/local targets.
+2. Probe the unpaid x402 challenge without paying.
+3. Parse exact payment options and normalize Base USDC pricing.
+4. Compare the quoted amount with the caller's `max_usd` ceiling.
+5. Return `ready_to_purchase` only when an exact Base-USDC quote is parseable and within budget; otherwise return `blocked` with reasons.
+6. Hash the idempotency key and request body rather than storing the raw values.
+7. Persist an intent + receipt in Postgres.
+8. Reusing the same idempotency key with identical purchase parameters returns the same intent instead of creating a second one.
+9. Reusing the same key with different purchase parameters is rejected as an idempotency conflict.
+10. **The beta never signs, sends, or settles the underlying purchase. `paymentExecuted` is always false.**
+
+This is intentionally free while demand is validated. Do not count beta calls as revenue. Do not add wallet/private-key custody merely to make the demo look more complete.
+
+### Current competitive context for Purchase Guard
+
+The broader x402 ecosystem already contains budget/preflight, wallet-policy, receipt, approval, and pay-and-fetch tooling. Current examples found during validation include agent budget/preflight products priced around $0.02–$0.03 and open-source agent-wallet/receipt infrastructure.
+
+Therefore the differentiation to test is not generic budgeting. It is:
+
+**one-call retry safety + stable purchase intent + max-spend enforcement + durable receipt with almost no integration work.**
+
+If agents do not use that differentiated behavior, do not keep expanding it. If external agents repeatedly use it and ask for execution, reconciliation, merchant reliability, or payment orchestration, then consider a paid version or deeper commerce layer.
 
 ## Managed Task Hunter
 
@@ -327,6 +374,7 @@ It monitors:
 
 - first-sale `/web-extract` health, x402 challenge, marketplace/index visibility, buyer-intent routing and real settlements
 - Moltbook first demand post and relevant conversations for substantive replies / repeated agent demand
+- Agent Purchase Guard beta availability and evidence of real external use or repeated purchase-safety demand
 - TaskBounty auth + current funded public inventory
 - Task Hunter duplicate-run prevention and economics gate
 - x402 seller/ledger and broader buyer visibility
@@ -336,6 +384,8 @@ It monitors:
 - the two-condition public ChatGPT launch gate
 
 For Moltbook it should group demand by capability, current alternative/provider, pricing complaint, authentication/friction, reliability/retry problem, output-format need, and willingness-to-pay evidence. Notify on repeated independent demand or unusually concrete purchase intent, but do not spam or automatically build from one vague comment.
+
+For Purchase Guard, do not treat internal/self tests as adoption. Notify only on meaningful external-use evidence, repeated independent requests for the capability, or a concrete request to add payment execution/reconciliation that could justify a paid next step.
 
 Do not start billable managed-agent compute unless a qualifying funded task exists.
 
@@ -352,6 +402,7 @@ As of this reconciliation:
 - Verified real external INCOME 2 cash/revenue: **$0**
 - Verified real outside Agent Earn settlements: **0 observed**
 - `/web-extract`: live and distributed, but listing/availability is not revenue
+- Agent Purchase Guard: live free beta; calls/intents are not revenue
 - Moltbook account/post: active distribution/demand research, but engagement is not revenue
 - Simulated AgentWorld reward: excluded
 - TaskBounty available/public code bounties: 0 at latest public-board check
@@ -360,15 +411,16 @@ As of this reconciliation:
 ## Current blockers / next milestones
 
 1. Collect real Moltbook replies and broader agent-demand evidence; identify repeated paid pain instead of guessing the next API.
-2. Let `/web-extract` obtain genuine marketplace exposure and measure real outside demand; do not add speculative tools without evidence.
-3. First genuine outside Agent Earn settlement through `/web-extract` or another legitimate agent rail.
-4. First Human Earn publisher approval and funded inventory.
-5. Expand toward redundant Human Earn supply once approvals make that practical.
-6. Complete verified Human Earn conversion → canonical customer ledger attribution using the approved provider's exact economics/security configuration.
-7. Solve safe, real customer cash-out before broad consumer launch.
-8. Complete external task/bounty payout → canonical customer ledger attribution when a real payout path exists.
-9. Run end-to-end ChatGPT reviewer tests against the unified live ledger.
-10. Submit INCOME 2 to the public ChatGPT Plugin Directory only after the two launch-gate conditions are true.
+2. Measure whether external agents actually use the free Purchase Guard beta for retry-safe intents; do not monetize or expand it before usage evidence.
+3. Let `/web-extract` obtain genuine marketplace exposure and measure real outside demand.
+4. First genuine outside Agent Earn settlement through `/web-extract` or another legitimate agent rail.
+5. First Human Earn publisher approval and funded inventory.
+6. Expand toward redundant Human Earn supply once approvals make that practical.
+7. Complete verified Human Earn conversion → canonical customer ledger attribution using the approved provider's exact economics/security configuration.
+8. Solve safe, real customer cash-out before broad consumer launch.
+9. Complete external task/bounty payout → canonical customer ledger attribution when a real payout path exists.
+10. Run end-to-end ChatGPT reviewer tests against the unified live ledger.
+11. Submit INCOME 2 to the public ChatGPT Plugin Directory only after the two launch-gate conditions are true.
 
 ## Current strategic judgment
 
@@ -377,6 +429,8 @@ INCOME 2 is no longer primarily blocked by architecture. It is blocked by **dema
 Do not respond to weak demand by endlessly adding features. Use this priority:
 
 **traffic → observe demand → validate repeated pain → build narrowly → distribute → verify real payment → repeat**
+
+The Agent Purchase Guard is the first explicit example of this loop: a narrow beta built from Moltbook/market evidence, kept free and non-custodial until agents prove the differentiated retry-safety behavior matters.
 
 The larger long-term thesis remains: INCOME 2 can become a transaction/demand network where humans and agents turn capability into paid results, while INCOME 2 takes a fee or spread. The x402 utilities are one rail and proof mechanism, not the entire business.
 
@@ -389,6 +443,7 @@ Before making a material INCOME 2 decision, reconcile against:
 - latest GitHub main commits
 - live Render deploy/service health
 - current Moltbook claim/post/reply state
+- current Agent Purchase Guard availability/use evidence
 - current Brainbase Task Hunter configuration/tasks
 - enabled INCOME 2 Earn Watch automation
 - current provider inbox/status
@@ -396,4 +451,4 @@ Before making a material INCOME 2 decision, reconcile against:
 - current x402 marketplace visibility and settlement evidence
 - current ChatGPT Plugin Directory state when launch status matters
 
-Update this file after material architecture, launch-gate, provider, revenue, distribution, Moltbook, or automation changes. Never let stale chat context override verified live state.
+Update this file after material architecture, launch-gate, provider, revenue, distribution, Moltbook, Purchase Guard, or automation changes. Never let stale chat context override verified live state.
