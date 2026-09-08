@@ -2,13 +2,14 @@ import { createServer } from 'node:http';
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import * as z from 'zod/v4';
-import ledger from './ledger.cjs';
 
 const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_ORIGIN = String(process.env.PUBLIC_ORIGIN || 'https://earn-chat-mcp.onrender.com').replace(/\/$/, '');
 const ALLOWED_HOST = new URL(PUBLIC_ORIGIN).host.toLowerCase();
 const ROUTER_ORIGIN = String(process.env.EARN_ROUTER_ORIGIN || 'https://earn-router.onrender.com').replace(/\/$/, '');
 const SELLER_ORIGIN = String(process.env.EARN_SELLER_ORIGIN || 'https://earn-tools-backend.onrender.com').replace(/\/$/, '');
+const FALLBACK_USER_SHARE_PERCENT = Number(process.env.AGENT_USER_SHARE_BPS || 7000) / 100;
+const FALLBACK_PLATFORM_SHARE_PERCENT = 100 - FALLBACK_USER_SHARE_PERCENT;
 
 const startWindows = new Map();
 
@@ -37,7 +38,7 @@ function allowAccountCreate(ip) {
   return true;
 }
 
-async function fetchJson(url, options = {}, timeoutMs = 8000) {
+async function fetchJson(url, options = {}, timeoutMs = 12000) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), timeoutMs);
   try {
@@ -51,36 +52,64 @@ async function fetchJson(url, options = {}, timeoutMs = 8000) {
   }
 }
 
+async function sellerAccount(path, body, ip = 'unknown') {
+  return fetchJson(`${SELLER_ORIGIN}${path}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-forwarded-for': String(ip || 'unknown').slice(0, 80),
+      'x-income2-client': 'chatgpt-mcp',
+    },
+    body: JSON.stringify(body || {}),
+  }, 45000);
+}
+
+async function sellerHealth() {
+  const result = await fetchJson(`${SELLER_ORIGIN}/health`, {}, 30000);
+  return result.ok ? result.data : null;
+}
+
+function economicsFromSeller(data) {
+  const userSharePercent = Number(data?.economics?.userSharePercent ?? FALLBACK_USER_SHARE_PERCENT);
+  const platformSharePercent = Number(data?.economics?.platformSharePercent ?? FALLBACK_PLATFORM_SHARE_PERCENT);
+  return { userSharePercent, platformSharePercent };
+}
+
 async function liveStatus() {
   const [router, seller] = await Promise.allSettled([
-    fetchJson(`${ROUTER_ORIGIN}/api/status`),
-    fetchJson(`${SELLER_ORIGIN}/health`),
+    fetchJson(`${ROUTER_ORIGIN}/api/status`, {}, 30000),
+    fetchJson(`${SELLER_ORIGIN}/health`, {}, 30000),
   ]);
   const routerData = router.status === 'fulfilled' ? router.value : { ok: false, data: {} };
   const sellerData = seller.status === 'fulfilled' ? seller.value : { ok: false, data: {} };
+  const economics = economicsFromSeller(sellerData.data);
   return {
     humanEarn: {
-      connected: Boolean(routerData.ok && routerData.data?.providerConfigured),
-      provider: routerData.data?.provider || null,
-      status: routerData.ok && routerData.data?.providerConfigured ? 'live' : 'provider_approval_pending',
+      connected: Boolean(routerData.ok && routerData.data?.human?.providerConfigured),
+      provider: routerData.data?.human?.provider || null,
+      status: routerData.ok && routerData.data?.human?.providerConfigured ? 'live' : 'provider_approval_pending',
     },
     agentEarn: {
       connected: Boolean(sellerData.ok && sellerData.data?.x402),
       network: sellerData.data?.network || 'eip155:8453',
       asset: 'USDC',
       status: sellerData.ok && sellerData.data?.x402 ? 'live' : 'temporarily_unavailable',
-      userSharePercent: ledger.USER_SHARE_BPS / 100,
-      platformSharePercent: ledger.PLATFORM_SHARE_BPS / 100,
+      accountSystem: 'canonical_seller_ledger',
+      ...economics,
     },
   };
 }
 
+function manageUrl(handle, token) {
+  return `${PUBLIC_ORIGIN}/manage?handle=${encodeURIComponent(handle)}&key=${encodeURIComponent(token)}`;
+}
+
 function buildServer({ requestInfo } = {}) {
   const server = new McpServer(
-    { name: 'Earn', version: '0.1.0' },
+    { name: 'INCOME 2', version: '0.2.0' },
     {
       instructions:
-        'Earn connects users to legitimate paid opportunities and autonomous agent work. Never guarantee income. Never describe projected earnings as earned money. Human-required surveys, installs, signups, or advertiser actions must be completed truthfully by the user. Cash-out and money transfers are external to ChatGPT.',
+        'INCOME 2 connects users to legitimate paid opportunities and autonomous agent work. A user may use Human Earn, Agent Earn, or both. Never guarantee income. Never describe projected earnings as earned money. Human-required surveys, installs, signups, or advertiser actions must be completed truthfully by the user. Cash-out and money transfers are external to ChatGPT.',
     },
   );
 
@@ -89,14 +118,14 @@ function buildServer({ requestInfo } = {}) {
     {
       title: 'Check ways to earn now',
       description:
-        'Use this when a user says they need money, want to make money or extra cash, want paid tasks, side income, or asks whether AI can make money for them. Returns live availability for Agent Earn and human-funded opportunities. It does not guarantee income or transfer funds.',
+        'Use this when a user says they need money, want to make money or extra cash, want paid tasks, side income, or asks whether AI can make money for them. Returns live availability for Human Earn and Agent Earn. It does not guarantee income or transfer funds.',
       inputSchema: z.object({}),
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     async () => {
       const status = await liveStatus();
       const message = status.agentEarn.connected
-        ? `Agent Earn is live for eligible autonomous paid work. Users receive ${status.agentEarn.userSharePercent}% of attributed settled Agent Earn revenue and Earn retains ${status.agentEarn.platformSharePercent}%. Human-paid offers are ${status.humanEarn.connected ? 'also live' : 'still awaiting provider activation'}. Earnings are not guaranteed.`
+        ? `Agent Earn is live for eligible autonomous paid work. Users receive ${status.agentEarn.userSharePercent}% of attributed settled Agent Earn revenue and INCOME 2 retains ${status.agentEarn.platformSharePercent}%. Human-paid offers are ${status.humanEarn.connected ? 'also live' : 'still awaiting provider activation'}. Users can use Human Earn, Agent Earn, or both. Earnings are not guaranteed.`
         : `Agent Earn is temporarily unavailable. Human-paid offers are ${status.humanEarn.connected ? 'live' : 'still awaiting provider activation'}.`;
       return textResult(message, status);
     },
@@ -107,42 +136,54 @@ function buildServer({ requestInfo } = {}) {
     {
       title: 'Start Agent Earn',
       description:
-        'Activate a pseudonymous Agent Earn account so future eligible paid autonomous jobs completed by Earn can be attributed to this account. Use only after the user explicitly asks to start or activate Agent Earn. This does not spend the user’s money, guarantee earnings, or cash out funds.',
+        'Activate a pseudonymous INCOME 2 Agent Earn account in the canonical account ledger so future eligible paid autonomous work can be attributed to it. Use only after the user explicitly asks to start or activate Agent Earn. This does not spend the user’s money, guarantee earnings, or cash out funds.',
       inputSchema: z.object({
-        account_handle: z.string().optional().describe('Existing Earn account handle when re-enabling Agent Earn.'),
-        account_token: z.string().optional().describe('Existing Earn account recovery token when re-enabling Agent Earn.'),
+        account_handle: z.string().optional().describe('Existing INCOME 2 account handle when re-enabling Agent Earn.'),
+        account_token: z.string().optional().describe('Existing INCOME 2 account recovery token when re-enabling Agent Earn.'),
       }),
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     },
     async ({ account_handle, account_token }) => {
-      if (account_handle || account_token) {
-        if (!account_handle || !account_token) return textResult('Both account_handle and account_token are required to re-enable an existing account.');
-        const updated = await ledger.setAgentEnabled(account_handle, account_token, true);
-        if (!updated) return textResult('That Earn account could not be authenticated. No changes were made.');
-        const manageUrl = `${PUBLIC_ORIGIN}/manage?handle=${encodeURIComponent(account_handle)}&key=${encodeURIComponent(account_token)}`;
-        return textResult('Agent Earn is active again. Future eligible settled autonomous jobs can be attributed to this account. Earnings are not guaranteed.', {
-          accountHandle: account_handle,
-          agentEnabled: true,
-          manageUrl,
-        });
+      if ((account_handle && !account_token) || (!account_handle && account_token)) {
+        return textResult('Both account_handle and account_token are required to re-enable an existing account.');
       }
 
       const ip = requestIp(requestInfo);
-      if (!allowAccountCreate(ip)) return textResult('Too many new Earn accounts were created from this connection recently. Try again later.');
+      if (!account_handle && !allowAccountCreate(ip)) {
+        return textResult('Too many new INCOME 2 accounts were created from this connection recently. Try again later.');
+      }
 
-      const account = await ledger.createAccount({ enableAgent: true });
-      const manageUrl = `${PUBLIC_ORIGIN}/manage?handle=${encodeURIComponent(account.handle)}&key=${encodeURIComponent(account.token)}`;
+      const result = await sellerAccount('/account/start', account_handle ? {
+        accountHandle: account_handle,
+        accountToken: account_token,
+      } : {}, ip);
+
+      if (!result.ok) {
+        if (result.status === 401) return textResult('That INCOME 2 account could not be authenticated. No changes were made.');
+        return textResult(result.data?.message || 'Agent Earn could not be activated right now.');
+      }
+
+      const data = result.data || {};
+      const handle = data.accountHandle || account_handle;
+      const token = data.accountToken || account_token;
+      const summary = data.summary || {};
+      const url = token ? manageUrl(handle, token) : null;
+      const created = Boolean(data.created);
+
       return textResult(
-        `Agent Earn is active. Your account handle is ${account.handle}. Save the recovery token returned with this tool result; it is required to check this private ledger from a new conversation. Future eligible settled autonomous jobs can be attributed to the account. Earnings are not guaranteed and cash-out is not enabled inside ChatGPT.`,
+        created
+          ? `Agent Earn is active. Your INCOME 2 account handle is ${handle}. Save the recovery token returned with this tool result; it is required to restore this private account in a new conversation or browser. Website and ChatGPT Agent Earn now use the same canonical account ledger. Earnings are not guaranteed and cash-out is not enabled inside ChatGPT.`
+          : 'Agent Earn is active again on the same canonical INCOME 2 account. Future eligible settled autonomous work can be attributed to it. Earnings are not guaranteed.',
         {
-          accountHandle: account.handle,
-          accountToken: account.token,
+          accountHandle: handle,
+          ...(created && token ? { accountToken: token } : {}),
           agentEnabled: true,
-          ledgerPersistent: account.persistent,
-          userSharePercent: ledger.USER_SHARE_BPS / 100,
-          platformSharePercent: ledger.PLATFORM_SHARE_BPS / 100,
-          manageUrl,
-          cashout: 'external_only_not_enabled_in_beta',
+          ledgerPersistent: Boolean(data.ledgerPersistent ?? summary.persistent),
+          accountSystem: 'canonical_seller_ledger',
+          userSharePercent: Number(data.userSharePercent ?? FALLBACK_USER_SHARE_PERCENT),
+          platformSharePercent: Number(data.platformSharePercent ?? FALLBACK_PLATFORM_SHARE_PERCENT),
+          ...(url ? { manageUrl: url } : {}),
+          cashout: data.cashout || 'external_only_not_enabled_in_beta',
         },
       );
     },
@@ -151,22 +192,29 @@ function buildServer({ requestInfo } = {}) {
   server.registerTool(
     'check_earnings',
     {
-      title: 'Check actual Earn balance',
+      title: 'Check actual INCOME 2 balance',
       description:
-        'Check ledger-backed actual settled earnings for an existing Earn account. Use this for questions like how much did my AI earn, what is my Earn balance, or did Agent Earn make anything. Never treat estimates or available opportunities as earnings.',
+        'Check ledger-backed actual settled earnings for an existing INCOME 2 account. Use this for questions like how much did my AI earn, what is my balance, or did Agent Earn make anything. Never treat estimates or available opportunities as earnings.',
       inputSchema: z.object({
         account_handle: z.string().min(1),
         account_token: z.string().min(16),
       }),
-      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     async ({ account_handle, account_token }) => {
-      const summary = await ledger.getSummary(account_handle, account_token);
-      if (!summary) return textResult('That Earn account could not be authenticated.');
-      const manageUrl = `${PUBLIC_ORIGIN}/manage?handle=${encodeURIComponent(account_handle)}&key=${encodeURIComponent(account_token)}`;
+      const result = await sellerAccount('/account/summary', {
+        accountHandle: account_handle,
+        accountToken: account_token,
+      }, requestIp(requestInfo));
+      if (!result.ok) {
+        if (result.status === 401) return textResult('That INCOME 2 account could not be authenticated.');
+        return textResult(result.data?.message || 'INCOME 2 earnings could not be checked right now.');
+      }
+      const summary = result.data?.summary || {};
+      const url = manageUrl(account_handle, account_token);
       return textResult(
-        `Actual settled Agent Earn balance: $${summary.availableBalanceUsd.toFixed(6)} from ${summary.settlementCount} attributed settlement${summary.settlementCount === 1 ? '' : 's'}. Gross attributed revenue: $${summary.grossAttributedUsd.toFixed(6)}. This is ledger-backed settled activity, not a projection. Cash-out is external and not enabled in this beta.`,
-        { ...summary, manageUrl },
+        `Actual settled Agent Earn balance: $${Number(summary.availableBalanceUsd || 0).toFixed(6)} from ${Number(summary.settlementCount || 0)} attributed settlement${Number(summary.settlementCount || 0) === 1 ? '' : 's'}. Gross attributed revenue: $${Number(summary.grossAttributedUsd || 0).toFixed(6)}. This is ledger-backed settled activity from the canonical INCOME 2 account system, not a projection. Cash-out is external and not enabled in this beta.`,
+        { ...summary, accountSystem: 'canonical_seller_ledger', manageUrl: url },
       );
     },
   );
@@ -176,12 +224,12 @@ function buildServer({ requestInfo } = {}) {
     {
       title: 'Find live paid opportunities',
       description:
-        'Find currently funded legitimate paid surveys and advertiser-funded offers that a user may be eligible to complete. Use this when the user wants real paid opportunities instead of generic side-hustle advice. Human-required actions must be completed by the user; do not automate survey answers, installs, signups, identities, or advertiser actions.',
+        'Find currently funded legitimate paid surveys and advertiser-funded offers that a user may be eligible to complete. Human-required actions must be completed by the user; do not automate survey answers, installs, signups, identities, or advertiser actions.',
       inputSchema: z.object({
         country: z.string().length(2).default('US').describe('Two-letter country code such as US.'),
         device: z.enum(['windows', 'android', 'iphone', 'macos']).default('windows'),
         zero_spend_only: z.boolean().default(true).describe('Exclude offers that appear to require deposits, shopping, credit cards, or paid trials.'),
-        account_handle: z.string().optional().describe('Optional Earn handle for future attribution when human providers are connected.'),
+        account_handle: z.string().optional().describe('Optional INCOME 2 account handle for attribution when Human Earn providers are connected.'),
       }),
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
@@ -191,10 +239,10 @@ function buildServer({ requestInfo } = {}) {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ userId, country: country.toUpperCase(), device, zeroSpendOnly: zero_spend_only }),
-      });
+      }, 30000);
       if (!result.ok) {
         if (result.status === 503 || result.data?.code === 'PROVIDER_PENDING') {
-          return textResult('Human-funded offer inventory is not activated yet. Provider applications are still pending. Agent Earn can still be checked separately.', {
+          return textResult('Human-funded offer inventory is not activated yet. Provider applications are still pending. Agent Earn can still be used separately, and both modes can coexist on the same INCOME 2 account once Human Earn attribution is live.', {
             status: 'provider_approval_pending',
             offers: [],
           });
@@ -207,6 +255,7 @@ function buildServer({ requestInfo } = {}) {
       return textResult(`Found ${offers.length} currently funded opportunities. Completion and payment depend on provider eligibility and truthful completion; earnings are not guaranteed.`, {
         status: 'live',
         provider: result.data?.provider || null,
+        accountHandle: account_handle || null,
         offers,
       });
     },
@@ -218,8 +267,6 @@ function buildServer({ requestInfo } = {}) {
 function cryptoRandomId() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
-
-await ledger.init();
 
 const handler = createMcpHandler(buildServer, { responseMode: 'json' });
 const nodeHandler = toNodeHandler(handler);
@@ -236,7 +283,11 @@ function htmlEscape(value) {
 async function managePage(req, res, url) {
   const handle = url.searchParams.get('handle') || '';
   const key = url.searchParams.get('key') || '';
-  const summary = handle && key ? await ledger.getSummary(handle, key) : null;
+  let summary = null;
+  if (handle && key) {
+    const result = await sellerAccount('/account/summary', { accountHandle: handle, accountToken: key }, 'manage-page');
+    if (result.ok) summary = result.data?.summary || null;
+  }
   res.writeHead(summary ? 200 : 401, {
     'content-type': 'text/html; charset=utf-8',
     'cache-control': 'no-store',
@@ -244,19 +295,29 @@ async function managePage(req, res, url) {
     'x-frame-options': 'DENY',
   });
   if (!summary) {
-    return res.end('<!doctype html><html><body style="font-family:system-ui;max-width:700px;margin:60px auto;padding:20px"><h1>Earn</h1><p>Account authentication failed.</p></body></html>');
+    return res.end('<!doctype html><html><body style="font-family:system-ui;max-width:700px;margin:60px auto;padding:20px"><h1>INCOME 2</h1><p>Account authentication failed.</p></body></html>');
   }
-  const recent = summary.recent.map(e => `<tr><td>${htmlEscape(e.createdAt)}</td><td>${htmlEscape(e.source)}</td><td>$${Number(e.userShareUsd || 0).toFixed(6)}</td><td>${htmlEscape(e.status)}</td></tr>`).join('');
-  return res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Earn balance</title></head><body style="font-family:system-ui;background:#0b0d10;color:#f5f7fa;max-width:850px;margin:40px auto;padding:20px"><h1>Earn</h1><p style="color:#aab2c0">Account ${htmlEscape(summary.handle)}</p><div style="background:#151922;border:1px solid #2b3240;border-radius:16px;padding:24px"><div style="font-size:14px;color:#aab2c0">Actual settled Agent Earn balance</div><div style="font-size:44px;font-weight:800">$${summary.availableBalanceUsd.toFixed(6)}</div><p>${summary.settlementCount} attributed settlement${summary.settlementCount === 1 ? '' : 's'} · Agent ${summary.agentEnabled ? 'active' : 'paused'}</p><p style="color:#aab2c0">Cash-out is intentionally external to ChatGPT and is not enabled during this beta.</p></div><h2>Recent ledger</h2><table style="width:100%;border-collapse:collapse"><tr><th align="left">Time</th><th align="left">Source</th><th align="left">Your share</th><th align="left">Status</th></tr>${recent}</table><p style="color:#aab2c0;font-size:13px">Amounts shown here are recorded settled activity, not projections or guaranteed future earnings.</p></body></html>`);
+  const recent = (summary.recent || []).map(e => `<tr><td>${htmlEscape(e.createdAt)}</td><td>${htmlEscape(e.source)}</td><td>$${Number(e.userShareUsd || 0).toFixed(6)}</td><td>${htmlEscape(e.status)}</td></tr>`).join('');
+  return res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>INCOME 2 balance</title></head><body style="font-family:system-ui;background:#0b0d10;color:#f5f7fa;max-width:850px;margin:40px auto;padding:20px"><h1>INCOME 2</h1><p style="color:#aab2c0">Account ${htmlEscape(summary.handle)}</p><div style="background:#151922;border:1px solid #2b3240;border-radius:16px;padding:24px"><div style="font-size:14px;color:#aab2c0">Actual settled Agent Earn balance</div><div style="font-size:44px;font-weight:800">$${Number(summary.availableBalanceUsd || 0).toFixed(6)}</div><p>${Number(summary.settlementCount || 0)} attributed settlement${Number(summary.settlementCount || 0) === 1 ? '' : 's'} · Agent ${summary.agentEnabled ? 'active' : 'paused'}</p><p style="color:#aab2c0">Website and ChatGPT use this same canonical INCOME 2 account ledger. Cash-out remains external and is not enabled during this beta.</p></div><h2>Recent ledger</h2><table style="width:100%;border-collapse:collapse"><tr><th align="left">Time</th><th align="left">Source</th><th align="left">Your share</th><th align="left">Status</th></tr>${recent}</table><p style="color:#aab2c0;font-size:13px">Amounts shown here are recorded settled activity, not projections or guaranteed future earnings.</p></body></html>`);
 }
 
 const httpServer = createServer(async (req, res) => {
   try {
     const url = new URL(req.url || '/', `https://${req.headers.host || ALLOWED_HOST}`);
     if (url.pathname === '/health') {
-      const [status, system] = await Promise.all([liveStatus().catch(() => null), ledger.systemStatus().catch(() => null)]);
+      const [status, seller] = await Promise.all([liveStatus().catch(() => null), sellerHealth().catch(() => null)]);
       res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-      return res.end(JSON.stringify({ ok: true, service: 'earn-chat-mcp', version: '0.1.0', mcp: `${PUBLIC_ORIGIN}/mcp`, status, ledger: system }));
+      return res.end(JSON.stringify({
+        ok: true,
+        service: 'income2-chat-mcp',
+        version: '0.2.0',
+        brand: 'INCOME 2',
+        motto: 'Your second income. Powered by you or your AI.',
+        mcp: `${PUBLIC_ORIGIN}/mcp`,
+        accountSystem: 'canonical_seller_ledger',
+        status,
+        ledger: seller?.ledger || null,
+      }));
     }
     if (url.pathname === '/manage') return await managePage(req, res, url);
     if (url.pathname !== '/mcp') {
@@ -283,7 +344,7 @@ const httpServer = createServer(async (req, res) => {
 });
 
 httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`Earn ChatGPT MCP listening on ${PORT}; endpoint=${PUBLIC_ORIGIN}/mcp; ledger=${ledger.persistent ? 'postgres' : 'memory'}`);
+  console.log(`INCOME 2 ChatGPT MCP listening on ${PORT}; endpoint=${PUBLIC_ORIGIN}/mcp; accountSystem=canonical_seller_ledger`);
 });
 
 process.on('SIGTERM', async () => {
