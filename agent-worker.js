@@ -21,7 +21,7 @@ const state = {
 
 async function openClient() {
   const { Client, StreamableHTTPClientTransport } = await import('@modelcontextprotocol/client');
-  const client = new Client({ name: 'earn-mcp-verifier', version: '0.8.0' }, { versionNegotiation: { mode: 'auto' } });
+  const client = new Client({ name: 'earn-mcp-verifier', version: '0.8.1' }, { versionNegotiation: { mode: 'auto' } });
   const transport = new StreamableHTTPClientTransport(new URL(MCP_URL));
   await client.connect(transport);
   return client;
@@ -58,6 +58,7 @@ async function checkBuyerDiscovery() {
     'json data quality audit',
     'website url health metadata audit',
     'x402 buyer preflight payment challenge audit',
+    'outcome routing agent procurement result max budget autonomous fulfillment',
   ];
   const checks = [];
   for (const query of queries) {
@@ -108,7 +109,14 @@ async function verifyMcp() {
     client = await openClient();
     const toolResult = await client.listTools();
     const toolNames = (toolResult.tools || []).map(t => t.name).sort();
-    const expected = ['check_earnings', 'find_paid_opportunities', 'get_earning_options', 'guard_x402_purchase', 'start_agent_earn'].sort();
+    const expected = [
+      'check_earnings',
+      'find_paid_opportunities',
+      'get_earning_options',
+      'guard_x402_purchase',
+      'request_agent_outcome',
+      'start_agent_earn',
+    ].sort();
     const missing = expected.filter(name => !toolNames.includes(name));
     if (missing.length) throw new Error(`missing MCP tools: ${missing.join(', ')}`);
     const options = await client.callTool({ name: 'get_earning_options', arguments: {} });
