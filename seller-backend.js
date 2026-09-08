@@ -1,4 +1,5 @@
 const http = require('http');
+const crypto = require('crypto');
 const { spawn } = require('child_process');
 const vault = require('./taskbounty-vault.cjs');
 
@@ -6,12 +7,14 @@ const PORT = Number(process.env.PORT || 3000);
 const CORE_PORT = Number(process.env.SELLER_INTERNAL_PORT || 3901);
 const TASKBOUNTY_API = 'https://www.task-bounty.com/api/v1';
 const BOOTSTRAP_NONCE = String(process.env.TASKBOUNTY_BOOTSTRAP_NONCE || '').trim();
+const SOLVER_KEY = String(process.env.TASKBOUNTY_SOLVER_KEY || '').trim();
 
 function sendJson(res, status, data) {
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
     'x-content-type-options': 'nosniff',
+    'referrer-policy': 'no-referrer',
   });
   res.end(JSON.stringify(data));
 }
@@ -55,6 +58,126 @@ async function taskBountyStatus() {
   const check = await fetchJson(`${TASKBOUNTY_API}/tasks?state=open&limit=50`, { headers: { authorization: `Bearer ${token}` } });
   if (check.ok) await vault.markVerified();
   return { ...status, authReady: check.ok, openTaskCount: check.ok ? countTasks(check.data) : null, authHttpStatus: check.status };
+}
+
+function secureEqual(a, b) {
+  const x = Buffer.from(String(a || ''));
+  const y = Buffer.from(String(b || ''));
+  return x.length === y.length && x.length > 0 && crypto.timingSafeEqual(x, y);
+}
+
+function solverAuthorized(req) {
+  return Boolean(SOLVER_KEY && secureEqual(req.headers['x-income2-solver-key'], SOLVER_KEY));
+}
+
+async function taskBountyRequest(path, options = {}) {
+  const token = await vault.getToken();
+  if (!token) return { ok: false, status: 503, data: { message: 'TaskBounty authentication is not ready.' } };
+  const headers = { authorization: `Bearer ${token}`, ...(options.headers || {}) };
+  return fetchJson(`${TASKBOUNTY_API}${path}`, { ...options, headers }, options.timeoutMs || 30000);
+}
+
+function cleanId(value) {
+  const id = String(value || '').trim();
+  return /^[A-Za-z0-9_-]{1,120}$/.test(id) ? id : null;
+}
+
+async function handleSolver(req, res, url) {
+  if (!url.pathname.startsWith('/taskbounty/solver/')) return false;
+  if (!solverAuthorized(req)) {
+    sendJson(res, 401, { ok: false, message: 'solver authorization required' });
+    return true;
+  }
+
+  const relative = url.pathname.slice('/taskbounty/solver'.length);
+
+  if (req.method === 'GET' && relative === '/status') {
+    const status = await taskBountyStatus().catch(error => ({ connected: false, authReady: false, error: String(error?.message || error).slice(0, 300) }));
+    sendJson(res, 200, { ok: true, taskBounty: status, capabilities: ['list_open_tasks', 'get_task', 'request_readonly_repo_access', 'submit_patch', 'check_submission'] });
+    return true;
+  }
+
+  if (req.method === 'GET' && relative === '/tasks') {
+    const params = new URLSearchParams();
+    params.set('state', 'open');
+    const requestedLimit = Number(url.searchParams.get('limit') || 10);
+    params.set('limit', String(Math.max(1, Math.min(25, Number.isFinite(requestedLimit) ? requestedLimit : 10))));
+    for (const key of ['language', 'platform']) {
+      const value = String(url.searchParams.get(key) || '').trim();
+      if (value) params.set(key, value.slice(0, 80));
+    }
+    const upstream = await taskBountyRequest(`/tasks?${params.toString()}`);
+    sendJson(res, upstream.status, upstream.data);
+    return true;
+  }
+
+  const taskMatch = relative.match(/^\/tasks\/([^/]+)$/);
+  if (req.method === 'GET' && taskMatch) {
+    const taskId = cleanId(decodeURIComponent(taskMatch[1]));
+    if (!taskId) { sendJson(res, 400, { ok: false, message: 'invalid task id' }); return true; }
+    const upstream = await taskBountyRequest(`/tasks/${encodeURIComponent(taskId)}`);
+    sendJson(res, upstream.status, upstream.data);
+    return true;
+  }
+
+  const accessMatch = relative.match(/^\/tasks\/([^/]+)\/access$/);
+  if (req.method === 'POST' && accessMatch) {
+    const taskId = cleanId(decodeURIComponent(accessMatch[1]));
+    if (!taskId) { sendJson(res, 400, { ok: false, message: 'invalid task id' }); return true; }
+    let body = {};
+    try { body = JSON.parse(await readBody(req, 4000) || '{}'); } catch {}
+    const agentId = body.agent_id ? cleanId(body.agent_id) : null;
+    if (body.agent_id && !agentId) { sendJson(res, 400, { ok: false, message: 'invalid agent id' }); return true; }
+    const upstream = await taskBountyRequest(`/tasks/${encodeURIComponent(taskId)}/access`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(agentId ? { agent_id: agentId } : {}),
+    });
+    sendJson(res, upstream.status, upstream.data);
+    return true;
+  }
+
+  if (req.method === 'POST' && relative === '/submissions/patch') {
+    let body;
+    try { body = JSON.parse(await readBody(req, 2_500_000) || '{}'); }
+    catch { sendJson(res, 400, { ok: false, message: 'invalid JSON body' }); return true; }
+    const taskId = cleanId(body.task_id);
+    const agentId = cleanId(body.agent_id);
+    const resultText = String(body.result_text || '').trim().slice(0, 1000);
+    const patch = String(body.patch || '');
+    const testOutput = body.test_output == null ? undefined : String(body.test_output).slice(0, 65536);
+    if (!taskId || !agentId || !resultText || !patch) {
+      sendJson(res, 422, { ok: false, message: 'task_id, agent_id, result_text, and patch are required' });
+      return true;
+    }
+    if (patch.length > 2_000_000) {
+      sendJson(res, 413, { ok: false, message: 'patch exceeds 2 MB solver bridge limit' });
+      return true;
+    }
+    const payload = { task_id: taskId, agent_id: agentId, result_text: resultText, patch };
+    if (testOutput !== undefined) payload.test_output = testOutput;
+    const upstream = await taskBountyRequest('/submissions/patch', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+      timeoutMs: 60000,
+    });
+    console.log(JSON.stringify({ type: 'taskbounty_patch_submission', taskId, upstreamStatus: upstream.status, accepted: upstream.ok, at: new Date().toISOString() }));
+    sendJson(res, upstream.status, upstream.data);
+    return true;
+  }
+
+  const submissionMatch = relative.match(/^\/submissions\/([^/]+)$/);
+  if (req.method === 'GET' && submissionMatch) {
+    const submissionId = cleanId(decodeURIComponent(submissionMatch[1]));
+    if (!submissionId) { sendJson(res, 400, { ok: false, message: 'invalid submission id' }); return true; }
+    const upstream = await taskBountyRequest(`/submissions/${encodeURIComponent(submissionId)}`);
+    sendJson(res, upstream.status, upstream.data);
+    return true;
+  }
+
+  sendJson(res, 404, { ok: false, message: 'solver operation not allowed' });
+  return true;
 }
 
 async function handleVault(req, res, path) {
@@ -127,7 +250,7 @@ function proxy(req, res) {
 
 (async () => {
   const vaultState = await vault.init();
-  console.log(JSON.stringify({ type: 'taskbounty_vault_init', persistent: vaultState.persistent, configured: vaultState.configured }));
+  console.log(JSON.stringify({ type: 'taskbounty_vault_init', persistent: vaultState.persistent, configured: vaultState.configured, solverBridge: Boolean(SOLVER_KEY) }));
 
   const core = spawn(process.execPath, ['seller-core.js'], {
     env: { ...process.env, PORT: String(CORE_PORT) },
@@ -140,8 +263,9 @@ function proxy(req, res) {
 
   const server = http.createServer(async (req, res) => {
     try {
-      const path = new URL(req.url || '/', 'http://localhost').pathname;
-      if (await handleVault(req, res, path)) return;
+      const url = new URL(req.url || '/', 'http://localhost');
+      if (await handleSolver(req, res, url)) return;
+      if (await handleVault(req, res, url.pathname)) return;
       proxy(req, res);
     } catch (error) {
       console.error(JSON.stringify({ type: 'seller_wrapper_error', error: String(error?.message || error).slice(0, 500) }));
@@ -151,7 +275,7 @@ function proxy(req, res) {
   });
 
   server.listen(PORT, '0.0.0.0', () => {
-    console.log(`INCOME 2 seller gateway listening on ${PORT}; core=${CORE_PORT}; vault=postgres`);
+    console.log(`INCOME 2 seller gateway listening on ${PORT}; core=${CORE_PORT}; vault=postgres; solverBridge=${SOLVER_KEY ? 'enabled' : 'disabled'}`);
   });
 
   const stop = () => {
