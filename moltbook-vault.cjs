@@ -56,11 +56,15 @@ async function init() {
       claim_url text,
       verification_code text,
       claim_status text NOT NULL DEFAULT 'pending_claim',
+      first_post_id text,
+      first_posted_at timestamptz,
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now(),
       last_checked_at timestamptz
     );
   `);
+  await pool.query(`ALTER TABLE earn_moltbook_credentials ADD COLUMN IF NOT EXISTS first_post_id text`);
+  await pool.query(`ALTER TABLE earn_moltbook_credentials ADD COLUMN IF NOT EXISTS first_posted_at timestamptz`);
   return { persistent: true, configured: true };
 }
 
@@ -96,9 +100,14 @@ async function setClaimStatus(claimStatus) {
   await pool.query(`UPDATE earn_moltbook_credentials SET claim_status=$1, last_checked_at=now(), updated_at=now() WHERE id='primary'`, [String(claimStatus || 'unknown').slice(0,80)]);
 }
 
+async function markFirstPost(postId) {
+  if (!pool || !postId) return;
+  await pool.query(`UPDATE earn_moltbook_credentials SET first_post_id=$1, first_posted_at=now(), updated_at=now() WHERE id='primary'`, [String(postId).slice(0,160)]);
+}
+
 async function status({ includeClaim = false } = {}) {
   if (!pool) return { connected: false, persistent: false, configured: Boolean(MASTER_KEY_RAW) };
-  const r = await pool.query(`SELECT agent_name, claim_url, verification_code, claim_status, created_at, updated_at, last_checked_at FROM earn_moltbook_credentials WHERE id='primary' LIMIT 1`);
+  const r = await pool.query(`SELECT agent_name, claim_url, verification_code, claim_status, first_post_id, first_posted_at, created_at, updated_at, last_checked_at FROM earn_moltbook_credentials WHERE id='primary' LIMIT 1`);
   if (!r.rowCount) return { connected: false, persistent: true, configured: Boolean(MASTER_KEY_RAW) };
   const row = r.rows[0];
   return {
@@ -107,6 +116,8 @@ async function status({ includeClaim = false } = {}) {
     configured: true,
     agentName: row.agent_name,
     claimStatus: row.claim_status,
+    firstPostId: row.first_post_id || null,
+    firstPostedAt: row.first_posted_at || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     lastCheckedAt: row.last_checked_at,
@@ -114,4 +125,4 @@ async function status({ includeClaim = false } = {}) {
   };
 }
 
-module.exports = { init, storeRegistration, getApiKey, setClaimStatus, status };
+module.exports = { init, storeRegistration, getApiKey, setClaimStatus, markFirstPost, status };
