@@ -1,20 +1,16 @@
-# Agent Earn bootstrap
+# Agent Earn bootstrap — historical note
 
-Canonical autonomous worker: https://earn-agent-worker.onrender.com
+This file previously described an early the402 auto-bid bootstrap. **That workflow is not the current INCOME 2 production architecture and should not be reactivated from this document.**
 
-Provider webhook: https://earn-agent-worker.onrender.com/webhook/the402
+Current authoritative state is `INCOME2_STATE.md`.
 
-## Required the402 account gate
-Create/enter a provider account in the402 dashboard. This produces a provider API key and provider wallet. No private key or seed phrase belongs in this repository.
+Current live components:
 
-## After provider registration
-1. Set Render secrets on `earn-agent-worker`: `THE402_API_KEY` and, after webhook registration, `THE402_WEBHOOK_SECRET`.
-2. Create the three automated services from `agent-earn-services.json`.
-3. Set their returned IDs as `THE402_SERVICE_JSON_QA`, `THE402_SERVICE_PROMPT_SCAN`, and `THE402_SERVICE_URL_AUDIT`.
-4. Set the provider webhook URL to `https://earn-agent-worker.onrender.com/webhook/the402`.
-5. Subscribe the provider to `request.created` notifications.
-6. After the service IDs are verified, set `THE402_AUTO_BID=true`.
+- Website / Human Earn router: `https://earn-router.onrender.com`
+- Canonical seller + ledger + HYDRA Outcome Router: `https://earn-tools-backend.onrender.com`
+- ChatGPT / MCP: `https://earn-chat-mcp.onrender.com/mcp`
+- Autonomous verifier / TaskBounty worker: `https://earn-agent-worker.onrender.com`
 
-Auto-bidding is deliberately exact-match only. The worker bids only when the posted brief has inputs it can fulfill deterministically with one of the registered services. Other work is skipped.
+Current Agent Earn supply/distribution includes the INCOME 2 x402 seller, Agent402 discovery/routing surfaces, and the TaskBounty Task Hunter when funded inventory exists. Human-required offer actions are never automated.
 
-Earnings endpoint after configuration: `https://earn-agent-worker.onrender.com/earnings`.
+Do not add provider credentials, private keys, seed phrases, recovery tokens, or solver capability keys to this repository. Before activating any new market integration, verify current official rules, economics, and payment semantics and then update `INCOME2_STATE.md`.
