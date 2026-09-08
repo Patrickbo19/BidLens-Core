@@ -2,13 +2,35 @@ const express = require('express');
 
 const ORIGIN = String(process.env.PUBLIC_ORIGIN || 'https://earn-tools-backend.onrender.com').replace(/\/$/, '');
 const OUTCOME_EXECUTION_PATH = '/outcome-router/execute/{requestId}';
-const CURRENT_OUTCOME_DESCRIPTION = 'Submit a desired result plus maximum budget. HYDRA, the internal autonomous engine, tries zero-dollar proof-of-work fulfillment first, then can route supported paid work through buyer-signed non-custodial x402 pass-through to the Agent402 Smart Order Router. The buyer wallet signs locally; HYDRA never receives a buyer private key and never uses owner working capital. Higher paid tiers are not auto-escalated.';
+const BUYER_INTENTS = [
+  'do this task for me under budget',
+  'get this result for a maximum budget',
+  'find an agent to complete this task',
+  'find and pay the best tool for this job',
+  'cheapest reliable agent for this task',
+  'autonomous task fulfillment',
+  'agent procurement',
+  'buy a completed result from an agent',
+  'need this result willing to pay',
+  'outsource task to ai agent',
+  'route task to service',
+  'completed result under budget',
+  'webpage article to clean markdown',
+  'x402 purchase safety',
+  'prevent duplicate x402 payment',
+  'retry payment safely',
+  'prompt injection security scan',
+  'json data quality audit',
+  'website metadata audit',
+];
+const OUTCOME_TAGS = [
+  'outcome', 'buyer-intent', 'procurement', 'routing', 'autonomous', 'budget', 'demand',
+  'task-fulfillment', 'agent-procurement', 'completed-result', 'under-budget', 'find-agent',
+  'find-tool', 'buy-result', 'outsource-task', 'reliable-agent', 'max-budget', 'willing-to-pay',
+];
+const CURRENT_OUTCOME_DESCRIPTION = `Give INCOME 2 the result you need and your maximum budget. HYDRA autonomously finds an agent/tool/service to complete the task, tries zero-dollar proof-of-work fulfillment first, and can route supported paid work through buyer-signed non-custodial x402. Useful when you want a completed result under budget, need to find the best available agent or tool, want to outsource a task automatically, or are willing to pay up to a maximum amount for fulfillment. The buyer wallet signs locally; HYDRA never receives a private key and never uses owner working capital. Higher paid tiers are not auto-escalated.`;
 const PAID_BLOCK = `Buyer-signed paid HYDRA execution\n- Outcome request: POST ${ORIGIN}/outcome-router\n- Paid execution: POST ${ORIGIN}/outcome-router/execute/{requestId}\n- First execution call returns the relayed Agent402 Smart Order Router x402 PAYMENT-REQUIRED challenge.\n- An x402-capable buyer wallet signs locally and retries with PAYMENT-SIGNATURE.\n- HYDRA forwards the proof and returns the routed result.\n- HYDRA never receives the buyer private key or uses owner working capital.\n- Current beta platform fee: $0. Higher paid tiers are not auto-escalated.`;
 
-// Directory publication is an intentional action, not a deploy side effect. Keep
-// existing listings intact while preventing every Render restart from resubmitting
-// the same seller and consuming directory rate limits. Set EARN_DIRECTORY_REGISTER_ON_BOOT=1
-// only for a deliberate refresh.
 const directoryRegistrationUrls = new Set([
   'https://agent402.tools/api/index/register',
   'https://core.x402arena.gg/register',
@@ -18,7 +40,9 @@ const directoryRegistrationUrls = new Set([
 const nativeFetch = global.fetch;
 global.fetch = async function income2DiscoveryFetch(url, options = {}) {
   const target = String(url);
-  if (directoryRegistrationUrls.has(target) && String(process.env.EARN_DIRECTORY_REGISTER_ON_BOOT || '') !== '1') {
+  const generalRefresh = String(process.env.EARN_DIRECTORY_REGISTER_ON_BOOT || '') === '1';
+  const agent402Refresh = target === 'https://agent402.tools/api/index/register' && String(process.env.EARN_AGENT402_REFRESH_ON_BOOT || '') === '1';
+  if (directoryRegistrationUrls.has(target) && !generalRefresh && !agent402Refresh) {
     console.log(JSON.stringify({ type:'directory_registration_skipped', target, reason:'registration_on_boot_disabled', at:new Date().toISOString() }));
     return new Response(JSON.stringify({ ok:true, skipped:true, reason:'registration_on_boot_disabled' }), {
       status:200,
@@ -47,7 +71,14 @@ express.response.json = function income2DiscoveryTruthJson(body) {
     if (paths['/outcome-router']?.post) {
       paths['/outcome-router'] = {
         ...paths['/outcome-router'],
-        post: { ...paths['/outcome-router'].post, description: CURRENT_OUTCOME_DESCRIPTION },
+        post: {
+          ...paths['/outcome-router'].post,
+          summary: 'Autonomous agent procurement and outcome fulfillment under a max budget',
+          description: CURRENT_OUTCOME_DESCRIPTION,
+          tags: ['agent procurement', 'outcome routing', 'autonomous fulfillment'],
+          'x-intents': BUYER_INTENTS,
+          'x-keywords': OUTCOME_TAGS,
+        },
       };
     }
     body = {
@@ -63,12 +94,15 @@ express.response.json = function income2DiscoveryTruthJson(body) {
     body = {
       ...body,
       description: correctText(body.description || 'INCOME 2 agent-facing x402 tools and autonomous outcome fulfillment.'),
+      intents: Array.from(new Set([...(Array.isArray(body.intents) ? body.intents : []), ...BUYER_INTENTS])),
     };
     if (Array.isArray(body.resources)) {
       body.resources = body.resources.map(resource => {
         if (resource?.name !== 'INCOME 2 Outcome Router beta') return resource;
         return {
           ...resource,
+          tags: Array.from(new Set([...(Array.isArray(resource.tags) ? resource.tags : []), ...OUTCOME_TAGS])),
+          description: CURRENT_OUTCOME_DESCRIPTION,
           paidExecution: {
             enabled: true,
             mode: 'buyer_signed_x402_passthrough',
@@ -88,7 +122,12 @@ express.response.json = function income2DiscoveryTruthJson(body) {
 const previousSend = express.response.send;
 express.response.send = function income2DiscoveryTruthSend(body) {
   const path = this.req?.path;
-  if (typeof body === 'string' && ['/skill.md', '/llms.txt', '/agents.txt'].includes(path)) body = correctText(body);
+  if (typeof body === 'string' && ['/skill.md', '/llms.txt', '/agents.txt'].includes(path)) {
+    body = correctText(body);
+    if (/Outcome Router|HYDRA/i.test(body) && !body.includes('Buyer language:')) {
+      body += `\nBuyer language: ${BUYER_INTENTS.join(' | ')}\n`;
+    }
+  }
   return previousSend.call(this, body);
 };
 
