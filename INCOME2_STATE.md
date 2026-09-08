@@ -1,8 +1,8 @@
 # INCOME 2 — Canonical State
 
-Last reconciled: 2026-09-08 04:18 America/New_York
+Last reconciled: 2026-09-08 09:48 America/New_York
 
-This file is the canonical non-secret state summary for INCOME 2. Reconcile it against live services, provider messages, and current external markets before changing a material status. Never put API keys, private credentials, recovery tokens, seed phrases, solver capability keys, or other secrets here.
+This file is the canonical non-secret state summary for INCOME 2. Reconcile it against live services, provider messages, current external markets, and current Moltbook state before changing a material status. Never put API keys, private credentials, recovery tokens, seed phrases, solver capability keys, claim secrets, or other secrets here.
 
 ## Product
 
@@ -18,6 +18,18 @@ A human user may use both modes at the same time:
 - **Agent Earn / Auto Make Me:** AI performs eligible machine-doable paid work.
 
 INCOME 2 is also agent-native: outside AI agents can discover and pay for machine services programmatically.
+
+### Launch positioning
+
+Do not rely on autonomous-agent work alone to make the consumer product useful at launch.
+
+Current intended economic shape:
+
+- **Human Earn = dependable earning floor.** Build redundant funded human-work supply so supported users can usually find something legitimate to do even while agent-native demand is still thin.
+- **Agent Earn = autonomous upside.** Keep growing x402, paid agent services, bounties, and future agent-to-agent work so more of the earning can become automated over time.
+- **Both can run simultaneously.** A customer should be able to earn manually while Auto Make Me continues looking for legitimate machine-doable paid work.
+
+The product should never imply that autonomous work is guaranteed or already abundant. The early goal is enough total paid demand across all rails to make INCOME 2 useful now while the agent economy grows.
 
 ## Business model
 
@@ -56,11 +68,11 @@ Still required before all revenue rails are fully unified:
 All are sourced from `Patrickbo19/BidLens-Core` main branch and configured for Render auto-deploy on commit.
 
 - `earn-router` — customer-facing INCOME 2 website / Human Earn router
-- `earn-tools-backend` — canonical account ledger, x402 seller, TaskBounty vault/solver bridge
+- `earn-tools-backend` — canonical account ledger, x402 seller, TaskBounty vault/solver bridge, Moltbook credential vault and demand worker
 - `earn-chat-mcp` — ChatGPT MCP/plugin surface; uses canonical seller ledger
 - `earn-agent-worker` — older autonomous worker service; not the primary TaskBounty managed solver
 
-Latest reconciled Render state: the seller build containing the new first-sale web-extraction route deployed successfully. Subsequent marketplace-compatibility deployment must be rechecked live before assuming final state.
+Latest reconciled seller deployment is live and includes the first-sale `/web-extract` route plus the claimed Moltbook integration/demand launch.
 
 ## Customer-facing website
 
@@ -147,10 +159,11 @@ Buyer intents targeted:
 - article to markdown
 - web content extraction
 - scrape page to markdown
+- website text extraction
 - research/RAG ingestion
 - URL to clean text/markdown
 
-Why this was chosen: current Agent402 pricing/evidence shows article extraction and site/page-to-markdown as paid network capabilities, while generic hashing/encoding is commoditized. INCOME 2 intentionally undercuts the current Agent402 article-extract price while avoiding a paid upstream dependency.
+Why this was chosen: current buyer-market evidence shows article/page extraction as a paid machine need, while generic hashing/encoding is heavily commoditized. INCOME 2 intentionally undercuts comparable article extraction while avoiding a paid upstream dependency.
 
 Safety/quality properties:
 
@@ -161,18 +174,69 @@ Safety/quality properties:
 - static HTML/text only; no claim of JavaScript rendering
 - external page content explicitly marked untrusted
 
-The URL audit route now benefits from the redirect-safe public fetch helper as well.
+The URL-audit route also uses the redirect-safe public fetch helper.
 
-Current live seller manifest reports 13 resources. Existing generic capabilities remain available, including status, hashes/encoding, JSON QA, prompt scan, URL audit, and x402 buyer preflight.
+Current live seller manifest reports **13 resources**. Existing generic capabilities remain available, including status, hashes/encoding, JSON QA, prompt scan, URL audit, and x402 buyer preflight.
 
-### Buyer visibility after first-sale route launch
+### Buyer visibility / routing state
 
-- **x402 Arena:** `income2-web-extract` was accepted as active and verified at 0.003 USDC on Base; subsequent duplicate-name 409s are expected because the registration now exists.
-- **402Index:** `INCOME 2 Webpage to Clean Markdown` was accepted as a healthy self-registered service, currently pending review/domain verification.
-- **Market402:** the exact `/web-extract` resource is now submitted instead of being accidentally rewritten to `/seller-status`. A compatibility shim is being deployed so the valid x402 v2 challenge present in the `PAYMENT-REQUIRED` header is also mirrored into the HTTP 402 JSON body for marketplaces that inspect the body.
-- **Agent402:** origin remains listed/routable. Immediate registration response still reported the previously indexed 12 tools even though the live manifest reports 13, so allow normal re-crawl/index time and do not create duplicate listings.
+- **Agent402:** origin is currently listed, routable, health 1, and now reports **13 tools** after re-indexing.
+- **x402 Arena:** `income2-web-extract` was accepted as active/verified at 0.003 USDC on Base. Later duplicate-name 409 responses are expected because the registration already exists.
+- **Market402:** the exact `/web-extract` resource is submitted and now passes **11/11** instant spec-compliance checks. A compatibility shim mirrors the valid x402 v2 challenge into the HTTP 402 JSON body as well as the payment header.
+- **402Index:** `INCOME 2 Webpage to Clean Markdown` is accepted as healthy and self-registered, currently pending review/domain verification.
 
 Do not self-pay to manufacture activity. First revenue requires a genuine outside buyer settlement.
+
+## Moltbook — agent demand/distribution loop
+
+INCOME 2 now has a claimed Moltbook agent identity.
+
+- **Agent name:** `Income2`
+- **Claim status:** `claimed`
+- **Credential storage:** API key is encrypted at rest in the existing Postgres-backed INCOME 2 vault. Never expose it in chat, logs intended for users, GitHub, or public docs.
+- Moltbook status is checked through its authenticated agent status API using the encrypted key.
+
+First verified demand post:
+
+`https://www.moltbook.com/post/c5e9a29c-a2f8-4d2a-8115-2c07cc895c49`
+
+- Post id: `c5e9a29c-a2f8-4d2a-8115-2c07cc895c49`
+- Community: `m/agent-marketplace`
+- Title: `Agents: what capability do you repeatedly need — or wish were cheaper?`
+- Status: **verified and published**
+
+The first post flow is idempotent so service restarts should not create duplicates. Moltbook's anti-spam verification challenge is solved only when the math parser is confident; uncertain challenges must not be guessed.
+
+### Moltbook strategy
+
+Use Moltbook primarily as a demand-intelligence and relevant distribution channel, not an ad cannon.
+
+Loop:
+
+1. Read/search existing agent conversations.
+2. Ask agents what repetitive capability they currently pay for, cannot do locally, or avoid because the alternative is expensive/annoying.
+3. Record exact buyer language, current alternatives, price complaints, auth friction, reliability/retry issues, output-format needs, and concrete willingness-to-pay evidence.
+4. Treat repeated independent demand as stronger than one generic suggestion.
+5. Cross-check the demand against current agent marketplaces and existing competitor pricing.
+6. Build only the strongest low-cost/reliable capability.
+7. Publish it through INCOME 2's x402 seller and discovery surfaces.
+8. Report back to relevant agents without spam.
+9. Measure **real external paid calls**, not engagement, as the success metric.
+
+Do not mass-comment, manufacture engagement, create duplicate posts/accounts, or advertise into unrelated conversations.
+
+### Early Moltbook demand signals
+
+Existing conversations already suggest that agents care about more than raw API functionality. Notable recurring themes to continue validating:
+
+- predictable, known pricing before a call
+- retries/idempotency so agents do not get charged twice
+- receipts / payment reconciliation
+- reliable structured outputs
+- avoiding annoying authentication/setup
+- distribution/routing: merely supporting x402 is not enough if buyers cannot discover the service
+
+A potential future direction is an **agent-safe paid-call/preflight/reconciliation layer**, but do NOT build it solely from this early signal. Wait for repeated independent demand and/or concrete paid-workflow evidence.
 
 ## Managed Task Hunter
 
@@ -204,7 +268,18 @@ The displayed reward was simulation-only (`sim_only` / payout source `sim`). It 
 
 ## Human Earn
 
-Current target/provider work includes Lootably plus other publisher applications.
+Human Earn is now strategically the **consumer earning floor**, not a side feature. The goal is eventually a redundant multi-provider supply layer so one provider's lack of inventory or approval does not make INCOME 2 empty for users.
+
+Current/potential provider stack under consideration:
+
+- Lootably
+- TapResearch
+- ayeT Studios
+- BitLabs
+- CPX Research
+- inBrain
+
+Do not claim a provider is integrated or approved merely because it is a target. Only live approved funded feeds count.
 
 Latest reconciled inbox state:
 
@@ -218,26 +293,49 @@ Before crediting real Human Earn USD balances, configure and verify the provider
 
 Do not fabricate inventory while provider activation is pending.
 
+### Human Earn product goal
+
+Once multiple feeds are available, build one unified ranking layer that favors:
+
+- legitimate funded opportunities
+- zero-spend opportunities where possible
+- user eligibility
+- realistic reward/time
+- provider reliability
+- INCOME 2 margin without misleading the user
+
+A supported user should ideally see at least one currently available legitimate earning action before the product says nothing is available.
+
+## Customer payout requirement
+
+External customer cash-out is still **not production-enabled**. Do not claim users can withdraw money yet.
+
+Before broad consumer launch, actual redeemability must be solved. An internal ledger balance alone is not enough for a consumer "make money" product.
+
 ## Autonomous controller
 
 ChatGPT automation:
 
 - Title: `INCOME 2 Earn Watch`
+- ID: `6a9f2eb7dccc8191a659939d9b47a0f0`
 - Enabled: yes
 - Frequency: hourly
 - Mode: condition watch
+- Timezone: America/New_York
 
 It monitors:
 
-- the first-sale `/web-extract` route health, x402 challenge, marketplace/index visibility, buyer-intent routing and real settlements
+- first-sale `/web-extract` health, x402 challenge, marketplace/index visibility, buyer-intent routing and real settlements
+- Moltbook first demand post and relevant conversations for substantive replies / repeated agent demand
 - TaskBounty auth + current funded public inventory
 - Task Hunter duplicate-run prevention and economics gate
-- x402 seller/ledger
-- broader buyer visibility
+- x402 seller/ledger and broader buyer visibility
 - ChatGPT MCP health and canonical-ledger architecture
 - Human Earn router/provider state
 - Gmail for meaningful Lootably/TapResearch/ayeT approval/rejection/action-required messages
 - the two-condition public ChatGPT launch gate
+
+For Moltbook it should group demand by capability, current alternative/provider, pricing complaint, authentication/friction, reliability/retry problem, output-format need, and willingness-to-pay evidence. Notify on repeated independent demand or unusually concrete purchase intent, but do not spam or automatically build from one vague comment.
 
 Do not start billable managed-agent compute unless a qualifying funded task exists.
 
@@ -253,31 +351,49 @@ As of this reconciliation:
 
 - Verified real external INCOME 2 cash/revenue: **$0**
 - Verified real outside Agent Earn settlements: **0 observed**
-- New `/web-extract` route: live, but listing/availability is not revenue
+- `/web-extract`: live and distributed, but listing/availability is not revenue
+- Moltbook account/post: active distribution/demand research, but engagement is not revenue
 - Simulated AgentWorld reward: excluded
-- TaskBounty available/public bounties: 0 at latest public-board check
+- TaskBounty available/public code bounties: 0 at latest public-board check
 - Human Earn live provider conversions: 0
 
 ## Current blockers / next milestones
 
-1. Let `/web-extract` obtain genuine marketplace exposure and measure real outside demand; do not add more speculative tools before visibility data exists.
-2. First genuine outside Agent Earn settlement through `/web-extract` or another legitimate agent rail.
-3. First Human Earn publisher approval and funded inventory.
-4. Complete verified Human Earn conversion → canonical customer ledger attribution using the approved provider's exact economics/security configuration.
-5. Complete external task/bounty payout → canonical customer ledger attribution when a real payout path exists.
-6. Run end-to-end ChatGPT reviewer tests against the unified live ledger.
-7. Submit INCOME 2 to the public ChatGPT Plugin Directory only after the two launch-gate conditions are true.
+1. Collect real Moltbook replies and broader agent-demand evidence; identify repeated paid pain instead of guessing the next API.
+2. Let `/web-extract` obtain genuine marketplace exposure and measure real outside demand; do not add speculative tools without evidence.
+3. First genuine outside Agent Earn settlement through `/web-extract` or another legitimate agent rail.
+4. First Human Earn publisher approval and funded inventory.
+5. Expand toward redundant Human Earn supply once approvals make that practical.
+6. Complete verified Human Earn conversion → canonical customer ledger attribution using the approved provider's exact economics/security configuration.
+7. Solve safe, real customer cash-out before broad consumer launch.
+8. Complete external task/bounty payout → canonical customer ledger attribution when a real payout path exists.
+9. Run end-to-end ChatGPT reviewer tests against the unified live ledger.
+10. Submit INCOME 2 to the public ChatGPT Plugin Directory only after the two launch-gate conditions are true.
+
+## Current strategic judgment
+
+INCOME 2 is no longer primarily blocked by architecture. It is blocked by **demand proof, Human Earn supply, and payout readiness**.
+
+Do not respond to weak demand by endlessly adding features. Use this priority:
+
+**traffic → observe demand → validate repeated pain → build narrowly → distribute → verify real payment → repeat**
+
+The larger long-term thesis remains: INCOME 2 can become a transaction/demand network where humans and agents turn capability into paid results, while INCOME 2 takes a fee or spread. The x402 utilities are one rail and proof mechanism, not the entire business.
 
 ## Continuity rule
 
-Before making a material INCOME 2 decision, reconcile this file against:
+When switching chats, start by reading this file and then reconcile it against live state before acting materially.
+
+Before making a material INCOME 2 decision, reconcile against:
 
 - latest GitHub main commits
 - live Render deploy/service health
+- current Moltbook claim/post/reply state
 - current Brainbase Task Hunter configuration/tasks
 - enabled INCOME 2 Earn Watch automation
 - current provider inbox/status
 - current official TaskBounty board/docs
+- current x402 marketplace visibility and settlement evidence
 - current ChatGPT Plugin Directory state when launch status matters
 
-Update this file after material architecture, launch-gate, provider, revenue, distribution, or automation changes. Never let stale chat context override verified live state.
+Update this file after material architecture, launch-gate, provider, revenue, distribution, Moltbook, or automation changes. Never let stale chat context override verified live state.
