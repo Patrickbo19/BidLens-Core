@@ -5,7 +5,7 @@ const PORT = process.env.PORT || 3000;
 const SELLER = String(process.env.EARN_SELLER_ORIGIN || 'https://earn-tools-backend.onrender.com').replace(/\/$/, '');
 const MCP = String(process.env.EARN_MCP_ORIGIN || 'https://earn-chat-mcp.onrender.com').replace(/\/$/, '');
 const LOOTABLY_API_URL = 'https://api.lootably.com/api/v2/offers/get';
-const VERSION = '0.6.0';
+const VERSION = '0.6.1';
 
 function json(res, status, data) {
   res.writeHead(status, {
@@ -136,6 +136,17 @@ async function proxySeller(path, body, req, timeoutMs = 50000) {
 }
 async function proxySellerGet(path, timeoutMs = 15000) {
   return fetchJson(`${SELLER}${path}`, {}, timeoutMs);
+}
+function normalizeOutcomeData(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+  const data = { ...value };
+  const rawExecutionUrl = data.executionUrl || data.execution?.url || null;
+  if (rawExecutionUrl) {
+    try { data.executionUrl = new URL(String(rawExecutionUrl), `${SELLER}/`).toString(); }
+    catch { data.executionUrl = null; }
+  }
+  if (data.execution?.body && typeof data.execution.body === 'object') data.executionBody = data.execution.body;
+  return data;
 }
 
 function userReward(offer) {
@@ -297,6 +308,7 @@ q('routeOutcome').onclick=async()=>{
    if(d.quotedPriceUsd!=null)lines.push('Quoted upstream price: $'+Number(d.quotedPriceUsd).toFixed(6));
    if(d.status==='fulfilled_free_compute')lines.push('Fulfilled with $0 upstream spend.');
    if(d.executionUrl)lines.push('Buyer-funded execution URL: '+d.executionUrl);
+   if(d.executionBody)lines.push('Execution body: '+JSON.stringify(d.executionBody));
    if(d.fundingState)lines.push('Funding: '+d.fundingState);
    if(d.note)lines.push(String(d.note));
    if(d.result!=null)lines.push('Result: '+JSON.stringify(d.result,null,2).slice(0,4000));
@@ -390,13 +402,13 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && u.pathname === '/api/outcome') {
       const body = JSON.parse((await readBody(req, 120000)) || '{}');
       const result = await proxySeller('/outcome-router', body, req, 60000);
-      return json(res, result.status, result.data);
+      return json(res, result.status, normalizeOutcomeData(result.data));
     }
     if (req.method === 'GET' && u.pathname.startsWith('/api/outcome/')) {
       const id = u.pathname.slice('/api/outcome/'.length).trim();
       if (!/^outcome_[a-f0-9]{32}$/i.test(id)) return json(res, 400, { ok:false, message:'Invalid outcome request id' });
       const result = await proxySellerGet(`/outcome-router/${encodeURIComponent(id)}`);
-      return json(res, result.status, result.data);
+      return json(res, result.status, normalizeOutcomeData(result.data));
     }
     if (req.method === 'POST' && u.pathname === '/api/opportunities') {
       if (!lootablyConfigured()) return json(res, 503, { ok: false, code: 'PROVIDER_PENDING', message: 'Human Earn publisher inventory activation is pending.' });
