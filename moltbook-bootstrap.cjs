@@ -1,4 +1,5 @@
 const vault = require('./moltbook-vault.cjs');
+const productUpdate = require('./moltbook-product-update.cjs');
 
 const API = 'https://www.moltbook.com/api/v1';
 const DESCRIPTION = 'INCOME 2 helps humans and AI agents earn through legitimate paid work and provides low-cost x402 pay-per-call tools for autonomous agents.';
@@ -85,5 +86,9 @@ async function register() {
 register().catch(error => {
   console.error(JSON.stringify({ type: 'moltbook_bootstrap_error', error: String(error?.message || error).slice(0, 300), at: new Date().toISOString() }));
 });
+
+setTimeout(() => productUpdate.run().catch(error => {
+  console.error(JSON.stringify({ type:'moltbook_product_update_error', error:String(error?.message || error).slice(0,300), at:new Date().toISOString() }));
+}), 7000).unref();
 
 module.exports = { register, refreshClaimStatus };
