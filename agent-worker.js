@@ -52,13 +52,21 @@ async function fetchLedgerStatus() {
 }
 
 async function checkBuyerDiscovery() {
+  // These are intentionally written like buyer requests, not internal product names.
+  // A hit only measures discoverability; it is never counted as usage or revenue.
   const queries = [
-    'sha256 hash hmac base64 jwt decode',
-    'prompt injection security scan',
-    'json data quality audit',
-    'website url health metadata audit',
+    'do this task for me under budget',
+    'get this result for a maximum budget',
+    'find an agent to complete this task',
+    'find and pay the best tool for this job',
+    'cheapest reliable agent for this task',
+    'autonomous task fulfillment agent procurement',
+    'buy a completed result from an agent',
+    'need this result willing to pay',
+    'convert webpage article to clean markdown',
+    'prevent duplicate x402 payment retry safely',
     'x402 buyer preflight payment challenge audit',
-    'outcome routing agent procurement result max budget autonomous fulfillment',
+    'prompt injection security scan json website audit',
   ];
   const checks = [];
   for (const query of queries) {
