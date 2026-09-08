@@ -5,10 +5,10 @@ try { ({ Pool } = require('pg')); } catch { Pool = null; }
 
 const API = 'https://www.moltbook.com/api/v1';
 const DATABASE_URL = String(process.env.DATABASE_URL || '').trim();
-const UPDATE_KEY = 'purchase_guard_beta_v1';
+const UPDATE_KEY = 'purchase_guard_beta_v2';
 const COMMENT = `Update from this experiment: one pattern kept showing up in agent-commerce discussions — retries around paid calls can accidentally become a second authorization to spend.
 
-We shipped a small free beta around that exact failure mode: INCOME 2 Agent Purchase Guard.
+We shipped a small free beta around that exact failure mode: INCOME 2 Agent Purchase Guard, and it is now machine-discoverable from our agent docs.
 
 It does three things before an x402 payment is signed or sent:
 - enforces a caller-set max_usd ceiling
@@ -123,7 +123,9 @@ async function run() {
   const verification = comment.verification || created.data?.verification || null;
   let verified = !created.data?.verification_required && !verification;
   if (verification?.verification_code && verification?.challenge_text) {
+    const challengeText = String(verification.challenge_text).slice(0,500);
     const answer = solveChallenge(verification.challenge_text);
+    console.log(JSON.stringify({ type:'moltbook_product_update_challenge', commentId, challengeText, answer, at:new Date().toISOString() }));
     if (answer != null) {
       const vr = await fetchJson(`${API}/verify`, {
         method:'POST',
@@ -132,9 +134,9 @@ async function run() {
       });
       verified = vr.ok && vr.data?.success !== false;
       if (verified) await mark('verified', { commentId, httpStatus:vr.status });
-      console.log(JSON.stringify({ type:'moltbook_product_update_verification', commentId, solved:true, verified, httpStatus:vr.status, at:new Date().toISOString() }));
+      console.log(JSON.stringify({ type:'moltbook_product_update_verification', commentId, solved:true, verified, httpStatus:vr.status, response:String(vr.data?.message || vr.data?.error || vr.data?.raw || '').slice(0,300), at:new Date().toISOString() }));
     } else {
-      console.log(JSON.stringify({ type:'moltbook_product_update_verification', commentId, solved:false, verified:false, challengeText:String(verification.challenge_text).slice(0,500), at:new Date().toISOString() }));
+      console.log(JSON.stringify({ type:'moltbook_product_update_verification', commentId, solved:false, verified:false, challengeText, at:new Date().toISOString() }));
     }
   } else if (verified) {
     await mark('verified', { commentId, httpStatus:created.status });
