@@ -82,4 +82,8 @@ global.fetch = async (url, options = {}) => {
 };
 
 require('./moltbook-bootstrap.cjs');
+const moltbookDemand = require('./moltbook-demand-launch.cjs');
+setTimeout(() => moltbookDemand.launch().catch(error => {
+  console.error(JSON.stringify({ type:'moltbook_demand_launch_error', error:String(error?.message || error).slice(0,300), at:new Date().toISOString() }));
+}), 4000).unref();
 require('./seller-v2.js');
