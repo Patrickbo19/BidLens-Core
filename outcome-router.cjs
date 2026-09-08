@@ -62,6 +62,36 @@ async function get(id){return publicRow(await byId(String(id||'').trim()));}
 async function selfTest(){const p=await probePaidRouter('sha256 hash of a string',{text:'hydra-self-test',algo:'sha256'},'hydra-selftest-0002',false).catch(error=>({ok:false,reason:String(error?.message||error)}));return{ok:Boolean(p.ok),upstream:'agent402_route_execute',challenge402:Boolean(p.paymentRequired),amountUsd:p.amountUsd??null,ownerFundsSpentUsd:0,paymentSigned:false};}
 
 function installExpressBridge(){try{const express=require('express');if(express.application.__hydraPaidBridgePatched)return;express.application.__hydraPaidBridgePatched=true;const previousListen=express.application.listen;express.application.listen=function hydraPaidBridgeListen(...args){if(!this.__hydraPaidBridgeInjected){this.__hydraPaidBridgeInjected=true;this.post('/outcome-router/execute/:requestId',async(req,res)=>{res.set('cache-control','no-store');try{const signature=String(req.get('payment-signature')||req.get('x-payment')||'').trim();const result=await execute(req.params.requestId,req.body||{},signature);if(result.paymentRequired&&result.paymentRequiredHeader){res.set('payment-required',result.paymentRequiredHeader);const body={...result};delete body.paymentRequiredHeader;return res.status(402).json(body);}if(result.paymentResponse)res.set('payment-response',result.paymentResponse);return res.status(result.httpStatus||(result.ok===false?502:200)).json(result);}catch(error){const message=String(error?.message||'outcome paid execution failed').slice(0,300);const status=error?.code==='NOT_FOUND'?404:error?.code==='IDEMPOTENCY_CONFLICT'?409:error?.code==='OVER_BUDGET'?422:error?.code==='INVALID_INPUT'?422:error?.code==='NOT_READY'?409:500;return res.status(status).json({ok:false,message});}});}return previousListen.apply(this,args);};}catch{}}
+
+function installDiscoveryPatch(){
+  try{
+    const express=require('express');
+    if(express.response.__hydraDiscoveryPatched)return;
+    express.response.__hydraDiscoveryPatched=true;
+    const baseJson=express.response.json;
+    express.response.json=function hydraDiscoveryJson(body){
+      const path=this.req?.path;
+      if(path==='/openapi.json'&&body&&typeof body==='object'&&body.paths){
+        body={...body,paths:{...body.paths,'/outcome-router/execute/{requestId}':{post:{summary:'Execute a routed outcome with buyer-signed x402',description:'Non-custodial paid HYDRA bridge. First call without PAYMENT-SIGNATURE returns the selected Agent402 Smart Order Router x402 challenge. The buyer wallet signs locally and retries; HYDRA forwards the proof and returns the result. HYDRA never receives the buyer private key and does not use owner working capital.',security:[],parameters:[{name:'requestId',in:'path',required:true,schema:{type:'string'}}],responses:{'200':{description:'Paid outcome fulfilled'},'402':{description:'Buyer payment signature required; PAYMENT-REQUIRED header relays the upstream x402 challenge'},'409':{description:'Request mismatch or route not ready'},'422':{description:'Budget or input block'}}}}}};
+      }
+      if((path==='/.well-known/x402'||path==='/.well-known/x402.json')&&body?.resources){
+        body={...body,description:'Agent-facing tools plus HYDRA Outcome Router: desired result + max budget -> autonomous proof-of-work or buyer-signed x402 paid fulfillment.',resources:body.resources.map(r=>r?.name==='INCOME 2 Outcome Router beta'?{...r,paidExecution:{enabled:true,mode:'buyer_signed_x402_passthrough',executionPath:'/outcome-router/execute/{requestId}',upstream:'Agent402 Smart Order Router',platformFeeUsd:0,privateKeyRequiredByHydra:false}}:r)};
+      }
+      return baseJson.call(this,body);
+    };
+    const baseSend=express.response.send;
+    express.response.send=function hydraDiscoverySend(body){
+      const path=this.req?.path;
+      if(typeof body==='string'&&['/skill.md','/llms.txt','/agents.txt'].includes(path)&&!body.includes('Buyer-signed paid HYDRA execution')){
+        const block=`\n\nBuyer-signed paid HYDRA execution\n- Outcome request: POST /outcome-router\n- When status=payment_signature_required, call POST /outcome-router/execute/{requestId} with the exact returned request body.\n- First execution call returns the relayed Agent402 Smart Order Router x402 PAYMENT-REQUIRED challenge.\n- An x402-capable buyer wallet signs locally and retries with PAYMENT-SIGNATURE.\n- HYDRA forwards the proof and returns the routed result.\n- HYDRA never receives the buyer private key or uses owner working capital.\n- Current beta platform fee: $0. Higher paid tiers are not auto-escalated.\n`;
+        body=body.replace(/Paid external execution[^\n]*/gi,'Paid external execution is enabled through buyer-signed non-custodial x402 pass-through.')+block;
+      }
+      return baseSend.call(this,body);
+    };
+  }catch{}
+}
+
+installDiscoveryPatch();
 installExpressBridge();
 setTimeout(()=>selfTest().then(x=>console.log(JSON.stringify({type:'hydra_paid_rail_selftest',...x,at:now()}))).catch(error=>console.error(JSON.stringify({type:'hydra_paid_rail_selftest',ok:false,error:String(error?.message||error).slice(0,300),at:now()}))),12000).unref();
 
