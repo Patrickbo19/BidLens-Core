@@ -2,10 +2,12 @@ const http = require('http');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
 const vault = require('./taskbounty-vault.cjs');
+const moltbookVault = require('./moltbook-vault.cjs');
 
 const PORT = Number(process.env.PORT || 3000);
 const CORE_PORT = Number(process.env.SELLER_INTERNAL_PORT || 3901);
 const TASKBOUNTY_API = 'https://www.task-bounty.com/api/v1';
+const MOLTBOOK_API = 'https://www.moltbook.com/api/v1';
 const BOOTSTRAP_NONCE = String(process.env.TASKBOUNTY_BOOTSTRAP_NONCE || '').trim();
 const SOLVER_KEY = String(process.env.TASKBOUNTY_SOLVER_KEY || '').trim();
 
@@ -49,6 +51,57 @@ function countTasks(data) {
   if (Array.isArray(data)) return data.length;
   for (const key of ['data', 'tasks', 'items', 'results']) if (Array.isArray(data?.[key])) return data[key].length;
   return null;
+}
+
+function arrayFrom(data, keys) {
+  if (Array.isArray(data)) return data;
+  for (const key of keys) if (Array.isArray(data?.[key])) return data[key];
+  return [];
+}
+
+function publicComment(x) {
+  const content = String(x?.content || x?.text || x?.body || '').trim();
+  const author = String(x?.author?.name || x?.author_name || x?.agent?.name || x?.username || '').trim();
+  return {
+    id: String(x?.id || x?.comment_id || '').slice(0, 160) || null,
+    author: author.slice(0, 100) || null,
+    content: content.slice(0, 1200),
+    createdAt: x?.created_at || x?.createdAt || null,
+    score: x?.score ?? x?.upvotes ?? null,
+  };
+}
+
+async function moltbookDemandStatus() {
+  const state = await moltbookVault.status();
+  if (!state.connected) return { connected: false, claimStatus: state.claimStatus || null, postId: null, replies: [], checkedAt: new Date().toISOString() };
+  const apiKey = await moltbookVault.getApiKey();
+  const postId = state.firstPostId;
+  if (!apiKey || !postId) return { connected: true, claimStatus: state.claimStatus || null, postId: postId || null, replies: [], checkedAt: new Date().toISOString() };
+  const headers = { authorization: `Bearer ${apiKey}` };
+  const postResp = await fetchJson(`${MOLTBOOK_API}/posts/${encodeURIComponent(postId)}`, { headers }).catch(error => ({ ok:false, status:null, data:{}, error:String(error?.message || error) }));
+  let comments = arrayFrom(postResp.data, ['comments','replies']);
+  let commentsStatus = null;
+  if (!comments.length) {
+    const commentsResp = await fetchJson(`${MOLTBOOK_API}/posts/${encodeURIComponent(postId)}/comments?sort=new&limit=50`, { headers }).catch(error => ({ ok:false, status:null, data:{}, error:String(error?.message || error) }));
+    commentsStatus = commentsResp.status;
+    comments = arrayFrom(commentsResp.data, ['comments','replies','data','items','results']);
+  }
+  const post = postResp.data?.post || postResp.data?.data?.post || postResp.data?.data || postResp.data || {};
+  return {
+    connected: true,
+    claimStatus: state.claimStatus || null,
+    agentName: state.agentName || null,
+    postId,
+    postUrl: `https://www.moltbook.com/post/${postId}`,
+    postHttpStatus: postResp.status,
+    commentsHttpStatus: commentsStatus,
+    title: String(post?.title || '').slice(0, 300) || null,
+    submolt: String(post?.submolt?.name || post?.submolt_name || '').slice(0, 100) || null,
+    commentCount: Number(post?.comment_count ?? post?.comments_count ?? comments.length) || comments.length,
+    score: post?.score ?? post?.upvotes ?? null,
+    replies: comments.slice(0, 25).map(publicComment),
+    checkedAt: new Date().toISOString(),
+  };
 }
 
 async function taskBountyStatus() {
@@ -187,6 +240,12 @@ async function handleVault(req, res, path) {
     return true;
   }
 
+  if (path === '/moltbook/demand-status' && req.method === 'GET') {
+    const status = await moltbookDemandStatus().catch(error => ({ connected: true, error: String(error?.message || error).slice(0, 300), replies: [], checkedAt: new Date().toISOString() }));
+    sendJson(res, 200, { ok: true, moltbook: status });
+    return true;
+  }
+
   if (!BOOTSTRAP_NONCE || path !== `/taskbounty/bootstrap/${BOOTSTRAP_NONCE}`) return false;
   if (req.method !== 'POST') {
     sendJson(res, 405, { ok: false, message: 'POST required' });
@@ -250,7 +309,8 @@ function proxy(req, res) {
 
 (async () => {
   const vaultState = await vault.init();
-  console.log(JSON.stringify({ type: 'taskbounty_vault_init', persistent: vaultState.persistent, configured: vaultState.configured, solverBridge: Boolean(SOLVER_KEY) }));
+  const moltbookVaultState = await moltbookVault.init().catch(() => ({ persistent:false, configured:false }));
+  console.log(JSON.stringify({ type: 'taskbounty_vault_init', persistent: vaultState.persistent, configured: vaultState.configured, solverBridge: Boolean(SOLVER_KEY), moltbookVault: Boolean(moltbookVaultState.persistent) }));
 
   const core = spawn(process.execPath, ['seller-core.js'], {
     env: { ...process.env, PORT: String(CORE_PORT) },
