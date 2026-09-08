@@ -4,8 +4,8 @@ global.fetch = async (url, options = {}) => {
     try {
       const payload = JSON.parse(options.body);
       if (payload.url && !payload.resource) {
+        payload.resource = payload.url;
         delete payload.url;
-        payload.resource = 'https://earn-tools-backend.onrender.com/seller-status';
         options = { ...options, body: JSON.stringify(payload) };
       }
     } catch {}
