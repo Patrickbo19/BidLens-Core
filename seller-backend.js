@@ -42,9 +42,7 @@ async function fetchJson(url, options = {}, timeoutMs = 12000) {
     let data;
     try { data = JSON.parse(text); } catch { data = { raw: text.slice(0, 500) }; }
     return { ok: r.ok, status: r.status, data };
-  } finally {
-    clearTimeout(timer);
-  }
+  } finally { clearTimeout(timer); }
 }
 
 function countTasks(data) {
@@ -53,40 +51,39 @@ function countTasks(data) {
   return null;
 }
 
-function arrayFrom(data, keys) {
-  if (Array.isArray(data)) return data;
-  for (const key of keys) if (Array.isArray(data?.[key])) return data[key];
-  return [];
-}
-
-function publicComment(x) {
-  const content = String(x?.content || x?.text || x?.body || '').trim();
-  const author = String(x?.author?.name || x?.author_name || x?.agent?.name || x?.username || '').trim();
-  return {
-    id: String(x?.id || x?.comment_id || '').slice(0, 160) || null,
-    author: author.slice(0, 100) || null,
-    content: content.slice(0, 1200),
-    createdAt: x?.created_at || x?.createdAt || null,
-    score: x?.score ?? x?.upvotes ?? null,
-  };
-}
-
+// Moltbook compliance mode: only inspect our own post-level state and expose
+// aggregate counters. Do not fetch/re-publish comment bodies, author names,
+// profile details, or other third-party Moltbook content through this service.
 async function moltbookDemandStatus() {
   const state = await moltbookVault.status();
-  if (!state.connected) return { connected: false, claimStatus: state.claimStatus || null, postId: null, replies: [], checkedAt: new Date().toISOString() };
+  if (!state.connected) {
+    return {
+      connected: false,
+      claimStatus: state.claimStatus || null,
+      postId: null,
+      checkedAt: new Date().toISOString(),
+      thirdPartyContentExposed: false,
+    };
+  }
+
   const apiKey = await moltbookVault.getApiKey();
   const postId = state.firstPostId;
-  if (!apiKey || !postId) return { connected: true, claimStatus: state.claimStatus || null, postId: postId || null, replies: [], checkedAt: new Date().toISOString() };
-  const headers = { authorization: `Bearer ${apiKey}` };
-  const postResp = await fetchJson(`${MOLTBOOK_API}/posts/${encodeURIComponent(postId)}`, { headers }).catch(error => ({ ok:false, status:null, data:{}, error:String(error?.message || error) }));
-  let comments = arrayFrom(postResp.data, ['comments','replies']);
-  let commentsStatus = null;
-  if (!comments.length) {
-    const commentsResp = await fetchJson(`${MOLTBOOK_API}/posts/${encodeURIComponent(postId)}/comments?sort=new&limit=50`, { headers }).catch(error => ({ ok:false, status:null, data:{}, error:String(error?.message || error) }));
-    commentsStatus = commentsResp.status;
-    comments = arrayFrom(commentsResp.data, ['comments','replies','data','items','results']);
+  if (!apiKey || !postId) {
+    return {
+      connected: true,
+      claimStatus: state.claimStatus || null,
+      postId: postId || null,
+      checkedAt: new Date().toISOString(),
+      thirdPartyContentExposed: false,
+    };
   }
+
+  const headers = { authorization: `Bearer ${apiKey}` };
+  const postResp = await fetchJson(`${MOLTBOOK_API}/posts/${encodeURIComponent(postId)}`, { headers })
+    .catch(error => ({ ok:false, status:null, data:{}, error:String(error?.message || error) }));
   const post = postResp.data?.post || postResp.data?.data?.post || postResp.data?.data || postResp.data || {};
+  const commentCount = Number(post?.comment_count ?? post?.comments_count ?? 0) || 0;
+
   return {
     connected: true,
     claimStatus: state.claimStatus || null,
@@ -94,13 +91,11 @@ async function moltbookDemandStatus() {
     postId,
     postUrl: `https://www.moltbook.com/post/${postId}`,
     postHttpStatus: postResp.status,
-    commentsHttpStatus: commentsStatus,
-    title: String(post?.title || '').slice(0, 300) || null,
-    submolt: String(post?.submolt?.name || post?.submolt_name || '').slice(0, 100) || null,
-    commentCount: Number(post?.comment_count ?? post?.comments_count ?? comments.length) || comments.length,
+    commentCount,
+    hasReplies: commentCount > 0,
     score: post?.score ?? post?.upvotes ?? null,
-    replies: comments.slice(0, 25).map(publicComment),
     checkedAt: new Date().toISOString(),
+    thirdPartyContentExposed: false,
   };
 }
 
@@ -241,7 +236,12 @@ async function handleVault(req, res, path) {
   }
 
   if (path === '/moltbook/demand-status' && req.method === 'GET') {
-    const status = await moltbookDemandStatus().catch(error => ({ connected: true, error: String(error?.message || error).slice(0, 300), replies: [], checkedAt: new Date().toISOString() }));
+    const status = await moltbookDemandStatus().catch(error => ({
+      connected: true,
+      error: String(error?.message || error).slice(0, 300),
+      checkedAt: new Date().toISOString(),
+      thirdPartyContentExposed: false,
+    }));
     sendJson(res, 200, { ok: true, moltbook: status });
     return true;
   }
