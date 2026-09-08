@@ -1,6 +1,6 @@
 # INCOME 2 — Canonical State
 
-Last reconciled: 2026-09-08 15:02 America/New_York
+Last reconciled: 2026-09-08 16:20 America/New_York
 
 This is the canonical **non-secret** state summary for INCOME 2. Before a material decision, reconcile it against latest GitHub main, live Render services, provider messages, external markets, and current Moltbook state. Never place API keys, recovery tokens, private keys, seed phrases, claim secrets, solver keys, or other credentials here.
 
@@ -17,6 +17,19 @@ Current modes:
 - **Buyer intent / Outcome Router:** an agent states the result it wants plus a maximum budget; INCOME 2 autonomously finds a fulfillment route and executes when a supported path exists.
 
 INCOME 2 is intended to become a two-sided earning/fulfillment network. Humans and agents can supply work; humans or agents can eventually buy completed outcomes; INCOME 2 sits in the transaction layer.
+
+## Legacy HYDRA retirement
+
+The older standalone HYDRA Agent Seller project is **retired and not authoritative**.
+
+- Legacy repo: `Patrickbo19/promisekeeper`
+- Legacy Render services: `hydra-agent-market-clean` and `hydra-agent-seller`
+- The legacy repo `main` branch has been stripped of the old HYDRA source/catalog/workflow code and now contains only a decommission notice, a tiny 410 tombstone app, and minimal dependencies.
+- `hydra-agent-seller` was already suspended.
+- `hydra-agent-market-clean` is being/has been redeployed as the tombstone so stale links fail clearly instead of behaving as a second HYDRA product.
+- Git history is preserved for audit/recovery only. Do not resume development there.
+
+**From this point forward, "HYDRA" means only the internal autonomous Outcome Router engine inside INCOME 2 (`Patrickbo19/BidLens-Core`).**
 
 ## Revenue truth
 
