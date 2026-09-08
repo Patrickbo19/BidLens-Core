@@ -1,6 +1,6 @@
 # INCOME 2 — Canonical State
 
-Last reconciled: 2026-09-08 17:43 America/New_York
+Last reconciled: 2026-09-08 17:46 America/New_York
 
 This is the canonical **non-secret** state summary for INCOME 2. Before a material decision, reconcile it against latest GitHub `main`, live Render services, provider messages, external markets, official MCP Registry state, and current Moltbook state. Never place API keys, recovery tokens, private keys, seed phrases, claim secrets, solver keys, passwords, or other credentials here.
 
@@ -319,7 +319,7 @@ HYDRA buyer jobs must never use it. Preserve it unless a separate verified legit
 
 ## Autonomous controller
 
-Automation: `INCOME 2 Earn Watch`  
+Canonical automation: `INCOME 2 Earn Watch`  
 ID: `6a9f2eb7dccc8191a659939d9b47a0f0`  
 Enabled: yes  
 Frequency: hourly condition watch
@@ -341,6 +341,8 @@ Monitor:
 - natural Agent402 discovery changes
 
 Do not treat intentionally skipped per-boot directory registration as a failure.
+
+The old standalone `HYDRA Earnings Watch` automation (`6a9ec31ed1048191bd39afb6f538012b`) was found still enabled during the second closure sweep and was **disabled on 2026-09-08**. It targeted the retired standalone HYDRA tombstone and must not be re-enabled. The unified `INCOME 2 Earn Watch` is the authoritative HYDRA/INCOME 2 monitor.
 
 For HYDRA distinguish:
 
@@ -373,6 +375,6 @@ When switching chats, read this file and reconcile it against:
 - TaskBounty
 - Human Earn provider inbox/status
 - Moltbook aggregate state
-- enabled Earn Watch
+- enabled `INCOME 2 Earn Watch`
 
 Update this file after material architecture, payment, revenue, provider, distribution, Moltbook, TaskBounty, Purchase Guard, HYDRA, website, registry, or automation changes. Never let stale chat context override verified live state.
