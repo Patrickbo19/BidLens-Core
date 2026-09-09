@@ -2,6 +2,10 @@ const express = require('express');
 
 const ORIGIN = String(process.env.PUBLIC_ORIGIN || 'https://earn-tools-backend.onrender.com').replace(/\/$/, '');
 const OUTCOME_EXECUTION_PATH = '/outcome-router/execute/{requestId}';
+const PAYAI_FACILITATOR = 'https://facilitator.payai.network';
+const CDP_FACILITATOR = 'https://api.cdp.coinbase.com/platform/v2/x402';
+const CDP_ENABLED = String(process.env.EARN_CDP_FACILITATOR_ENABLED || '').toLowerCase() === 'true';
+const CDP_CONFIGURED = Boolean(String(process.env.CDP_API_KEY_ID || '').trim() && String(process.env.CDP_API_KEY_SECRET || '').trim());
 const BUYER_INTENTS = [
   'do this task for me under budget',
   'get this result for a maximum budget',
@@ -38,8 +42,40 @@ const directoryRegistrationUrls = new Set([
   'https://402index.io/api/v1/register',
 ]);
 const nativeFetch = global.fetch;
+let cdpAuthModulePromise = null;
+
+async function fetchViaCdp(target, options = {}) {
+  if (!CDP_ENABLED || !target.startsWith(PAYAI_FACILITATOR)) return null;
+  if (!CDP_CONFIGURED) {
+    console.log(JSON.stringify({ type:'cdp_facilitator_fallback', reason:'credentials_not_configured', at:new Date().toISOString() }));
+    return null;
+  }
+  const suffix = target.slice(PAYAI_FACILITATOR.length) || '';
+  if (!['/supported', '/verify', '/settle'].some(path => suffix === path || suffix.startsWith(`${path}?`))) return null;
+  const cdpTarget = `${CDP_FACILITATOR}${suffix}`;
+  const parsed = new URL(cdpTarget);
+  if (!cdpAuthModulePromise) cdpAuthModulePromise = import('@coinbase/cdp-sdk/auth');
+  const { generateJwt } = await cdpAuthModulePromise;
+  const method = String(options.method || 'GET').toUpperCase();
+  const token = await generateJwt({
+    apiKeyId: process.env.CDP_API_KEY_ID,
+    apiKeySecret: process.env.CDP_API_KEY_SECRET,
+    requestMethod: method,
+    requestHost: parsed.host,
+    requestPath: `${parsed.pathname}${parsed.search}`,
+    expiresIn: 120,
+  });
+  const headers = new Headers(options.headers || {});
+  headers.set('authorization', `Bearer ${token}`);
+  headers.set('accept', headers.get('accept') || 'application/json');
+  console.log(JSON.stringify({ type:'cdp_facilitator_request', method, path:parsed.pathname, at:new Date().toISOString() }));
+  return nativeFetch(cdpTarget, { ...options, headers });
+}
+
 global.fetch = async function income2DiscoveryFetch(url, options = {}) {
   const target = String(url);
+  const cdpResponse = await fetchViaCdp(target, options);
+  if (cdpResponse) return cdpResponse;
   const generalRefresh = String(process.env.EARN_DIRECTORY_REGISTER_ON_BOOT || '') === '1';
   const agent402Refresh = target === 'https://agent402.tools/api/index/register' && String(process.env.EARN_AGENT402_REFRESH_ON_BOOT || '') === '1';
   if (directoryRegistrationUrls.has(target) && !generalRefresh && !agent402Refresh) {
@@ -66,6 +102,19 @@ function correctText(text) {
 const previousJson = express.response.json;
 express.response.json = function income2DiscoveryTruthJson(body) {
   const path = this.req?.path;
+  if (path === '/health' && body && typeof body === 'object') {
+    body = {
+      ...body,
+      facilitator: CDP_ENABLED && CDP_CONFIGURED ? 'cdp' : body.facilitator,
+      discovery: {
+        ...(body.discovery || {}),
+        coinbaseBazaarExtension: true,
+        cdpFacilitatorEnabled: CDP_ENABLED,
+        cdpCredentialsConfigured: CDP_CONFIGURED,
+        cdpBazaarSettlementReady: CDP_ENABLED && CDP_CONFIGURED,
+      },
+    };
+  }
   if (path === '/openapi.json' && body && typeof body === 'object') {
     const paths = { ...(body.paths || {}) };
     if (paths['/outcome-router']?.post) {
@@ -95,7 +144,16 @@ express.response.json = function income2DiscoveryTruthJson(body) {
       ...body,
       description: correctText(body.description || 'INCOME 2 agent-facing x402 tools and autonomous outcome fulfillment.'),
       intents: Array.from(new Set([...(Array.isArray(body.intents) ? body.intents : []), ...BUYER_INTENTS])),
+      bazaar: {
+        extension: true,
+        cdpFacilitatorEnabled: CDP_ENABLED,
+        cdpCredentialsConfigured: CDP_CONFIGURED,
+        note: CDP_ENABLED && CDP_CONFIGURED ? 'CDP facilitator active for verify/settle; eligible Bazaar metadata is declared on paid routes.' : 'Bazaar metadata is declared on paid routes; CDP verify/settle activation still requires CDP API credentials.',
+      },
     };
+    if (Array.isArray(body.rails) && CDP_ENABLED && CDP_CONFIGURED) {
+      body.rails = body.rails.map(rail => rail?.rail === 'evm' ? { ...rail, facilitator:CDP_FACILITATOR } : rail);
+    }
     if (Array.isArray(body.resources)) {
       body.resources = body.resources.map(resource => {
         if (resource?.name !== 'INCOME 2 Outcome Router beta') return resource;
