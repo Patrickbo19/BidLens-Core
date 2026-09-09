@@ -11,7 +11,7 @@ const CDP_CONFIGURED = Boolean(String(process.env.CDP_API_KEY_ID || '').trim() &
 // Agent402 ranks by lexical match first, then rolling health, then price.
 // Keep discovery language compact and task-level instead of stuffing broad synonyms.
 const DISCOVERY_NAMES = {
-  webExtract: 'Convert Webpage URL to Clean Markdown',
+  webExtract: 'Extract Clean Markdown from Webpage URL',
   buyerCheck: 'x402 Payment Challenge Preflight Audit',
   purchaseGuard: 'x402 Duplicate Payment Retry Guard',
   outcomeRouter: 'Find and Execute Agent or Tool Under Budget',
@@ -24,7 +24,7 @@ const BUYER_INTENTS = [
   'find and execute a tool under budget',
   'buy a completed result from an agent',
   'get this result for a maximum budget',
-  'convert webpage url to clean markdown',
+  'extract clean markdown from webpage url',
   'convert webpage article to clean markdown',
   'x402 payment challenge preflight audit',
   'prevent duplicate x402 payment',
@@ -225,7 +225,7 @@ express.response.json = function income2DiscoveryTruthJson(body) {
           summary: DISCOVERY_NAMES.webExtract,
           description: WEB_EXTRACT_DESCRIPTION,
           tags: ['web documents', 'webpage extraction', 'markdown'],
-          'x-intents': ['convert webpage url to clean markdown', 'convert webpage article to clean markdown', 'fetch webpage and return markdown'],
+          'x-intents': ['extract clean markdown from webpage url', 'convert webpage article to clean markdown', 'fetch webpage and return markdown'],
         },
       };
     }
@@ -278,7 +278,7 @@ express.response.json = function income2DiscoveryTruthJson(body) {
   if ((path === '/.well-known/x402' || path === '/.well-known/x402.json') && body && typeof body === 'object') {
     body = {
       ...body,
-      description: 'INCOME 2 buyer-facing agent tools: convert a live webpage URL to clean Markdown, audit x402 payment challenges, prevent duplicate payment retries, and find/execute a supported agent or tool under a maximum budget.',
+      description: 'INCOME 2 buyer-facing agent tools: extract clean Markdown from a live webpage URL, audit x402 payment challenges, prevent duplicate payment retries, and find/execute a supported agent or tool under a maximum budget.',
       intents: Array.from(new Set([...(Array.isArray(body.intents) ? body.intents : []), ...BUYER_INTENTS])),
       bazaar: {
         extension: true,
