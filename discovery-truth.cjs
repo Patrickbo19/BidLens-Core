@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 
 const ORIGIN = String(process.env.PUBLIC_ORIGIN || 'https://earn-tools-backend.onrender.com').replace(/\/$/, '');
 const OUTCOME_EXECUTION_PATH = '/outcome-router/execute/{requestId}';
@@ -42,7 +43,49 @@ const directoryRegistrationUrls = new Set([
   'https://402index.io/api/v1/register',
 ]);
 const nativeFetch = global.fetch;
-let cdpAuthModulePromise = null;
+let josePromise = null;
+
+function b64url(value) {
+  return Buffer.from(value).toString('base64url');
+}
+
+async function buildCdpJwt({ method, host, path }) {
+  if (!josePromise) josePromise = import('jose');
+  const { SignJWT, importJWK } = await josePromise;
+  const keyId = String(process.env.CDP_API_KEY_ID || '').trim();
+  const secret = String(process.env.CDP_API_KEY_SECRET || '').replace(/\\n/g, '\n').trim();
+  if (!keyId || !secret) throw new Error('CDP credentials are not configured');
+
+  let alg;
+  let key;
+  if (secret.includes('BEGIN')) {
+    const nodeKey = crypto.createPrivateKey(secret);
+    const jwk = nodeKey.export({ format:'jwk' });
+    alg = jwk.kty === 'OKP' && jwk.crv === 'Ed25519' ? 'EdDSA' : 'ES256';
+    key = await importJWK(jwk, alg);
+  } else {
+    const raw = Buffer.from(secret, 'base64');
+    if (raw.length !== 64) throw new Error('Unsupported CDP API key secret format');
+    alg = 'EdDSA';
+    key = await importJWK({
+      kty:'OKP',
+      crv:'Ed25519',
+      d:b64url(raw.subarray(0, 32)),
+      x:b64url(raw.subarray(32, 64)),
+    }, alg);
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  return new SignJWT({
+    iss:'cdp',
+    sub:keyId,
+    nbf:now,
+    exp:now + 120,
+    uri:`${method} ${host}${path}`,
+  })
+    .setProtectedHeader({ alg, typ:'JWT', kid:keyId, nonce:crypto.randomBytes(16).toString('hex') })
+    .sign(key);
+}
 
 async function fetchViaCdp(target, options = {}) {
   if (!CDP_ENABLED || !target.startsWith(PAYAI_FACILITATOR)) return null;
@@ -54,17 +97,9 @@ async function fetchViaCdp(target, options = {}) {
   if (!['/supported', '/verify', '/settle'].some(path => suffix === path || suffix.startsWith(`${path}?`))) return null;
   const cdpTarget = `${CDP_FACILITATOR}${suffix}`;
   const parsed = new URL(cdpTarget);
-  if (!cdpAuthModulePromise) cdpAuthModulePromise = import('@coinbase/cdp-sdk/auth');
-  const { generateJwt } = await cdpAuthModulePromise;
   const method = String(options.method || 'GET').toUpperCase();
-  const token = await generateJwt({
-    apiKeyId: process.env.CDP_API_KEY_ID,
-    apiKeySecret: process.env.CDP_API_KEY_SECRET,
-    requestMethod: method,
-    requestHost: parsed.host,
-    requestPath: `${parsed.pathname}${parsed.search}`,
-    expiresIn: 120,
-  });
+  const requestPath = `${parsed.pathname}${parsed.search}`;
+  const token = await buildCdpJwt({ method, host:parsed.host, path:requestPath });
   const headers = new Headers(options.headers || {});
   headers.set('authorization', `Bearer ${token}`);
   headers.set('accept', headers.get('accept') || 'application/json');
