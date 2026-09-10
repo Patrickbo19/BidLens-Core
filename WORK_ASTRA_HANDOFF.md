@@ -4,7 +4,7 @@ Last prepared: 2026-09-09 23:15 America/New_York
 
 This document is a non-secret operating handoff for a fresh ChatGPT Work session. It exists so a new Work/Astra session can resume INCOME 2 without reconstructing months of chat history. Before taking any material action, reconcile this file against **live GitHub main, Render production, current provider/marketplace state, Gmail, and the canonical `INCOME2_STATE.md`**. Live state beats this document if they conflict.
 
-## Latest Work reconciliation — 2026-09-10 04:03 UTC
+## Latest Work reconciliation — 2026-09-10 11:26 UTC
 
 Read the updated `INCOME2_STATE.md` and `AGENT402_LIVE_UPDATE.md` before following the historical detail below.
 
@@ -12,10 +12,12 @@ Read the updated `INCOME2_STATE.md` and `AGENT402_LIVE_UPDATE.md` before followi
 - All four Render services are live on `c6c729ef9f6aeaa50624a4013ef525abfeb695ec`; six MCP tools preserved.
 - Canonical `POST /url-to-clean-markdown` is deployed, with `/web-extract` retained as a paid compatibility alias. There are 14 paid URLs for 13 capabilities. Both returned correct $0.001 Base USDC 402 challenges; no payment was signed.
 - Minimal privacy-safe aggregate funnel telemetry is already implemented in `/health.funnel` and Render `seller_funnel` logs. Do not build it again. Counts are per request, not unique buyers, and health totals reset with the process. Exclude diagnostic probes and do not equate unclassified crawler challenges with demand.
+- By 11:23 UTC, the process had recorded 401 unclassified unpaid challenges plus two diagnostic challenges since 03:52 UTC, with zero payment attempts or new settlements. This is about 7.5 hours of observations; qualified buyer traffic remains unknown. The follow-up still found TaskBounty open tasks 0 and no new matching provider/Agent402 email since 04:00 UTC.
 - CDP flag remains deliberately ON; credential-pair readiness is false, with PayAI fallback. The owner must configure the pair directly in Render. Coinbase docs require a successful CDP-settled payment for indexing; validation/credentials alone do not assure distribution. CDP public API requests timed out from Work; Agentic.Market returned 403. Neither visibility nor absence is confirmed.
 - Agent402's public source corrects its email: re-registering a known origin refreshes existing route prices, not the manifest. One refresh initially returned the old catalog. Its normal full crawler subsequently ran at 03:59:25 UTC and now shows **20 surfaces / 14 paid URLs**, including the alias. The exact query `extract clean markdown from webpage url` now ranks **#1 among external results**; the other two monitored searches remain outside the top five. Do not repeat registration or confuse this with overall seller rank or sales. Paid dispatch still requires 50 legitimate settlements / 3 payers.
 - Current buyer checks did not find worthwhile funded work. PayanAgent's latest 50 request rows contained no escrow-marked tasks or >=$25 budgets, and 48 were from one promotional poster. Query-specific funded requests were only $0.04/$0.05. A public sample of 20 receipt rows totaled $0.16 over August 31–September 8; outside provenance was not verified. Do not infer substantial buyer volume from the catalog size.
 - Existing hourly `INCOME 2 Earn Watch` was updated, remains enabled, and now follows the new funnel and corrected gates. No duplicate automation. Keep recurring monitoring quiet except for real conversion evidence, outside receipts, qualified funded demand, or material failures.
+- Extra channel checks rejected ClawTasks (currently free-task-only) and the $50 Claude changelog bounty (2,119 comments, stale repository, funding/payout not established). Do not repeat those checks without changed evidence. A documentation-tree omission was caught and fully restored; application files and all four live deployments were verified intact. See the canonical state for the correction record.
 
 ## Primary mission
 

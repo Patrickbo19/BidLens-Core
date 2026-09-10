@@ -1,8 +1,8 @@
 # INCOME 2 — Agent402 Live Update
 
-Last updated: 2026-09-10 04:03 UTC
+Last updated: 2026-09-10 11:26 UTC (search measurement: 04:02 UTC)
 
-This file captures the newest verified Agent402 production facts from Mike Petrillo / Agent402.tools and supersedes older assumptions in `INCOME2_STATE.md` and `WORK_ASTRA_HANDOFF.md` wherever they conflict.
+This file captures Agent402 production measurements and correspondence from Mike Petrillo / Agent402.tools. Reconcile against live production and the canonical `INCOME2_STATE.md`; dated correspondence is not authoritative when direct behavior differs.
 
 ## Work verification after deployment
 
@@ -20,7 +20,7 @@ The exact query improved from outside the top five before deployment. This is no
 
 **Correction to the earlier email:** [current Agent402 source](https://github.com/MikeyPetrillo/Agent402/blob/main/src/x402-index.js) shows that `registerOrigin` on a known healthy origin refreshes existing live price quotes and returns without fetching its manifest. The earlier immediate-full-recrawl statement is incorrect for this code path and conflicts with observed behavior. Full crawling runs on a nominal 30-minute cadence with rotation/budgets. No second registration was needed: the normal crawl consumed the alias. Preserve the new 20-surface / 14-priced baseline and monitor conversion.
 
-Dispatch remains blocked by the legitimate 50-settlement / 3-payer gate. Verified external revenue is still $0; the seventeen unclassified unpaid challenges seen by 04:03 UTC after deployment may be directory probes and had no payment attempts.
+Dispatch remains blocked by the legitimate 50-settlement / 3-payer gate. Verified external revenue is still $0. At 11:23 UTC, the seller had recorded 401 unclassified unpaid challenges since 03:52 UTC and zero payment attempts. These requests may include directory probes; they are not attributable to Agent402 buyers. The three search results above are the 04:02 measurement, not a claim of continuous rank monitoring.
 
 ## Earlier maintainer crawl / index report
 

@@ -1,6 +1,6 @@
 # INCOME 2 — Canonical State
 
-Last reconciled: 2026-09-10 04:03 UTC
+Last reconciled: 2026-09-10 11:26 UTC
 
 This is the canonical **non-secret** operating state for INCOME 2. Reconcile against live GitHub `main`, Render production, current marketplace/provider state, Gmail, and verified settlement evidence before material decisions. Never store API keys, private keys, seed phrases, passwords, 2FA codes, recovery credentials, solver keys, or payment signatures here.
 
@@ -355,13 +355,19 @@ Minimal aggregate funnel telemetry is now live in `seller-funnel.cjs`, exposed a
 
 Counters are per request, **not unique buyers or verified revenue**. Health totals cover only the current process, identified by `since`; Render logs contain interval deltas. Do not add cumulative snapshots to those deltas. Pending counters can be lost on abrupt termination. Diagnostic classification is self-declared by `User-Agent: INCOME2-Operator-Audit/1.0`, not authenticated attribution. Unclassified requests include crawlers and unmarked tests.
 
-First observation since `2026-09-10T03:52:05.932Z`: two diagnostic unpaid challenges; seventeen unclassified unpaid challenges as of 04:03 UTC across utilities; **zero payment headers, decoded payment attempts, verifications, settlements or fulfilled paid requests**. The unclassified calls occurred during the directory refresh window and may be price probes, so they are not buyer evidence. No conclusion about long-term conversion can be drawn from this short window.
+Observation since `2026-09-10T03:52:05.932Z`: two diagnostic unpaid challenges; **401 unclassified unpaid challenges as of 11:23 UTC**, about 7.5 hours after deployment; **zero payment headers, decoded payment attempts, verifications, settlements or fulfilled paid requests**. The first seventeen unclassified challenges had appeared by 04:03 UTC. These requests include unknown amounts of directory/probe traffic; they do not establish qualified buyer demand or a buyer abandonment rate.
 
 Local integration testing used blocked external networking, mocked facilitator responses and an in-memory ledger. Both aliases were checked through success, settlement failure and private-target rejection; telemetry privacy and diagnostic separation passed. Production checks signed no payment and spent $0. The existing hourly watch was updated with these measurements and the corrected CDP/Agent402 logic; no duplicate watch was created.
 
+The 11:23–11:26 follow-up confirmed all four deployments still live on `c6c729e`, CDP enabled with credential readiness false, unchanged historical ledger, and TaskBounty openTaskCount 0 (provider verified at 11:11 UTC). No new matching provider/Agent402 email was found since 04:00 UTC. The existing watch is enabled and last ran at 11:11:59 UTC.
+
+A bounded extra buyer-channel check did not justify new work. [ClawTasks](https://clawtasks.com) currently announces free-task-only operation. The [$50 changelog bounty](https://github.com/claude-builders-bounty/claude-builders-bounty/issues/1) is open but already has 2,119 comments, no reply from its issuing account or an identifiable payment bot in that thread, and its repository was last pushed March 27. Funding and payout were not established. Do not spend compute joining that submission backlog or paid-star/review/token-promotion tasks. This is a channel-specific rejection, not proof that all agent commerce lacks buyers.
+
+A documentation-only commit accidentally omitted application files from its Git tree. The complete application tree was restored in `b9be2ff9e8ca4e9d520fcaeee9b2a5f9f5b5ef97`; comparison to the deployed code confirmed only the three intended handoff documents changed. Both commits used `[skip render]`, and all four production deployments remained unchanged. Verify complete tree diffs before future Git ref updates.
+
 ## Highest-value queue
 
-1. Clear Coinbase CDP credential owner gate; immediately verify Bazaar/Agentic.Market activation.
+1. Clear Coinbase CDP credential owner gate; verify authenticated supported networks, actual CDP routing and the official validator, then inspect Bazaar/Agentic.Market. A genuine CDP-settled buyer payment is still required for indexing; do not self-pay.
 2. Seek real machine-native buyer demand matching existing capabilities; prioritize transaction/funded-request evidence over generic opinions.
 3. Read the existing aggregate funnel over a meaningful observation window; do not build more analytics or treat directory challenges as buyer demand.
 4. Keep PayanAgent exact-query listing healthy; monitor genuine receipts and relevant funded requests; no self-buying.
