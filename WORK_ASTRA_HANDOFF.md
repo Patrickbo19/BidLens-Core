@@ -4,6 +4,19 @@ Last prepared: 2026-09-09 23:15 America/New_York
 
 This document is a non-secret operating handoff for a fresh ChatGPT Work session. It exists so a new Work/Astra session can resume INCOME 2 without reconstructing months of chat history. Before taking any material action, reconcile this file against **live GitHub main, Render production, current provider/marketplace state, Gmail, and the canonical `INCOME2_STATE.md`**. Live state beats this document if they conflict.
 
+## Latest Work reconciliation — 2026-09-10 04:03 UTC
+
+Read the updated `INCOME2_STATE.md` and `AGENT402_LIVE_UPDATE.md` before following the historical detail below.
+
+- Verified external revenue remains **$0**. Ledger still has only the old unverified 0.003 USDC row; PayanAgent paidAttempts and receiptsSold are 0; TaskBounty open tasks are 0.
+- All four Render services are live on `c6c729ef9f6aeaa50624a4013ef525abfeb695ec`; six MCP tools preserved.
+- Canonical `POST /url-to-clean-markdown` is deployed, with `/web-extract` retained as a paid compatibility alias. There are 14 paid URLs for 13 capabilities. Both returned correct $0.001 Base USDC 402 challenges; no payment was signed.
+- Minimal privacy-safe aggregate funnel telemetry is already implemented in `/health.funnel` and Render `seller_funnel` logs. Do not build it again. Counts are per request, not unique buyers, and health totals reset with the process. Exclude diagnostic probes and do not equate unclassified crawler challenges with demand.
+- CDP flag remains deliberately ON; credential-pair readiness is false, with PayAI fallback. The owner must configure the pair directly in Render. Coinbase docs require a successful CDP-settled payment for indexing; validation/credentials alone do not assure distribution. CDP public API requests timed out from Work; Agentic.Market returned 403. Neither visibility nor absence is confirmed.
+- Agent402's public source corrects its email: re-registering a known origin refreshes existing route prices, not the manifest. One refresh initially returned the old catalog. Its normal full crawler subsequently ran at 03:59:25 UTC and now shows **20 surfaces / 14 paid URLs**, including the alias. The exact query `extract clean markdown from webpage url` now ranks **#1 among external results**; the other two monitored searches remain outside the top five. Do not repeat registration or confuse this with overall seller rank or sales. Paid dispatch still requires 50 legitimate settlements / 3 payers.
+- Current buyer checks did not find worthwhile funded work. PayanAgent's latest 50 request rows contained no escrow-marked tasks or >=$25 budgets, and 48 were from one promotional poster. Query-specific funded requests were only $0.04/$0.05. A public sample of 20 receipt rows totaled $0.16 over August 31–September 8; outside provenance was not verified. Do not infer substantial buyer volume from the catalog size.
+- Existing hourly `INCOME 2 Earn Watch` was updated, remains enabled, and now follows the new funnel and corrected gates. No duplicate automation. Keep recurring monitoring quiet except for real conversion evidence, outside receipts, qualified funded demand, or material failures.
+
 ## Primary mission
 
 Turn **INCOME 2** from a technically functional system with **$0 verified external revenue** into a real autonomous money-making network that gets its **first genuine unrelated buyer**, then a second unrelated buyer, then repeated demand, then scalable recurring/usage revenue.
@@ -34,7 +47,7 @@ Hard rules:
 - secrets should be entered directly into the relevant provider/Render environment by the owner when unavoidable
 - never use owner working capital for anonymous Outcome Router/HYDRA buyer jobs
 - never count owner-funded transactions or unverified ledger events as revenue
-- owner-authorized general working-capital ceiling is $10, but preserve it unless a separate, verified, legal earning opportunity has clearly positive expected economics; HYDRA buyer jobs get $0 owner subsidy
+- historical general working-capital ceiling was $10; the current owner instruction requires explicit approval before any unavoidable spend or financial commitment. HYDRA buyer jobs get $0 owner subsidy.
 - ask the owner only for unavoidable gates: login/2FA, KYC/identity, terms acceptance, account authorization, credential creation, payment/spend authorization, or final publication when the tool cannot perform it
 
 ## Brand and product

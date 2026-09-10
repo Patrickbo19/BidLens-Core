@@ -1,10 +1,28 @@
 # INCOME 2 — Agent402 Live Update
 
-Last updated: 2026-09-10 01:45 UTC / 2026-09-09 21:45 America/New_York
+Last updated: 2026-09-10 04:03 UTC
 
 This file captures the newest verified Agent402 production facts from Mike Petrillo / Agent402.tools and supersedes older assumptions in `INCOME2_STATE.md` and `WORK_ASTRA_HANDOFF.md` wherever they conflict.
 
-## Verified crawl / index state
+## Work verification after deployment
+
+Production commit `c6c729ef9f6aeaa50624a4013ef525abfeb695ec` is live on all four core services. `/url-to-clean-markdown` is now a callable canonical paid route; `/web-extract` remains compatible. Shared validation, payment gating and fulfillment preserve the $0.001 price. Live no-payment checks passed for both, and aggregate funnel telemetry is live. There are 14 paid URLs for 13 capabilities.
+
+One registration refresh initially returned 19 surfaces / 13 paid and the old `fetchedAt=2026-09-10T03:29:33.588Z`. The normal full crawl subsequently updated at **03:59:25.240 UTC**, and the 04:02 read confirmed **20 surfaces / 14 paid URLs** with the new route. Live search results after ingestion:
+
+| Query, with `include=external` | INCOME 2 result |
+| --- | --- |
+| `extract clean markdown from webpage url` | **#1**, canonical route, score 30 |
+| `web extract markdown` | Outside top five |
+| `convert url to markdown` | Outside top five |
+
+The exact query improved from outside the top five before deployment. This is not #1 overall seller rank and does not establish traffic or sales.
+
+**Correction to the earlier email:** [current Agent402 source](https://github.com/MikeyPetrillo/Agent402/blob/main/src/x402-index.js) shows that `registerOrigin` on a known healthy origin refreshes existing live price quotes and returns without fetching its manifest. The earlier immediate-full-recrawl statement is incorrect for this code path and conflicts with observed behavior. Full crawling runs on a nominal 30-minute cadence with rotation/budgets. No second registration was needed: the normal crawl consumed the alias. Preserve the new 20-surface / 14-priced baseline and monitor conversion.
+
+Dispatch remains blocked by the legitimate 50-settlement / 3-payer gate. Verified external revenue is still $0; the seventeen unclassified unpaid challenges seen by 04:03 UTC after deployment may be directory probes and had no payment attempts.
+
+## Earlier maintainer crawl / index report
 
 Agent402 checked production directly.
 
@@ -17,7 +35,7 @@ Agent402 checked production directly.
 - network = Base only.
 - payTo = `0x5a9d3c8e3f0634f56966268c19bc5f8355944650`.
 - There is no separate seed/fresh-read mechanism required.
-- `POST https://agent402.tools/api/index/register` with the origin forces an immediate recrawl and is limited to 5/hour/IP, but routine repeated refresh is unnecessary and should not be spammed.
+- The maintainer described `POST https://agent402.tools/api/index/register` as an immediate recrawl (5/hour/IP); the Work/source verification above corrects this: known-origin registration refreshes existing quotes, not the full manifest.
 
 ## Critical dispatch gate
 
@@ -69,11 +87,7 @@ The same pattern affects security utilities: `prompt-scan` ranks behind routes w
 
 ## Highest-value implication
 
-This is new actionable evidence and changes the prior diagnosis.
-
-For Agent402 search, the next legitimate lever is not another description rewrite. It is a task-explicit route slug while preserving backward compatibility. A sensible implementation path is to add a canonical/alias paid route such as `/url-to-markdown` (or `/url-to-clean-markdown`) that uses the exact same safe fulfillment logic and economics as `/web-extract`, keep `/web-extract` working for existing integrations, expose the task-explicit slug in the live x402 manifest/OpenAPI, then perform one intentional recrawl and measure rank.
-
-Do not create duplicate marketplace identities or artificial offers merely for ranking. A compatibility alias on the same real seller/origin is acceptable if it is a genuine callable route for the same product.
+The task-explicit route experiment is implemented. Keep the canonical `/url-to-clean-markdown` and compatible `/web-extract` on the same origin, with one fulfillment implementation and unchanged economics. Full index ingestion and a #1 exact-query result are now verified. Broader searches remain outside the top five and no buyer demand is established. Do not add further aliases or change descriptions without economic evidence.
 
 ## Official self-check endpoints supplied by Agent402
 
@@ -90,12 +104,10 @@ A fresh Work/Astra session MUST read this file after `INCOME2_STATE.md` and `WOR
 
 Priority after reconciling live state:
 
-1. Preserve the Coinbase/CDP credential gate work already in progress.
-2. Implement a backward-compatible task-explicit Agent402 route slug for Web Extract if not already done, preferably `/url-to-markdown` or `/url-to-clean-markdown`, without duplicating business logic or breaking `/web-extract`.
-3. Expose that real route in discovery metadata.
-4. Perform one intentional Agent402 recrawl, not a spam loop.
-5. Measure the three live searches above plus seller index state.
-6. Do not claim Smart Order Router paid dispatch eligibility until the legitimate 50-settlement / 3-payer gate is actually met.
-7. Never self-pay or manufacture settlement volume to cross that gate.
+1. Preserve the deliberately enabled CDP flag. The credential pair is still incomplete/unavailable; the owner must enter both fields directly in Render, never in chat.
+2. Preserve the already-live `/url-to-clean-markdown` canonical route and compatible `/web-extract`; do not reimplement the alias.
+3. Preserve the confirmed 20-surface index and #1 exact-query baseline; monitor payment conversion instead of repeating the indexing experiment.
+4. Read aggregate funnel data, excluding diagnostic traffic and distinguishing crawlers from evidence of real payment intent.
+5. Do not claim paid dispatch eligibility before the legitimate settlement/payer threshold is met. Never self-pay or manufacture volume.
 
 Verified external INCOME 2 revenue remains $0 unless separate independent evidence proves otherwise.

@@ -1,6 +1,6 @@
 # INCOME 2 — Canonical State
 
-Last reconciled: 2026-09-09 23:15 America/New_York
+Last reconciled: 2026-09-10 04:03 UTC
 
 This is the canonical **non-secret** operating state for INCOME 2. Reconcile against live GitHub `main`, Render production, current marketplace/provider state, Gmail, and verified settlement evidence before material decisions. Never store API keys, private keys, seed phrases, passwords, 2FA codes, recovery credentials, solver keys, or payment signatures here.
 
@@ -62,10 +62,12 @@ When facts conflict:
 Repository: `Patrickbo19/BidLens-Core`  
 Branch: `main`
 
-Latest known commit after this reconciliation will be the state/handoff updates; immediately before them production was running:
+All four core services were verified **live** on production code commit:
 
-- `d820ffb6a49a8a1b1c3cd16e5106c027deec8581`
-- `Add PayanAgent relay readiness probe`
+- `c6c729ef9f6aeaa50624a4013ef525abfeb695ec`
+- `Expose canonical URL-to-clean-Markdown route and aggregate payment funnel`
+
+Documentation-only reconciliation commits may be newer on main and use `[skip render]`.
 
 Core Render workspace: `tea-daf1c48n74is73ft7drg`.
 
@@ -91,11 +93,11 @@ Network: Base mainnet `eip155:8453`
 Asset: USDC  
 Receive: `0x5a9d3c8e3f0634f56966268c19bc5f8355944650`
 
-Seller has **13 paid resources**, currently **$0.001 each**.
+Seller has **13 paid capabilities across 14 paid URLs**, currently **$0.001 per call**. The extra URL is a compatibility alias, not a new product.
 
 Primary route:
 
-- `POST /web-extract`
+- `POST /url-to-clean-markdown` — canonical; `POST /web-extract` remains compatible
 - discovery name: **Extract Clean Markdown from Webpage URL**
 - price: **0.001 USDC**
 - live public webpage/article → clean Markdown + title/description/author/canonical/link metadata
@@ -126,11 +128,11 @@ The flag was enabled on 2026-09-09 and the resulting Render deploy finished **li
 Authoritative Coinbase state:
 
 - Bazaar extension declared: **yes**
-- 13 paid routes metadata-ready: **yes**
+- 14 paid URLs metadata-ready: **yes**, representing 13 capabilities
 - CDP facilitator code-ready: **yes**
 - CDP activation flag: **ON**
-- `CDP_API_KEY_ID`: **not configured / unavailable to model**
-- `CDP_API_KEY_SECRET`: **not configured / unavailable to model**
+- CDP credential pair ready: **false**, verified through production behavior without viewing values
+- This boolean proves the pair is incomplete/unavailable; it does not identify which individual field is missing.
 - active behavior therefore falls back to PayAI
 - genuine CDP-facilitated settlement: **0 confirmed**
 - Bazaar indexing: **not confirmed**
@@ -139,6 +141,8 @@ Authoritative Coinbase state:
 Owner gate: create a legitimate Coinbase Developer Platform Secret API key and put Key ID + Secret directly into Render for `earn-tools-backend`. Never paste the secret into chat. Once configured, immediately verify authenticated `/supported`, seller health/facilitator state, safe no-payment 402 behavior, Bazaar discovery, and Agentic.Market visibility.
 
 Do **not** self-pay to trigger indexing.
+
+Current [Coinbase seller documentation](https://docs.cdp.coinbase.com/x402/seller/get-discovered) says indexing requires a successful CDP-facilitated settled payment. Credentials and validation alone do not guarantee listing. The public `/validate` endpoint can check readiness without paying. Work requests to CDP validation, merchant discovery and search timed out; Agentic.Market returned HTTP 403. Visibility remains **unconfirmed**, not proven absent. Recheck from an authorized working connection after the credential gate clears.
 
 CDP auth uses lightweight `jose` JWT signing. The full CDP SDK was removed after dependency advisories; current package set was restored to 0 known npm vulnerabilities at that point.
 
@@ -173,7 +177,9 @@ PayanAgent purchase relay was verified without payment:
 - payment signed: false
 - owner funds spent: $0
 
-No independent buyer/receipt has been confirmed. Do not self-buy to manufacture reputation.
+Current read: exact discovery query is #1 among 50 returned offers; offer `paidAttempts=0`; seller `receiptsSold=0`, `totalEarnedMicroUsd=0`. No independent buyer/receipt has been confirmed. Do not self-buy to manufacture reputation.
+
+Demand check: newest 50 requests had no escrow-marked work and no budget >= $25; 48 came from one promotional poster. Query-specific discovery surfaced tiny escrow-marked requests at $0.04 and $0.05, too small to justify custom work. The latest 20 public receipt rows sampled totaled $0.16, dated August 31–September 8, with 13 marked delivered. These are platform-reported sample figures, not independently verified outside revenue or a whole-market total. Current evidence does not justify more catalog building.
 
 ## 402Index / Market402 / x402scan / x402 Arena
 
@@ -194,26 +200,17 @@ Directory re-registration on deploy must remain disabled. Refresh intentionally 
 
 ## Agent402
 
-Latest deliberate refresh result:
+Read `AGENT402_LIVE_UPDATE.md` for the maintainer response and subsequent source verification.
 
-- listed: true
-- toolCount: 19
-- routable: true
-- health: 1
-- Base network recognized
+- Latest live index: **20 surfaces, 14 priced URLs**, health 1, routable true, Base recognized.
+- Latest observed `fetchedAt`: **2026-09-10T03:59:25.240Z**. The full crawler has now ingested `/url-to-clean-markdown`.
+- Production now serves `/url-to-clean-markdown` and the compatible `/web-extract`, using one fulfillment implementation and the same $0.001 price. Both passed no-payment 402 checks on Base USDC with the canonical receive address, Bazaar metadata and `cache-control: no-store`.
+- One intentional registration refresh initially returned the old 19-surface catalog. After the normal full crawl, the exact query `extract clean markdown from webpage url` improved from outside the top five to **#1 among external results** (score 30). `web extract markdown` and `convert url to markdown` still excluded INCOME 2 from the top five. This is search visibility, not overall seller rank, qualified traffic, a purchase or revenue.
+- Critical correction: current [Agent402 source](https://github.com/MikeyPetrillo/Agent402/blob/main/src/x402-index.js), `registerOrigin`, refreshes live quotes for a known origin's existing routes; it does **not** reread its manifest. This explains the unchanged index and contradicts the earlier email's immediate-recrawl claim. Full crawling has a nominal 30-minute cadence with budgets/rotation. Do not repeat registration to discover the new alias. The normal crawl subsequently consumed the route; no further registration was needed.
+- Full ingestion is confirmed: 20 surfaces / 14 paid URLs, still only 13 paid capabilities.
+- All paid rows remain `routerDispatchEligible:false`, reason `settlement_required`. Base paid dispatch requires at least **50 legitimate settlements and 3 distinct payers**. Never manufacture the threshold or equate inbound transfers with customer revenue.
 
-Task-level discovery names include:
-
-- Extract Clean Markdown from Webpage URL
-- x402 Payment Challenge Preflight Audit
-- x402 Duplicate Payment Retry Guard
-- Find and Execute Agent or Tool Under Budget
-
-Agent402 ranking inputs publicly described/observed: lexical/task match first, rolling health second, price third. INCOME 2 now has literal task language, health 1, and $0.001 floor pricing, yet the last verifier still showed INCOME 2 absent from top five across monitored buyer queries.
-
-Do not endlessly rewrite metadata. Re-measure after crawl time and pursue maintainer response, but prioritize channels with real demand.
-
-A maintainer email was sent; no meaningful reply was seen at the last relevant inbox check.
+Monitored queries: `extract clean markdown from webpage url`, `web extract markdown`, `convert url to markdown`, using `/api/route?q=...&include=external`.
 
 ## Outcome Router / HYDRA
 
@@ -354,15 +351,21 @@ Architecture is substantially built. **The main bottleneck is distribution → q
 
 The phrase “#1” on PayanAgent referred to exact-query relevance, not the overall seller leaderboard. That does not imply high traffic. The system may currently have a traffic problem rather than a pricing/product defect.
 
-A useful unresolved measurement is whether almost nobody reaches the seller versus buyers reach the 402 challenge but abandon payment. Minimal privacy-safe aggregate funnel telemetry may be justified if existing logs cannot distinguish those cases. Do not build a large analytics subsystem.
+Minimal aggregate funnel telemetry is now live in `seller-funnel.cjs`, exposed as `/health.funnel` and nonempty `seller_funnel` interval logs about once per minute. It records fixed paid route, traffic class, event and count only; no customer payloads, submitted URLs, payment proofs, wallets, IPs or identities. Events: request_received, payment_header_present, payment_attempt_observed, payment_verified, settlement_success, fulfillment_success, paid_request_failed, unpaid_challenge.
+
+Counters are per request, **not unique buyers or verified revenue**. Health totals cover only the current process, identified by `since`; Render logs contain interval deltas. Do not add cumulative snapshots to those deltas. Pending counters can be lost on abrupt termination. Diagnostic classification is self-declared by `User-Agent: INCOME2-Operator-Audit/1.0`, not authenticated attribution. Unclassified requests include crawlers and unmarked tests.
+
+First observation since `2026-09-10T03:52:05.932Z`: two diagnostic unpaid challenges; seventeen unclassified unpaid challenges as of 04:03 UTC across utilities; **zero payment headers, decoded payment attempts, verifications, settlements or fulfilled paid requests**. The unclassified calls occurred during the directory refresh window and may be price probes, so they are not buyer evidence. No conclusion about long-term conversion can be drawn from this short window.
+
+Local integration testing used blocked external networking, mocked facilitator responses and an in-memory ledger. Both aliases were checked through success, settlement failure and private-target rejection; telemetry privacy and diagnostic separation passed. Production checks signed no payment and spent $0. The existing hourly watch was updated with these measurements and the corrected CDP/Agent402 logic; no duplicate watch was created.
 
 ## Highest-value queue
 
 1. Clear Coinbase CDP credential owner gate; immediately verify Bazaar/Agentic.Market activation.
 2. Seek real machine-native buyer demand matching existing capabilities; prioritize transaction/funded-request evidence over generic opinions.
-3. Add only minimal conversion telemetry if needed to distinguish no traffic from payment abandonment.
+3. Read the existing aggregate funnel over a meaningful observation window; do not build more analytics or treat directory challenges as buyer demand.
 4. Keep PayanAgent exact-query listing healthy; monitor genuine receipts and relevant funded requests; no self-buying.
-5. Re-measure Agent402 after crawl time; avoid metadata churn without evidence.
+5. Preserve the now-indexed canonical alias and #1 exact-query baseline; monitor conversion. Do not repeat registration or chase further keyword tweaks without economic evidence.
 6. Monitor Human Earn provider approvals.
 7. Build new owned capabilities only from repeated evidenced unmet demand.
 
@@ -372,6 +375,7 @@ A fresh Work/GPT-6 Astra session should first read:
 
 - `INCOME2_STATE.md`
 - `WORK_ASTRA_HANDOFF.md`
+- `AGENT402_LIVE_UPDATE.md`
 
 Then reconcile against live GitHub, Render, marketplace state, Gmail and settlement evidence.
 
