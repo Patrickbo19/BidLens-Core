@@ -149,7 +149,7 @@ function resourcePath(resource) {
 function tuneResource(resource) {
   if (!resource || typeof resource !== 'object') return resource;
   const path = resourcePath(resource);
-  if (path === '/web-extract') {
+  if (['/web-extract', '/url-to-clean-markdown'].includes(path)) {
     return {
       ...resource,
       name: DISCOVERY_NAMES.webExtract,
@@ -217,11 +217,12 @@ express.response.json = function income2DiscoveryTruthJson(body) {
   }
   if (path === '/openapi.json' && body && typeof body === 'object') {
     const paths = { ...(body.paths || {}) };
-    if (paths['/web-extract']?.post) {
-      paths['/web-extract'] = {
-        ...paths['/web-extract'],
+    for (const extractPath of ['/web-extract', '/url-to-clean-markdown']) {
+      if (!paths[extractPath]?.post) continue;
+      paths[extractPath] = {
+        ...paths[extractPath],
         post: {
-          ...paths['/web-extract'].post,
+          ...paths[extractPath].post,
           summary: DISCOVERY_NAMES.webExtract,
           description: WEB_EXTRACT_DESCRIPTION,
           tags: ['web documents', 'webpage extraction', 'markdown'],
