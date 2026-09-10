@@ -367,6 +367,20 @@ A documentation-only commit accidentally omitted application files from its Git 
 
 ## Highest-value queue
 
+### Revenue-operator follow-up — 2026-09-10 15:33 UTC
+
+The owner asked for action to start earning. Verified outside revenue remains **$0**; the live seller still reported PayAI fallback, CDP enabled but credentials unavailable, and the unchanged historical ledger. GitHub main and provider correspondence had no new material update.
+
+A browser is now callable, but the Coinbase secret-key portal rendered **Site Unavailable** after navigation/recovery. This is a Work-browser access limitation; do not report Coinbase itself down or claim account authentication was tested successfully. The existing direct-to-Render credential owner gate remains.
+
+Targeted normal reading of our own Moltbook research post found two comments, both authored by Income2, and zero outside comments. Retain this aggregate only; there is no independent demand or willingness-to-pay signal. Current PayanAgent matching requests still comprise promotional need-checks and tiny custom bounties. A $0.04 escrow-marked catalog-checker request detail returned HTTP 400; no work or bid was submitted. Two newer GitHub candidates, `activepieces/activepieces#15366` and `calcom/cal.diy#30118`, have no confirmed reward: the apparent bounty signal came from other agents asking maintainers to add a reward. Do not treat these as funded work without new issuer evidence.
+
+The existing hourly watch was updated in place to prioritize actual payment/fulfillment failures, CDP activation when credentials appear, and explicit buyer requests that existing capabilities can fulfill. For custom work, verify funding/reward authority, scope, assignment, competing submissions and expected proceeds before building; default minimum gross remains $25. For a qualifying candidate, prepare the complete tested deliverable or an already-authorized draft PR rather than merely returning a link. Existing restrictions on unapproved messages, contracts, financial commitments, secrets and self-payment remain.
+
+Fresh demand searches are now limited to one short pass per day, with unchanged observations reused from run history. Other hourly passes should remain lightweight and silent without a meaningful trigger. No further directory/keyword churn or speculative utilities. At $0.001 per call, even $200 gross requires 200,000 paid calls per month before costs; current observations do not establish that demand or a credible $200/month profit path. CDP credentials enable an integration test, not a promise of buyers or automatic indexing.
+
+**CDP price-floor finding:** [official facilitator pricing](https://docs.cdp.coinbase.com/x402/seller/facilitator), checked in this follow-up, gives 1,000 free onchain transactions per month and then charges $0.001 per transaction. Our `exact` scheme settles once per accepted payment. The current $0.001 price therefore leaves zero marginal spread above the free allowance, before hosting/compute. If all calls used this model and the full allowance were available, even 200,000 paid calls would yield $200 gross minus $199 facilitator fees, or $1 before other costs. Keep the initial price as a demand test only; verify actual project allowance/billing when CDP access exists and establish positive-margin pricing before billable scale. No paid overage or other owner financial commitment is approved. The watch includes this constraint. Do not build batching or subscriptions before real demand.
+
 1. Clear Coinbase CDP credential owner gate; verify authenticated supported networks, actual CDP routing and the official validator, then inspect Bazaar/Agentic.Market. A genuine CDP-settled buyer payment is still required for indexing; do not self-pay.
 2. Seek real machine-native buyer demand matching existing capabilities; prioritize transaction/funded-request evidence over generic opinions.
 3. Read the existing aggregate funnel over a meaningful observation window; do not build more analytics or treat directory challenges as buyer demand.
