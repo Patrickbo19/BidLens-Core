@@ -5,6 +5,8 @@ const MCP_URL = String(process.env.EARN_MCP_URL || 'https://earn-chat-mcp.onrend
 const MCP_HEALTH_URL = new URL('/health', MCP_URL).toString();
 const CREATE_BETA = String(process.env.EARN_CREATE_BETA_ACCOUNT || '') === '1';
 const EARN_SELLER_ORIGIN = String(process.env.EARN_SELLER_ORIGIN || 'https://earn-tools-backend.onrender.com').replace(/\/$/, '');
+const BUYER_SEARCH_REFRESH_MS = 24 * 60 * 60 * 1000;
+const PAYANAGENT_OFFER_URL = 'https://payanagent.com/x402/kh7aj3snq4swt9wp7qez45fv718e3mqy';
 
 const state = {
   ok: false,
@@ -14,6 +16,8 @@ const state = {
   earningOptions: null,
   ledgerStatus: null,
   buyerSearch: null,
+  buyerSearchCheckedAt: null,
+  buyerSearchRefreshMs: BUYER_SEARCH_REFRESH_MS,
   betaAccount: null,
   taskBounty: { connected: false, authReady: false, openTaskCount: null, lastCheck: null, error: null, source: 'canonical_seller_backend' },
   error: null,
@@ -52,32 +56,49 @@ async function fetchLedgerStatus() {
 }
 
 async function checkBuyerDiscovery() {
-  // These are intentionally written like buyer requests, not internal product names.
-  // A hit only measures discoverability; it is never counted as usage or revenue.
+  // MCP health runs every 15 minutes; directory visibility only needs a daily
+  // observation. Cache failures too, so outages do not trigger query churn.
+  const checkedAt = Date.now();
+  if (state.buyerSearchCheckedAt && checkedAt - Date.parse(state.buyerSearchCheckedAt) < BUYER_SEARCH_REFRESH_MS) {
+    return state.buyerSearch;
+  }
+  // /api/find defaults to Agent402's own catalog. The external search is the
+  // surface that can actually discover our seller and our existing relay offer.
   const queries = [
-    'do this task for me under budget',
-    'get this result for a maximum budget',
-    'find an agent to complete this task',
-    'find and pay the best tool for this job',
-    'cheapest reliable agent for this task',
-    'autonomous task fulfillment agent procurement',
-    'buy a completed result from an agent',
-    'need this result willing to pay',
-    'convert webpage article to clean markdown',
-    'prevent duplicate x402 payment retry safely',
-    'x402 buyer preflight payment challenge audit',
-    'prompt injection security scan json website audit',
+    'extract clean markdown from webpage url',
+    'web extract markdown',
+    'convert url to markdown',
   ];
   const checks = [];
   for (const query of queries) {
     try {
-      const r = await fetchJson(`https://agent402.tools/api/find?q=${encodeURIComponent(query)}`, {}, 10000);
-      const raw = JSON.stringify(r.data);
-      checks.push({ query, earnPresent: raw.includes(EARN_SELLER_ORIGIN), responsePreview: raw.slice(0, 900) });
+      const r = await fetchJson(`https://agent402.tools/api/route?q=${encodeURIComponent(query)}&include=external`, {
+        headers: { 'user-agent': 'INCOME2-Operator-Audit/1.0' },
+      }, 10000);
+      if (!r.ok) throw new Error(`Agent402 external search HTTP ${r.status}`);
+      if (r.data?.include !== 'external' || !Array.isArray(r.data?.results)) throw new Error('Agent402 external search response unavailable');
+      const matches = [];
+      r.data.results.forEach((row, index) => {
+        const direct = row?.seller === EARN_SELLER_ORIGIN;
+        const relay = row?.url === PAYANAGENT_OFFER_URL;
+        if (!direct && !relay) return;
+        matches.push({
+          surface: direct ? 'direct' : 'payanagent_relay',
+          rank: index + 1,
+          url: typeof row.url === 'string' ? row.url.slice(0, 300) : null,
+          reportedDispatchEligible: typeof row.routerDispatchEligible === 'boolean' ? row.routerDispatchEligible : null,
+          reportedDispatchReason: typeof row.routerDispatchReason === 'string' ? row.routerDispatchReason.slice(0, 100) : null,
+        });
+      });
+      // Marketplace labels/history are not proof of route-level execution or
+      // our revenue. Keep exact own-listing matches; discard other sellers.
+      checks.push({ query, surface: 'external', ok: true, earnPresent: matches.length > 0, returnedResults: r.data.results.length, matches, executionVerified: false });
     } catch (error) {
-      checks.push({ query, earnPresent: false, error: String(error?.message || error).slice(0, 300) });
+      checks.push({ query, surface: 'external', ok: false, earnPresent: null, error: String(error?.message || error).slice(0, 300) });
     }
   }
+  state.buyerSearchCheckedAt = new Date(checkedAt).toISOString();
+  state.buyerSearch = checks;
   return checks;
 }
 
@@ -145,6 +166,7 @@ async function verifyMcp() {
       earningOptions: state.earningOptions,
       ledgerStatus: state.ledgerStatus,
       buyerSearch: state.buyerSearch,
+      buyerSearchCheckedAt: state.buyerSearchCheckedAt,
       taskBounty: state.taskBounty,
     }));
   } catch (error) {
