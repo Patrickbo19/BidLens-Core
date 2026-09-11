@@ -1,6 +1,6 @@
 # INCOME 2 — Canonical State
 
-Last reconciled: 2026-09-11 02:01 UTC
+Last reconciled: 2026-09-11 08:34 UTC
 
 This is the canonical **non-secret** operating state for INCOME 2. Reconcile against live GitHub `main`, Render production, current marketplace/provider state, Gmail, and verified settlement evidence before material decisions. Never store API keys, private keys, seed phrases, passwords, 2FA codes, recovery credentials, solver keys, or payment signatures here.
 
@@ -133,9 +133,9 @@ Reconciled through 2026-09-11 02:01 UTC:
 
 The direct public CDP validator request timed out from Work, and merchant discovery returned a connection-refused HTTP 502 through this connection. Agentic.Market itself now loads successfully, and its public validator completed via normal browser interaction. This resolves the earlier validator access blocker; do not treat the old Agentic.Market HTTP 403 as current or report the direct API failure as proof Coinbase is down.
 
-Current [Coinbase seller documentation](https://docs.cdp.coinbase.com/x402/seller/get-discovered) says indexing requires a successful CDP-facilitated settled payment. Credentials and validation alone do not create a listing. Agentic.Market's FAQ says Bazaar-indexed services automatically appear there. **Do not self-pay to trigger indexing.** Seek genuine independent usage and inspect listing after an attributable outside settlement.
+Current [Coinbase seller documentation](https://docs.cdp.coinbase.com/x402/seller/get-discovered) requires a successful CDP-settled payment for indexing. **Indexing and curated distribution are separate.** A [Coinbase maintainer confirmed](https://github.com/x402-foundation/x402/issues/3136#issuecomment-5329834855) that Bazaar MCP search defaults to `curatedOnly:true`, while REST discovery is unfiltered by default. Curation review requires live mainnet payments, at least 99% availability over a platform-measured 30-day window, a passing health probe, complete metadata and successful validation; selection is editorial. INCOME 2 has no confirmed outside settled call or established 30-day platform availability record. Do not promise default MCP buyer visibility after one sale or claim curation eligibility. **Never self-pay to trigger indexing or review.**
 
-The seller's new aggregate funnel process began at `2026-09-11T01:53:54.945Z`. At 02:00:59 UTC it had two diagnostic and two unclassified unpaid challenges and no payment attempts or settlements. Validation/directory traffic can enter the unclassified bucket; none of these requests establishes buyer demand. Persistent ledger accounting was not reset.
+The seller's current aggregate funnel process began at `2026-09-11T01:53:54.945Z`. At 08:34:44 UTC it had **628 unclassified unpaid challenges** (264 across the two extraction URLs), two diagnostic challenges and **zero payment headers, decoded attempts, verifications, settlements or fulfilled paid requests**. These are request counts over about 6 hours 41 minutes, not unique buyers; validation/directory traffic can enter the unclassified bucket. The persistent ledger still contains only the historical unverified 0.003 USDC row.
 
 CDP auth uses lightweight `jose` JWT signing. The full CDP SDK was removed after dependency advisories; the package set was restored to 0 known npm vulnerabilities at that point. Preserve the existing fee/allowance and owner-spend constraints below; no billable overage or owner-funded payment is authorized.
 
@@ -360,6 +360,24 @@ A documentation-only commit accidentally omitted application files from its Git 
 
 ## Highest-value queue
 
+### Buyer/channel check — 2026-09-11 08:34 UTC
+
+Verified outside revenue remains **$0**. Seller health still reports CDP, credential readiness and the unchanged historical ledger. No new payment attempt or paid fulfillment is observed.
+
+The bounded buyer pass found no extraction request in PayanAgent's `q=extract` discovery. Its `openRequests` field for `q=markdown` returned only the existing $0.04 catalog-health-checker and $0.05 payment-bug bounty. Both require custom work and fail the established economics test; no bid or deliverable was submitted. The `dinxsh/adkit` integration invitation is stale (last repository push February 5 and no response to its sole seller-pitch issue); do not revisit without fresh buyer evidence. Other matching searches mainly surfaced sellers, not hiring buyers. This pass does not prove absence of all market demand.
+
+The newly verified curation gate above supersedes the earlier assumption that a first indexed call guarantees default MCP distribution. The maintainer directs curation questions to **#x402 in the official CDP Discord**, not the Foundation issue tracker. The official invite https://discord.com/invite/cdp opens in Work, but no Discord account is signed in. Channel rules and posting permissions therefore remain uninspected. No message, account creation, payment or new financial commitment was made.
+
+Exact next action: use the owner's existing Discord account through secure browser authentication; inspect #x402 rules and the designated introduction channel; submit one relevant permitted message within the owner's current first-buyer outreach authorization. Do not create another identity, cross-post, DM members or ask anyone to manufacture a test sale. If the channel prohibits this type of post, respect the restriction. Curation is a future review question, not a claim of present eligibility.
+
+Prepared message — **NOT SENT**:
+
+> Hi — I operate INCOME 2. Our first-party endpoint converts a public webpage into clean Markdown plus metadata: POST https://earn-tools-backend.onrender.com/url-to-clean-markdown with {"url":"https://example.com"}. It costs $0.001 USDC on Base via CDP and handles static public articles/docs; it does not render JavaScript or access logged-in pages. The Agentic.Market validator passed all 25 checks, and we are seeking our first independent paid use.
+> 
+> For curation, how does a new endpoint begin the required platform-measured 30-day availability window, and where should we request review once eligible? Is there an approved channel for introducing this to builders who already need webpage extraction?
+
+Keep recurring automation lightweight. Today's bounded demand search is complete; do not repeat it within 24 hours absent new evidence. No fresh code, catalog, price or registration change is justified by this pass.
+
 ### Revenue-operator follow-up — 2026-09-11 00:14 UTC
 
 Verified outside revenue remains **$0**. At approximately 00:04 UTC the prior seller process had recorded **1,408 unclassified unpaid challenges** since September 10 03:52 UTC, with zero payment headers, decoded attempts, verifications, settlements or fulfilled paid requests. This is approximately 20 hours of requests, not unique buyers. The persistent ledger still has only the historical unverified 0.003 USDC row. PayanAgent separately reports zero sales, independent buyers and paid attempts. CDP readiness is still false; the enabled seller falls back to PayAI. TaskBounty remains connected with zero open tasks; no new provider approval or maintainer response was found.
@@ -394,7 +412,7 @@ Fresh demand searches are now limited to one short pass per day, with unchanged 
 
 **CDP price-floor finding:** [official facilitator pricing](https://docs.cdp.coinbase.com/x402/seller/facilitator), checked in this follow-up, gives 1,000 free onchain transactions per month and then charges $0.001 per transaction. Our `exact` scheme settles once per accepted payment. The current $0.001 price therefore leaves zero marginal spread above the free allowance, before hosting/compute. If all calls used this model and the full allowance were available, even 200,000 paid calls would yield $200 gross minus $199 facilitator fees, or $1 before other costs. Keep the initial price as a demand test only; verify actual project allowance/billing when CDP access exists and establish positive-margin pricing before billable scale. No paid overage or other owner financial commitment is approved. The watch includes this constraint. Do not build batching or subscriptions before real demand.
 
-1. CDP credentials are configured and the official endpoint validator passed on September 11. Prioritize a genuine independent payment attempt; verify its payment, settlement and fulfillment, then inspect Bazaar/Agentic.Market listing. Do not repeat credential setup, validation or indexing attempts without a regression or new settlement. Never self-pay.
+1. CDP activation and validation are complete. Resume the single official-community introduction after secure Discord sign-in and a channel-rules check. Verify any genuine independent payment attempt, settlement and fulfillment; inspect both indexing and curated status separately afterward. Do not repeat setup, validation or indexing probes without a regression or new settlement. Never self-pay.
 2. Seek real machine-native buyer demand matching existing capabilities; prioritize transaction/funded-request evidence over generic opinions.
 3. Read the existing aggregate funnel over a meaningful observation window; do not build more analytics or treat directory challenges as buyer demand.
 4. Keep PayanAgent exact-query listing healthy; monitor genuine receipts and relevant funded requests; no self-buying.
