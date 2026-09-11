@@ -1,8 +1,28 @@
 # INCOME 2 — Agent402 Live Update
 
-Last updated: 2026-09-10 11:26 UTC (search measurement: 04:02 UTC)
+Last updated: 2026-09-11 00:14 UTC (latest search measurement: 00:13:10 UTC)
 
 This file captures Agent402 production measurements and correspondence from Mike Petrillo / Agent402.tools. Reconcile against live production and the canonical `INCOME2_STATE.md`; dated correspondence is not authoritative when direct behavior differs.
+
+## Latest worker measurement — September 11
+
+The worker now uses `/api/route?q=...&include=external` once every 24 hours per running process. Its old 12-query `/api/find` loop used Agent402's own catalog and could not reliably report external discovery. Production commit `b30ac839499b0b291f446e4752380ded32f51571` is live on all four services; the six-tool MCP verification is unchanged.
+
+| Query | INCOME 2 placements at 00:13:10 UTC |
+| --- | --- |
+| `extract clean markdown from webpage url` | PayanAgent relay #1; direct `/web-extract` #2; direct `/url-to-clean-markdown` #3 |
+| `web extract markdown` | Direct `/web-extract` #2 |
+| `convert url to markdown` | Outside the five returned results |
+
+These are discovery observations, not traffic, sales or a result caused by our worker code. Both direct rows still report `routerDispatchEligible:false`, reason `settlement_required`.
+
+**Relay discrepancy:** Agent402 also indexes the existing INCOME 2 PayanAgent offer at `https://payanagent.com/x402/kh7aj3snq4swt9wp7qez45fv718e3mqy`. That row currently reports `routerDispatchEligible:true` / `eligible`, a $0.01 execution tier, and 11 Bazaar calls / 5 payers. The displayed history and inferred multichain networks are aggregated at the PayanAgent origin, not proven for this offer. The history's two displayed Base payTo addresses differ from the INCOME 2 receive wallet. Do not count those calls/payers as INCOME 2 usage or treat the label alone as proof of execution eligibility.
+
+A normal no-payment POST to the relay returned x402 v2 HTTP 402, **Base mainnet only**, USDC, amount `1000`, and INCOME 2's canonical receive address. No signature or payment was submitted. The [evidence-binding source](https://github.com/MikeyPetrillo/Agent402/blob/main/src/evidence-binding.js) and [buyer primitive](https://github.com/MikeyPetrillo/Agent402/blob/main/src/x402-buyer.js) bind payment-recipient evidence during resolution/payment. A successful paid route through this offer has not been established. Do not self-pay, borrow another seller's history, or alter payment metadata to clear a gate. Request-level enforcement may differ from the marketplace-wide public label.
+
+The worker retains exact own-listing ranks and **reported** eligibility only, with `executionVerified:false`; it drops unrelated seller previews. Network/schema failures become unknown rather than false absence. Use its dated cached result instead of repeating searches each hourly watch. No maintainer message was sent during this check.
+
+Verified outside revenue remains **$0**, with zero payment attempts. Before redeployment the seller's approximately 20-hour process window contained 1,408 unclassified unpaid challenges; after deployment the funnel starts at `2026-09-11T00:13:01.885Z`. No new receipt or ledger settlement appeared.
 
 ## Work verification after deployment
 
