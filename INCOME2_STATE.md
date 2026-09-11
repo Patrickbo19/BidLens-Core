@@ -1,6 +1,6 @@
 # INCOME 2 — Canonical State
 
-Last reconciled: 2026-09-11 00:14 UTC
+Last reconciled: 2026-09-11 02:01 UTC
 
 This is the canonical **non-secret** operating state for INCOME 2. Reconcile against live GitHub `main`, Render production, current marketplace/provider state, Gmail, and verified settlement evidence before material decisions. Never store API keys, private keys, seed phrases, passwords, 2FA codes, recovery credentials, solver keys, or payment signatures here.
 
@@ -67,6 +67,8 @@ All four core services were verified **live** on production code commit:
 - `b30ac839499b0b291f446e4752380ded32f51571`
 - `Check external seller discovery daily and distinguish reported routing from execution`
 
+The owner manually redeployed `earn-tools-backend` after entering the CDP credentials. Deploy `dep-dahlu49594qs73fisno0` finished live at 2026-09-11T01:53:59.505527Z on `7d0065c6cbb8c6183d3a5b5f2fccbf1c9906aa9f`; application files are unchanged from `b30ac83`. Other services were last verified on `b30ac83`.
+
 Documentation-only reconciliation commits may be newer on main and use `[skip render]`.
 
 Core Render workspace: `tea-daf1c48n74is73ft7drg`.
@@ -109,42 +111,33 @@ Do not add random paid utilities without demand evidence. Distribution/conversio
 
 Machine surfaces include `/.well-known/x402`, `/.well-known/x402.json`, `/openapi.json`, `/agents.txt`, `/llms.txt`, and `/skill.md`.
 
-## Coinbase CDP Bazaar / Agentic.Market — active top priority
+## Coinbase CDP Bazaar / Agentic.Market — credentials configured, validator passed
 
-The seller already declares the standard `@x402/extensions/bazaar` discovery metadata on paid routes.
+The seller declares standard `@x402/extensions/bazaar` discovery metadata on all 14 paid URLs (13 capabilities).
 
-Optional CDP facilitator target:
+Production target: `https://api.cdp.coinbase.com/platform/v2/x402`  
+Production flag: `EARN_CDP_FACILITATOR_ENABLED=true`
 
-`https://api.cdp.coinbase.com/platform/v2/x402`
+**The credential owner gate cleared on September 11. Do not ask the owner to create or enter the pair again.** Neither credential value was retrieved or exposed.
 
-Production flag is now:
+Reconciled through 2026-09-11 02:01 UTC:
 
-`EARN_CDP_FACILITATOR_ENABLED=true`
+- `/health` reports `facilitator=cdp`, `cdpCredentialsConfigured=true`, and `cdpBazaarSettlementReady=true`.
+- The new seller process logged its JWT-authenticated `GET /platform/v2/x402/supported` request at 01:53:58.045 UTC.
+- Both extraction URLs subsequently returned valid x402 v2 unpaid HTTP 402 challenges: Base, canonical USDC asset/receive address, amount 1,000 atomic units ($0.001), Bazaar metadata, and `Cache-Control: no-store`.
+- Successful supported-network initialization is inferred from the request log, configured CDP-only interception, and successful middleware challenges. The installed x402 middleware cannot generate those challenges unless facilitator initialization has loaded the supported network; no raw CDP response status was separately captured. Health booleans alone are configuration signals.
+- [Coinbase's Agentic.Market validator result](https://agentic.market/validate?url=https%3A%2F%2Fearn-tools-backend.onrender.com%2Furl-to-clean-markdown&method=POST) for canonical `POST /url-to-clean-markdown` says **Implementation Looks Correct** and **all 25 checks passed**: Transport & URL 6/6, Payment Requirements 9/9, Bazaar Extension 10/10.
+- The validator reports the endpoint still needs its first verify+settle to appear in Bazaar. **The canonical endpoint is ready for indexing, not yet indexed according to this result.** Other seller resources have not been exhaustively checked for listing.
+- Genuine CDP-facilitated settlement: **0 confirmed**. Successful real payment verification, settlement and paid delivery remain untested.
+- Verified external revenue: **$0**. The ledger still contains only the old unverified 0.003 USDC row.
 
-The flag was enabled on 2026-09-09 and the resulting Render deploy finished **live**. The seller then logged:
+The direct public CDP validator request timed out from Work, and merchant discovery returned a connection-refused HTTP 502 through this connection. Agentic.Market itself now loads successfully, and its public validator completed via normal browser interaction. This resolves the earlier validator access blocker; do not treat the old Agentic.Market HTTP 403 as current or report the direct API failure as proof Coinbase is down.
 
-`cdp_facilitator_fallback` → `credentials_not_configured`
+Current [Coinbase seller documentation](https://docs.cdp.coinbase.com/x402/seller/get-discovered) says indexing requires a successful CDP-facilitated settled payment. Credentials and validation alone do not create a listing. Agentic.Market's FAQ says Bazaar-indexed services automatically appear there. **Do not self-pay to trigger indexing.** Seek genuine independent usage and inspect listing after an attributable outside settlement.
 
-Authoritative Coinbase state:
+The seller's new aggregate funnel process began at `2026-09-11T01:53:54.945Z`. At 02:00:59 UTC it had two diagnostic and two unclassified unpaid challenges and no payment attempts or settlements. Validation/directory traffic can enter the unclassified bucket; none of these requests establishes buyer demand. Persistent ledger accounting was not reset.
 
-- Bazaar extension declared: **yes**
-- 14 paid URLs metadata-ready: **yes**, representing 13 capabilities
-- CDP facilitator code-ready: **yes**
-- CDP activation flag: **ON**
-- CDP credential pair ready: **false**, verified through production behavior without viewing values
-- This boolean proves the pair is incomplete/unavailable; it does not identify which individual field is missing.
-- active behavior therefore falls back to PayAI
-- genuine CDP-facilitated settlement: **0 confirmed**
-- Bazaar indexing: **not confirmed**
-- Agentic.Market visibility: **not confirmed**
-
-Owner gate: create a legitimate Coinbase Developer Platform Secret API key and put Key ID + Secret directly into Render for `earn-tools-backend`. Never paste the secret into chat. Once configured, immediately verify authenticated `/supported`, seller health/facilitator state, safe no-payment 402 behavior, Bazaar discovery, and Agentic.Market visibility.
-
-Do **not** self-pay to trigger indexing.
-
-Current [Coinbase seller documentation](https://docs.cdp.coinbase.com/x402/seller/get-discovered) says indexing requires a successful CDP-facilitated settled payment. Credentials and validation alone do not guarantee listing. The public `/validate` endpoint can check readiness without paying. Work requests to CDP validation, merchant discovery and search timed out; Agentic.Market returned HTTP 403. Visibility remains **unconfirmed**, not proven absent. Recheck from an authorized working connection after the credential gate clears.
-
-CDP auth uses lightweight `jose` JWT signing. The full CDP SDK was removed after dependency advisories; current package set was restored to 0 known npm vulnerabilities at that point.
+CDP auth uses lightweight `jose` JWT signing. The full CDP SDK was removed after dependency advisories; the package set was restored to 0 known npm vulnerabilities at that point. Preserve the existing fee/allowance and owner-spend constraints below; no billable overage or owner-funded payment is authorized.
 
 ## PayanAgent
 
@@ -401,7 +394,7 @@ Fresh demand searches are now limited to one short pass per day, with unchanged 
 
 **CDP price-floor finding:** [official facilitator pricing](https://docs.cdp.coinbase.com/x402/seller/facilitator), checked in this follow-up, gives 1,000 free onchain transactions per month and then charges $0.001 per transaction. Our `exact` scheme settles once per accepted payment. The current $0.001 price therefore leaves zero marginal spread above the free allowance, before hosting/compute. If all calls used this model and the full allowance were available, even 200,000 paid calls would yield $200 gross minus $199 facilitator fees, or $1 before other costs. Keep the initial price as a demand test only; verify actual project allowance/billing when CDP access exists and establish positive-margin pricing before billable scale. No paid overage or other owner financial commitment is approved. The watch includes this constraint. Do not build batching or subscriptions before real demand.
 
-1. Clear Coinbase CDP credential owner gate; verify authenticated supported networks, actual CDP routing and the official validator, then inspect Bazaar/Agentic.Market. A genuine CDP-settled buyer payment is still required for indexing; do not self-pay.
+1. CDP credentials are configured and the official endpoint validator passed on September 11. Prioritize a genuine independent payment attempt; verify its payment, settlement and fulfillment, then inspect Bazaar/Agentic.Market listing. Do not repeat credential setup, validation or indexing attempts without a regression or new settlement. Never self-pay.
 2. Seek real machine-native buyer demand matching existing capabilities; prioritize transaction/funded-request evidence over generic opinions.
 3. Read the existing aggregate funnel over a meaningful observation window; do not build more analytics or treat directory challenges as buyer demand.
 4. Keep PayanAgent exact-query listing healthy; monitor genuine receipts and relevant funded requests; no self-buying.
