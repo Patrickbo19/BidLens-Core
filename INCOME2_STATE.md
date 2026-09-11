@@ -1,6 +1,6 @@
 # INCOME 2 — Canonical State
 
-Last reconciled: 2026-09-10 11:26 UTC
+Last reconciled: 2026-09-11 00:14 UTC
 
 This is the canonical **non-secret** operating state for INCOME 2. Reconcile against live GitHub `main`, Render production, current marketplace/provider state, Gmail, and verified settlement evidence before material decisions. Never store API keys, private keys, seed phrases, passwords, 2FA codes, recovery credentials, solver keys, or payment signatures here.
 
@@ -64,8 +64,8 @@ Branch: `main`
 
 All four core services were verified **live** on production code commit:
 
-- `c6c729ef9f6aeaa50624a4013ef525abfeb695ec`
-- `Expose canonical URL-to-clean-Markdown route and aggregate payment funnel`
+- `b30ac839499b0b291f446e4752380ded32f51571`
+- `Check external seller discovery daily and distinguish reported routing from execution`
 
 Documentation-only reconciliation commits may be newer on main and use `[skip render]`.
 
@@ -366,6 +366,26 @@ A bounded extra buyer-channel check did not justify new work. [ClawTasks](https:
 A documentation-only commit accidentally omitted application files from its Git tree. The complete application tree was restored in `b9be2ff9e8ca4e9d520fcaeee9b2a5f9f5b5ef97`; comparison to the deployed code confirmed only the three intended handoff documents changed. Both commits used `[skip render]`, and all four production deployments remained unchanged. Verify complete tree diffs before future Git ref updates.
 
 ## Highest-value queue
+
+### Revenue-operator follow-up — 2026-09-11 00:14 UTC
+
+Verified outside revenue remains **$0**. At approximately 00:04 UTC the prior seller process had recorded **1,408 unclassified unpaid challenges** since September 10 03:52 UTC, with zero payment headers, decoded attempts, verifications, settlements or fulfilled paid requests. This is approximately 20 hours of requests, not unique buyers. The persistent ledger still has only the historical unverified 0.003 USDC row. PayanAgent separately reports zero sales, independent buyers and paid attempts. CDP readiness is still false; the enabled seller falls back to PayAI. TaskBounty remains connected with zero open tasks; no new provider approval or maintainer response was found.
+
+The actual worker had still been running 12 `/api/find` searches every 15 minutes. That endpoint defaults to Agent402's own catalog and was reporting INCOME 2 absent even when its external listing existed. The deployed fix uses the three established `/api/route?...&include=external` queries and caches the observation for 24 hours per process, including failures. Steady-state directory requests decrease from 1,152 to 3 per day; restarts can cause an additional initial pass. MCP verification keeps its existing 15-minute cadence and all six tools. Exact own-origin and own-offer matches replace raw response substring checks; unrelated seller previews are discarded. Failed searches report unknown, not lost visibility. Directory eligibility is explicitly reported metadata and never proof of successful execution or revenue.
+
+All four services completed deployment of `b30ac83` by 00:13:19 UTC and returned HTTP 200. The worker verified all six MCP tools and completed its first daily external search at **00:13:10 UTC**:
+
+| External query | Current INCOME 2 placements |
+| --- | --- |
+| `extract clean markdown from webpage url` | PayanAgent relay #1; direct `/web-extract` #2; direct `/url-to-clean-markdown` #3 |
+| `web extract markdown` | Direct `/web-extract` #2 |
+| `convert url to markdown` | No INCOME 2 result among the five returned |
+
+These are current marketplace measurements, not an effect of the monitoring change or evidence of buyers. The direct paid rows remain `settlement_required`. The PayanAgent relay row reports eligible, but its displayed Bazaar history is **marketplace-origin aggregate data**, including payTo addresses different from the INCOME 2 receive wallet. Its 11 calls / 5 payers must not be counted as INCOME 2 usage. A no-payment relay check returned only Base USDC, 1,000 atomic units and the canonical receive address. Agent402's public evidence-binding/buyer code also binds inherited history to the live payment recipient. Actual router execution through this offer remains **unverified**; do not claim the dispatch gate is cleared, route around it, or pay to test it. See `AGENT402_LIVE_UPDATE.md` for this discrepancy.
+
+The seller redeploy started a new funnel process at `2026-09-11T00:13:01.885Z`. Preserve the prior 1,408 observation as historical, and do not interpret reset counters as lost ledger money or add cumulative snapshots to interval deltas. No payment was signed and no owner funds were spent.
+
+The bounded buyer pass found no qualifying funded work: the latest ten PayanAgent requests were the same unfunded promotional posts, and targeted current GitHub/Algora-bounty searches surfaced no confirmed candidate. No bid, outreach message or speculative deliverable was submitted. The next useful triggers remain a genuine payment attempt, a qualified funded request, a provider approval or securely configured CDP credentials. Further keyword/catalog work is not justified by these observations.
 
 ### Revenue-operator follow-up — 2026-09-10 15:33 UTC
 
