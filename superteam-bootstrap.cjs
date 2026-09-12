@@ -164,19 +164,23 @@ async function scan(agent) {
       const assessment = candidateAssessment(detail);
       const amount = compensationUsd(detail) ?? compensationUsd(row);
       const deadline = cleanString(detail?.deadline || detail?.submissionDeadline || row?.deadline || row?.submissionDeadline, 80);
+      const deadlineMs = deadline ? Date.parse(deadline) : NaN;
+      const expired = Number.isFinite(deadlineMs) ? deadlineMs <= Date.now() : false;
       candidates.push({
         ...identity,
         compensationUsd:amount,
         deadline,
-        autonomousCandidate:assessment.autonomousCandidate,
-        blockers:assessment.blockers,
+        expired,
+        autonomousCandidate:assessment.autonomousCandidate && !expired,
+        blockers:expired ? [...assessment.blockers, 'expired_deadline'] : assessment.blockers,
       });
     }
 
-    const ranked = candidates
+    const current = candidates.filter(item => !item.expired);
+    const ranked = current
       .sort((a, b) => Number(b.autonomousCandidate) - Number(a.autonomousCandidate) || (b.compensationUsd || 0) - (a.compensationUsd || 0))
       .slice(0, 12);
-    const autonomous = candidates.filter(item => item.autonomousCandidate);
+    const autonomous = current.filter(item => item.autonomousCandidate);
 
     console.log(JSON.stringify({
       type:'superteam_earn_scan',
@@ -185,13 +189,15 @@ async function scan(agent) {
       username:agent.username || null,
       listingCount:rows.length,
       inspectedCount:candidates.length,
+      currentListingCount:current.length,
+      expiredListingCount:candidates.length - current.length,
       autonomousCandidateCount:autonomous.length,
       topCandidates:ranked,
       noSubmissionCreated:true,
       ownerFundsSpentUsd:0,
       at:new Date().toISOString(),
     }));
-    return { ok:true, listingCount:rows.length, inspectedCount:candidates.length, autonomousCandidateCount:autonomous.length, candidates:ranked };
+    return { ok:true, listingCount:rows.length, inspectedCount:candidates.length, currentListingCount:current.length, autonomousCandidateCount:autonomous.length, candidates:ranked };
   } finally {
     scanInFlight = false;
   }
