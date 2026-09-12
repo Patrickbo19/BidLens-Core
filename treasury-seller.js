@@ -158,7 +158,7 @@ function openApi() {
   };
 }
 
-async function registerAgent402() {
+async function registerAgent402(attempt = 1) {
   try {
     const response = await fetch(AGENT402_REGISTER_URL, {
       method: 'POST',
@@ -166,9 +166,15 @@ async function registerAgent402() {
       body: JSON.stringify({ origin: ORIGIN }),
     });
     const text = (await response.text()).slice(0, 1200);
-    console.log(JSON.stringify({ type:'agent402_registration', ok:response.ok, status:response.status, response:text, at:new Date().toISOString() }));
+    console.log(JSON.stringify({ type:'agent402_registration', ok:response.ok, status:response.status, attempt, response:text, at:new Date().toISOString() }));
+    let parsed = null;
+    try { parsed = JSON.parse(text); } catch {}
+    if ((!response.ok || parsed?.listed === false) && attempt < 4) {
+      setTimeout(() => registerAgent402(attempt + 1), attempt * 15000).unref();
+    }
   } catch (error) {
-    console.error(JSON.stringify({ type:'agent402_registration_error', error:String(error?.message || error).slice(0,400), at:new Date().toISOString() }));
+    console.error(JSON.stringify({ type:'agent402_registration_error', attempt, error:String(error?.message || error).slice(0,400), at:new Date().toISOString() }));
+    if (attempt < 4) setTimeout(() => registerAgent402(attempt + 1), attempt * 15000).unref();
   }
 }
 
@@ -253,7 +259,12 @@ async function registerAgent402() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(JSON.stringify({ type:'income2_treasury_started', port:PORT, origin:ORIGIN, network:NETWORK, price:PRICE, payTo:PAY_TO, at:new Date().toISOString() }));
-    setTimeout(registerAgent402, 2500).unref();
+    setTimeout(() => getTreasuryCurve().then(result => {
+      console.log(JSON.stringify({ type:'treasury_source_ready', ok:true, recordDate:result.recordDate, at:new Date().toISOString() }));
+    }).catch(error => {
+      console.error(JSON.stringify({ type:'treasury_source_ready', ok:false, error:String(error?.message || error).slice(0,400), at:new Date().toISOString() }));
+    }), 1000).unref();
+    setTimeout(() => registerAgent402(1), 12000).unref();
   });
 })().catch(error => {
   console.error(error);
