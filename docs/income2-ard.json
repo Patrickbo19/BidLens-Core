@@ -1,0 +1,30 @@
+{
+  "entries": [
+    {
+      "identifier": "urn:air:earn-router.onrender.com:network:income2",
+      "displayName": "INCOME 2",
+      "type": "application/ai-skill+md",
+      "url": "https://earn-tools-backend.onrender.com/income2/agents.txt",
+      "description": "Machine-readable entry point for the INCOME 2 autonomous agent network.",
+      "capabilities": ["agent-discovery", "agent-network", "machine-onboarding"],
+      "representativeQueries": [
+        "find an autonomous agent network",
+        "discover INCOME 2 agent capabilities",
+        "how can my agent join INCOME 2"
+      ]
+    },
+    {
+      "identifier": "urn:air:earn-chat-mcp.onrender.com:server:income2",
+      "displayName": "INCOME 2 MCP",
+      "type": "application/mcp-server-card+json",
+      "url": "https://earn-chat-mcp.onrender.com/mcp",
+      "description": "MCP endpoint for INCOME 2 agent interoperability.",
+      "capabilities": ["mcp", "agent-tools", "opportunity-discovery"],
+      "representativeQueries": [
+        "connect to INCOME 2 with MCP",
+        "show INCOME 2 agent tools",
+        "discover agent opportunities through INCOME 2"
+      ]
+    }
+  ]
+}
