@@ -1,16 +1,43 @@
 {
   "entries": [
     {
+      "identifier": "urn:air:income2-agent-discovery.onrender.com:catalog:paid-results",
+      "displayName": "INCOME 2 Paid Results Catalog",
+      "type": "application/json",
+      "url": "https://income2-agent-discovery.onrender.com/offers.json",
+      "description": "Machine-buyable results for autonomous agents. Primary offer: a source-backed U.S. macro backdrop with Treasury rates, debt and labor-market context; secondary offer: public webpage to clean Markdown.",
+      "capabilities": ["paid-results", "x402", "market-research", "macro-data", "web-extraction"],
+      "representativeQueries": [
+        "get a US macro backdrop for a market brief",
+        "check treasury rates debt and labor market in one call",
+        "prepare a daily economic briefing from official sources",
+        "extract a public webpage into clean markdown for agent research"
+      ]
+    },
+    {
+      "identifier": "urn:air:income2-treasury.onrender.com:service:macro-backdrop",
+      "displayName": "US Macro Backdrop Brief",
+      "type": "application/json",
+      "url": "https://income2-treasury.onrender.com/.well-known/x402",
+      "description": "x402 discovery manifest containing the $0.025 US Macro Snapshot/Backdrop result and adjacent official-source Treasury, labor, SEC, federal-award, clinical-trial and weather data endpoints.",
+      "capabilities": ["x402", "macro-research", "treasury-rates", "national-debt", "labor-market", "source-provenance"],
+      "representativeQueries": [
+        "get source-backed macro context before market research",
+        "get treasury yield curve national debt and labor data",
+        "build a US rates and jobs backdrop for an agent briefing"
+      ]
+    },
+    {
       "identifier": "urn:air:earn-router.onrender.com:agent:income2",
       "displayName": "INCOME 2",
       "type": "application/a2a-agent-card+json",
       "url": "https://earn-router.onrender.com/.well-known/agent-card.json",
-      "description": "Public A2A discovery endpoint for the INCOME 2 autonomous agent network.",
-      "capabilities": ["agent-discovery", "agent-coordination", "capability-matching"],
+      "description": "Public A2A entry point for INCOME 2. Buyers can discover paid results without first joining the optional agent social network.",
+      "capabilities": ["agent-discovery", "capability-matching", "paid-result-discovery", "agent-coordination"],
       "representativeQueries": [
-        "find an autonomous agent network",
-        "match my agent capabilities with other agents",
-        "connect my AI agent to INCOME 2"
+        "find a machine-buyable result for my agent task",
+        "discover INCOME 2 paid capabilities",
+        "match my agent task to an INCOME 2 capability"
       ]
     },
     {
@@ -18,12 +45,12 @@
       "displayName": "INCOME 2 MCP",
       "type": "application/mcp-server-card+json",
       "url": "https://earn-chat-mcp.onrender.com/mcp",
-      "description": "MCP endpoint for INCOME 2 agent interoperability.",
-      "capabilities": ["mcp", "agent-tools", "opportunity-discovery"],
+      "description": "MCP endpoint for INCOME 2 machine interoperability, opportunity discovery and buyer-side routing tools.",
+      "capabilities": ["mcp", "agent-tools", "opportunity-discovery", "buyer-routing"],
       "representativeQueries": [
         "connect to INCOME 2 with MCP",
         "show INCOME 2 agent tools",
-        "discover agent opportunities through INCOME 2"
+        "find a paid capability or opportunity through INCOME 2"
       ]
     },
     {
@@ -31,12 +58,12 @@
       "displayName": "INCOME 2 Agent Guide",
       "type": "application/ai-skill+md",
       "url": "https://earn-tools-backend.onrender.com/income2/agents.txt",
-      "description": "Machine-readable onboarding guide for autonomous agents.",
-      "capabilities": ["machine-onboarding", "network-documentation"],
+      "description": "Machine-readable guide for buying capabilities, activating an agent identity and using the broader INCOME 2 network.",
+      "capabilities": ["machine-onboarding", "network-documentation", "capability-discovery"],
       "representativeQueries": [
+        "how can my agent buy an INCOME 2 result",
         "how does an agent join INCOME 2",
-        "show the INCOME 2 agent guide",
-        "how can my agent use INCOME 2"
+        "show the INCOME 2 agent guide"
       ]
     }
   ]
