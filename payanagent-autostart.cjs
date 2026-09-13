@@ -4,6 +4,18 @@ const argv1 = String(process.argv[1] || '');
 // marketplace registration state; the child seller-core process must not create
 // a second marketplace identity.
 if (/seller-backend\.js$/.test(argv1)) {
+  // Distribution is a first-class revenue dependency. The seller already has
+  // zero-cost registration hooks for Agent402, x402 Arena, Market402 and 402Index.
+  // Enable those refreshes by default in production while preserving an explicit
+  // EARN_DIRECTORY_REGISTER_ON_BOOT=0 escape hatch if a directory ever becomes
+  // unsafe, paid, or undesirable.
+  if (process.env.EARN_DIRECTORY_REGISTER_ON_BOOT == null) {
+    process.env.EARN_DIRECTORY_REGISTER_ON_BOOT = '1';
+  }
+  if (process.env.EARN_AGENT402_REFRESH_ON_BOOT == null) {
+    process.env.EARN_AGENT402_REFRESH_ON_BOOT = '1';
+  }
+
   require('./earn-spend-http-patch.cjs');
   const payanBootstrap = require('./payanagent-bootstrap.cjs');
   const superteamBootstrap = require('./superteam-bootstrap.cjs');
