@@ -2,6 +2,7 @@ const http = require('http');
 const crypto = require('crypto');
 const spendVault = require('./earn-spend-vault.cjs');
 const evaluator = require('./earn-opportunity-evaluator.cjs');
+const profitOs = require('./agent-profit-os.cjs');
 
 const SOLVER_KEY = String(process.env.TASKBOUNTY_SOLVER_KEY || '').trim();
 
@@ -85,6 +86,38 @@ async function handleSpendRoute(req, res, url) {
       return sendJson(res, 422, { ok: false, message: String(error?.message || error).slice(0, 300) });
     }
   }
+
+  if (req.method === 'GET' && url.pathname === '/earn/profit-os/status') {
+    try {
+      return sendJson(res, 200, { ok: true, profitOs: await profitOs.status() });
+    } catch (error) {
+      return sendJson(res, 503, { ok: false, message: String(error?.message || error).slice(0, 300) });
+    }
+  }
+
+  if (req.method === 'POST' && url.pathname === '/earn/profit-os/plan') {
+    try {
+      const raw = await readBody(req, 12000);
+      const body = JSON.parse(raw || '{}');
+      return sendJson(res, 200, { ok: true, plan: profitOs.plan(body) });
+    } catch (error) {
+      return sendJson(res, 422, { ok: false, message: String(error?.message || error).slice(0, 300) });
+    }
+  }
+
+  if (req.method === 'POST' && url.pathname === '/earn/profit-os/execute') {
+    if (!authorized(req)) return sendJson(res, 401, { ok: false, message: 'solver authorization required' });
+    try {
+      const raw = await readBody(req, 64000);
+      const body = JSON.parse(raw || '{}');
+      const result = await profitOs.executeVerifiedOpportunity(body);
+      return sendJson(res, 200, { ok: true, result });
+    } catch (error) {
+      console.log(JSON.stringify({ type: 'agent_profit_os_execute_rejected', error: String(error?.message || error).slice(0, 300), at: new Date().toISOString() }));
+      return sendJson(res, 422, { ok: false, message: String(error?.message || error).slice(0, 300) });
+    }
+  }
+
   return false;
 }
 
