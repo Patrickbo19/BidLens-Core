@@ -390,17 +390,45 @@ const BLS_SERIES = {
   totalNonfarmPayrollsThousands: 'CES0000000001',
   averageHourlyEarningsPrivate: 'CES0500000003',
 };
-async function getBlsSeries(seriesId) {
-  const json = await fetchJson(`https://api.bls.gov/publicAPI/v1/timeseries/data/${seriesId}`, {}, 15000, 1_000_000);
-  const series = json?.Results?.series?.[0];
-  if (!series?.data?.length) throw new Error(`BLS series ${seriesId} returned no data`);
-  return series.data.slice(0, 14).map(row => ({ year:row.year, period:row.period, periodName:row.periodName, value:Number(row.value), latest:row.latest === 'true' }));
+async function getBlsSeriesBatch() {
+  const ids = Object.values(BLS_SERIES);
+  let lastError = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const json = await fetchJson('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ seriesid: ids }),
+      }, 20000, 2_000_000);
+      if (String(json?.status || '').toUpperCase() !== 'REQUEST_SUCCEEDED') {
+        throw new Error(`BLS request failed: ${String(json?.message?.[0] || json?.status || 'unknown error').slice(0, 180)}`);
+      }
+      const results = Array.isArray(json?.Results) ? json.Results[0] : json?.Results;
+      const rowsById = new Map((results?.series || []).map(item => [item.seriesID, item.data || []]));
+      const series = {};
+      for (const [name, id] of Object.entries(BLS_SERIES)) {
+        const rows = rowsById.get(id) || [];
+        if (!rows.length) throw new Error(`BLS series ${id} returned no data`);
+        series[name] = rows.slice(0, 14).map(row => ({
+          year: row.year,
+          period: row.period,
+          periodName: row.periodName,
+          value: Number(row.value),
+          latest: row.latest === 'true',
+        }));
+      }
+      return series;
+    } catch (error) {
+      lastError = error;
+      if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 750));
+    }
+  }
+  throw lastError;
 }
 
 async function getLaborMarket() {
   return cached('labor-market', {}, 6 * 60 * 60 * 1000, async () => {
-    const entries = await Promise.all(Object.entries(BLS_SERIES).map(async ([name, id]) => [name, await getBlsSeries(id)]));
-    const series = Object.fromEntries(entries);
+    const series = await getBlsSeriesBatch();
     const latest = {};
     for (const [name, rows] of Object.entries(series)) latest[name] = rows[0] || null;
     return {
