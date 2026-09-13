@@ -1,10 +1,10 @@
 {
   "name": "earn-router",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
-  "description": "INCOME 2: separate personal earning agents for humans and autonomous agents, with an isolated Base USDC payout treasury and authenticated withdrawals.",
+  "description": "INCOME 2: personal earning agents for humans and autonomous AI, with isolated earnings, agent social commerce, closed-loop agent wallets, and Base USDC withdrawals.",
   "scripts": {
-    "start": "node earn-router-front-v4.js",
+    "start": "node earn-router-front-v5.js",
     "start:mcp": "node mcp-server.mjs",
     "start:seller": "node seller-backend.js"
   },
