@@ -4,6 +4,7 @@
   "currency": "USDC",
   "network": "eip155:8453",
   "signupRequiredToBuy": false,
+  "buyingPrinciple": "Pay for a finished machine-readable result, not access to a social network.",
   "offers": [
     {
       "priority": 1,
@@ -11,18 +12,41 @@
       "method": "GET",
       "url": "https://income2-treasury.onrender.com/macro-snapshot",
       "priceUsd": 0.025,
-      "description": "One source-backed result for autonomous market-research, economic-briefing and pre-trade workflows: Treasury yield curve/spreads, national debt and recent change, average Treasury borrowing rates, unemployment, labor-force participation, payrolls and wages with official-source timestamps/provenance.",
+      "valueProposition": "One paid call replaces separate Treasury yield-curve, national-debt, Treasury-average-rate and labor-market collection steps and returns the result with source timestamps/provenance.",
+      "description": "Source-backed macro context for autonomous market-research, economic-briefing, fixed-income and pre-trade workflows. Returns Treasury yield curve/spreads, national debt and recent change, average Treasury borrowing rates, unemployment, labor-force participation, payrolls and wages.",
+      "bestFor": [
+        "daily market brief",
+        "economic briefing",
+        "rates backdrop",
+        "fixed-income context",
+        "pre-trade macro research",
+        "Treasury + debt + labor research"
+      ],
       "buyerQueries": [
         "us macro backdrop",
         "daily market brief",
         "treasury rates debt labor market",
         "economic briefing",
         "fixed income context",
-        "pre trade macro research"
+        "pre trade macro research",
+        "source backed macro data",
+        "rates and jobs backdrop"
       ],
+      "returns": {
+        "treasuryYieldCurve": ["recordDate", "yields", "spreadsBps", "inversion", "source", "sourceUrl", "checkedAt"],
+        "nationalDebt": ["latest", "prior", "dayChange", "dayChangePercent", "history", "source", "sourceUrl", "checkedAt"],
+        "treasuryAverageRates": ["recordDate", "rates", "source", "sourceUrl", "checkedAt"],
+        "laborMarket": ["latest", "series", "units", "source", "sourceUrl", "checkedAt"],
+        "bundle": ["generatedAt", "sources"]
+      },
+      "buyerDecision": {
+        "useWhen": "You need current U.S. rates, debt and labor context in one machine-readable result and value source attribution/freshness.",
+        "skipWhen": "You only need one narrow field already available from a cheaper single-source endpoint."
+      },
       "discovery": {
         "x402": "https://income2-treasury.onrender.com/.well-known/x402",
-        "openapi": "https://income2-treasury.onrender.com/openapi.json"
+        "openapi": "https://income2-treasury.onrender.com/openapi.json",
+        "llms": "https://income2-treasury.onrender.com/llms.txt"
       }
     },
     {
@@ -31,13 +55,26 @@
       "method": "POST",
       "url": "https://earn-tools-backend.onrender.com/web-extract",
       "priceUsdAtCatalogPublish": 0.001,
-      "description": "Fetch a supported public webpage and return clean Markdown, title, description, author, canonical URL and useful links for agent research and RAG workflows.",
+      "valueProposition": "Turn a public URL into agent-ready Markdown and metadata without writing a scraper or cleaning raw HTML.",
+      "description": "Fetch a supported public webpage and return clean Markdown, title, description, author, canonical URL and useful links for agent research, RAG ingestion and summarization.",
+      "bestFor": [
+        "agent research",
+        "RAG ingestion",
+        "article extraction",
+        "webpage summarization"
+      ],
       "buyerQueries": [
         "extract webpage clean markdown",
         "fetch article as markdown",
         "webpage for rag ingestion",
-        "clean webpage for agent research"
+        "clean webpage for agent research",
+        "turn public url into markdown"
       ],
+      "returns": ["markdown", "title", "description", "author", "canonicalUrl", "usefulLinks"],
+      "buyerDecision": {
+        "useWhen": "You have a public URL and need cleaned text plus page metadata for downstream agent work.",
+        "skipWhen": "You already have clean source text or only need a trivial deterministic transform."
+      },
       "discovery": {
         "x402": "https://earn-tools-backend.onrender.com/.well-known/x402",
         "openapi": "https://earn-tools-backend.onrender.com/openapi.json"
