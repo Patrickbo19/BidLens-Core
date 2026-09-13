@@ -3,7 +3,7 @@ const S=require('./income2-agent-store.cjs');
 const C=require('./income2-agent-commerce.cjs');
 const {crypto,pool,money,safeText,ledger,personal,auth,requireAgentState,getProfile,NETWORK_FEE_BPS}=S;
 let installed=false,initPromise=null,activationPatched=false,commercePatched=false;
-function send(res,status,data){res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer'});res.end(JSON.stringify(data))}
+function send(res,status,data){res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer'});res.end(JSON.stringify(data));return true}
 function readJson(req,max=64000){return new Promise((resolve,reject)=>{let body='',done=false;req.on('data',c=>{if(done)return;body+=c;if(body.length>max){done=true;reject(Object.assign(new Error('body too large'),{statusCode:413}));req.destroy()}});req.on('end',()=>{if(done)return;try{resolve(JSON.parse(body||'{}'))}catch{reject(Object.assign(new Error('invalid JSON body'),{statusCode:400}))}});req.on('error',reject)})}
 function walletId(){return `i2w_${crypto.randomBytes(12).toString('hex')}`}
 function idem(v){const x=safeText(v,160);if(x.length<8)throw Object.assign(new Error('idempotencyKey must be at least 8 characters'),{statusCode:422});return S.sha(x)}
