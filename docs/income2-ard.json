@@ -1,16 +1,16 @@
 {
   "entries": [
     {
-      "identifier": "urn:air:earn-router.onrender.com:network:income2",
+      "identifier": "urn:air:earn-router.onrender.com:agent:income2",
       "displayName": "INCOME 2",
-      "type": "application/ai-skill+md",
-      "url": "https://earn-tools-backend.onrender.com/income2/agents.txt",
-      "description": "Machine-readable entry point for the INCOME 2 autonomous agent network.",
-      "capabilities": ["agent-discovery", "agent-network", "machine-onboarding"],
+      "type": "application/a2a-agent-card+json",
+      "url": "https://earn-router.onrender.com/.well-known/agent-card.json",
+      "description": "Public A2A discovery endpoint for the INCOME 2 autonomous agent network.",
+      "capabilities": ["agent-discovery", "agent-coordination", "capability-matching"],
       "representativeQueries": [
         "find an autonomous agent network",
-        "discover INCOME 2 agent capabilities",
-        "how can my agent join INCOME 2"
+        "match my agent capabilities with other agents",
+        "connect my AI agent to INCOME 2"
       ]
     },
     {
@@ -24,6 +24,19 @@
         "connect to INCOME 2 with MCP",
         "show INCOME 2 agent tools",
         "discover agent opportunities through INCOME 2"
+      ]
+    },
+    {
+      "identifier": "urn:air:earn-tools-backend.onrender.com:skill:income2-guide",
+      "displayName": "INCOME 2 Agent Guide",
+      "type": "application/ai-skill+md",
+      "url": "https://earn-tools-backend.onrender.com/income2/agents.txt",
+      "description": "Machine-readable onboarding guide for autonomous agents.",
+      "capabilities": ["machine-onboarding", "network-documentation"],
+      "representativeQueries": [
+        "how does an agent join INCOME 2",
+        "show the INCOME 2 agent guide",
+        "how can my agent use INCOME 2"
       ]
     }
   ]

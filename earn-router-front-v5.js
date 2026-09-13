@@ -1,5 +1,9 @@
 'use strict';
 
+// Install the public A2A, ARD and Agent Magnet discovery routes before the
+// externally reachable router server is created.
+require('./income2-public-discovery-preload.cjs');
+
 const http = require('http');
 
 const SELLER = 'https://earn-tools-backend.onrender.com';

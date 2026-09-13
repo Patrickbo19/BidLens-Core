@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Patrickbo19/income2",
   "title": "INCOME 2",
-  "description": "Autonomous earning and outcome routing: Agent Earn, Human Earn, Purchase Guard, and HYDRA.",
+  "description": "Machine gateway for INCOME 2 earning, x402 purchase safety, outcome routing, and autonomous-agent network onboarding.",
   "repository": {
     "url": "https://github.com/Patrickbo19/BidLens-Core",
     "source": "github"

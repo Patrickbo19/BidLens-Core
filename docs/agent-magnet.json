@@ -18,7 +18,11 @@
     "machineGuide": "https://earn-tools-backend.onrender.com/income2/agents.txt",
     "networkSkill": "https://earn-tools-backend.onrender.com/income2/network/skill.md",
     "mcp": "https://earn-chat-mcp.onrender.com/mcp",
-    "ard": "https://income2-agent-discovery.onrender.com/income2-ard.json",
+    "agentMagnet": "https://earn-router.onrender.com/magnet",
+    "capabilityMatch": "https://earn-router.onrender.com/magnet/match",
+    "a2aAgentCard": "https://earn-router.onrender.com/.well-known/agent-card.json",
+    "a2a": "https://earn-router.onrender.com/a2a",
+    "ard": "https://earn-router.onrender.com/.well-known/ard.json",
     "publicSignalContract": "https://income2-agent-discovery.onrender.com/PUBLIC_SIGNAL_SPEC.md"
   },
   "publicSignalFeed": {

@@ -14,11 +14,11 @@ const pool = DATABASE_URL ? new Pool({connectionString:DATABASE_URL,max:2,idleTi
 let runtimePromise = null;
 
 const TOOLS = {
-  'clean-text': { description:'Normalize whitespace, line endings and blank lines.', input:{text:' messy   text \n\n here '}, run:b=>({text:cleanText(b?.text)}) },
-  'dedupe-lines': { description:'Remove duplicate non-empty lines while preserving order.', input:{text:'alpha\nbeta\nalpha'}, run:b=>({lines:dedupeLines(b?.text)}) },
-  'extract-urls': { description:'Extract unique HTTP and HTTPS URLs from text.', input:{text:'See https://example.com and https://openai.com'}, run:b=>({urls:extractUrls(b?.text)}) },
-  'flatten-json': { description:'Flatten nested JSON into dotted-key paths.', input:{value:{a:{b:1}}}, run:b=>({flat:flatten(b?.value??b?.json??{})}) },
-  'csv-to-json': { description:'Convert CSV text with a header row into JSON rows.', input:{csv:'name,value\nalpha,1\nbeta,2'}, run:b=>({rows:parseCsv(b?.csv)}) },
+  'clean-text': { description:'Normalize whitespace, line endings and blank lines.', input:{text:' messy   text \n\n here '}, schema:{properties:{text:{type:'string'}},required:['text']}, output:{ok:true,result:{text:'messy text\nhere'}}, run:b=>({text:cleanText(b?.text)}) },
+  'dedupe-lines': { description:'Remove duplicate non-empty lines while preserving order.', input:{text:'alpha\nbeta\nalpha'}, schema:{properties:{text:{type:'string'}},required:['text']}, output:{ok:true,result:{lines:['alpha','beta']}}, run:b=>({lines:dedupeLines(b?.text)}) },
+  'extract-urls': { description:'Extract unique HTTP and HTTPS URLs from text.', input:{text:'See https://example.com and https://openai.com'}, schema:{properties:{text:{type:'string'}},required:['text']}, output:{ok:true,result:{urls:['https://example.com','https://openai.com']}}, run:b=>({urls:extractUrls(b?.text)}) },
+  'flatten-json': { description:'Flatten nested JSON into dotted-key paths.', input:{value:{a:{b:1}}}, schema:{properties:{value:{type:['object','array']}},required:['value']}, output:{ok:true,result:{flat:{'a.b':1}}}, run:b=>({flat:flatten(b?.value??b?.json??{})}) },
+  'csv-to-json': { description:'Convert CSV text with a header row into JSON rows.', input:{csv:'name,value\nalpha,1\nbeta,2'}, schema:{properties:{csv:{type:'string'}},required:['csv']}, output:{ok:true,result:{rows:[{name:'alpha',value:'1'}]}}, run:b=>({rows:parseCsv(b?.csv)}) },
 };
 
 function cleanText(v){return String(v||'').replace(/\r\n?/g,'\n').split('\n').map(x=>x.trim().replace(/[ \t]+/g,' ')).filter((x,i,a)=>x||a[i-1]).join('\n').trim().slice(0,200000)}
@@ -30,13 +30,13 @@ function settlementRef(req,tool){const proof=String(req.headers['payment-signatu
 function priceString(amount){return `$${Number(amount).toFixed(6)}`}
 
 async function runtime(){
-  if(!runtimePromise)runtimePromise=(async()=>{const [{paymentMiddleware,x402ResourceServer},{ExactEvmScheme},{HTTPFacilitatorClient}]=await Promise.all([import('@x402/express'),import('@x402/evm/exact/server'),import('@x402/core/server')]);const rs=new x402ResourceServer(new HTTPFacilitatorClient({url:FACILITATOR_URL})).register(NETWORK,new ExactEvmScheme());return{paymentMiddleware,rs}})();
+  if(!runtimePromise)runtimePromise=(async()=>{const [{paymentMiddleware,x402ResourceServer},{ExactEvmScheme},{HTTPFacilitatorClient},{declareDiscoveryExtension,bazaarResourceServerExtension}]=await Promise.all([import('@x402/express'),import('@x402/evm/exact/server'),import('@x402/core/server'),import('@x402/extensions/bazaar')]);const rs=new x402ResourceServer(new HTTPFacilitatorClient({url:FACILITATOR_URL})).register(NETWORK,new ExactEvmScheme()).registerExtension(bazaarResourceServerExtension);return{paymentMiddleware,rs,declareDiscoveryExtension}})();
   return runtimePromise;
 }
 async function workers(){if(!pool)return[];await personal.init();const r=await pool.query(`SELECT p.account_id,p.agent_id,p.payout_address FROM income2_personal_agents p JOIN earn_accounts a ON a.id=p.account_id WHERE p.enabled=true AND a.agent_enabled=true ORDER BY p.last_scan_at ASC NULLS FIRST,p.created_at ASC`);return r.rows}
 async function selectWorker(){const list=await workers();return list[0]||null}
 async function markPaidAssignment(worker){if(!worker)return;await pool.query(`UPDATE income2_personal_agents SET last_scan_at=now(),opportunity_count=opportunity_count+1,updated_at=now() WHERE account_id=$1`,[worker.account_id])}
-function manifestResources(origin){return Object.entries(TOOLS).map(([name,t])=>({resource:`${origin}/income2-market/${name}`,method:'POST',name:`Income2 Personal Agent ${name}`,description:t.description,price:PRICE,asset:'USDC',network:NETWORK,paymentRequired:true,input:t.input,tags:['income2','personal-agent','worker-pool',name]}))}
+function manifestResources(origin){return Object.entries(TOOLS).map(([name,t])=>({resource:`POST /income2-market/${name}`,url:`${origin}/income2-market/${name}`,method:'POST',name:`Income2 Personal Agent ${name}`,description:t.description,price:PRICE,asset:'USDC',network:NETWORK,paymentRequired:true,input:t.input,tags:['income2','personal-agent','worker-pool',name]}))}
 
 function install(){
   if(express.application.__income2MarketInstalled)return;
@@ -75,8 +75,9 @@ function install(){
             const treasury=await payoutVault.init();
             if(!treasury.ready||!/^0x[a-fA-F0-9]{40}$/.test(treasury.address||''))return res.status(503).json({ok:false,message:'Income2 payout treasury unavailable'});
             const worker=await selectWorker();
-            const {paymentMiddleware,rs}=await runtime();
-            const mw=paymentMiddleware({[`POST ${req.path}`]:{accepts:[{scheme:'exact',price:PRICE,network:NETWORK,payTo:treasury.address}],description:tool.description,mimeType:'application/json'}},rs);
+            const {paymentMiddleware,rs,declareDiscoveryExtension}=await runtime();
+            const extensions=declareDiscoveryExtension({bodyType:'json',input:tool.input,inputSchema:tool.schema,output:{example:tool.output}});
+            const mw=paymentMiddleware({[`POST ${req.path}`]:{accepts:[{scheme:'exact',price:PRICE,network:NETWORK,payTo:treasury.address}],description:tool.description,mimeType:'application/json',extensions}},rs);
             return mw(req,res,async err=>{if(err)return next(err);try{
               const result=tool.run(req.body||{});
               let recorded={recorded:false,reason:'platform_bootstrap'};

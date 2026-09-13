@@ -106,7 +106,10 @@ test('canonical extraction alias keeps payment protection, fulfillment and priva
     const after = await (await fetch(`${base}/health`)).json();
     assert.ok(after.funnel.counts.some(x=>x.traffic==='unclassified' && x.event==='unpaid_challenge' && x.count===1));
   } finally {
-    child.kill();
-    await new Promise(resolve => child.once('exit', resolve));
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = new Promise(resolve => child.once('exit', resolve));
+      child.kill();
+      await exited;
+    }
   }
 });
