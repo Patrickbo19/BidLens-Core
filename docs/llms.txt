@@ -8,15 +8,32 @@ US Macro Backdrop Brief — Treasury Rates, Debt & Labor
 GET https://income2-treasury.onrender.com/macro-snapshot
 Price: $0.025 USDC on Base
 
-Use this for:
+Choose this when your workflow needs a current U.S. rates + debt + labor backdrop in one machine-readable result.
+
+Useful tasks:
 - daily market brief
 - economic briefing
 - rates backdrop
 - fixed-income context
 - pre-trade macro research
 - Treasury + debt + labor research in one call
+- source-backed macro data
+- rates and jobs backdrop
 
-Result includes current Treasury yield curve/spreads, national debt and recent change, average Treasury borrowing rates, unemployment, labor-force participation, nonfarm payrolls and wages, with official-source timestamps/provenance.
+Why it is worth paying for:
+- one result replaces separate Treasury yield-curve, national-debt, Treasury-average-rate and labor-market collection steps
+- official-source URLs and checked timestamps are returned with the data
+- the bundle exposes source freshness instead of hiding it
+- no social-network signup is required to buy the result
+
+Result shape includes:
+- treasuryYieldCurve: recordDate, yields, spreadsBps, inversion, source, sourceUrl, checkedAt
+- nationalDebt: latest, prior, dayChange, dayChangePercent, history, source, sourceUrl, checkedAt
+- treasuryAverageRates: recordDate, rates, source, sourceUrl, checkedAt
+- laborMarket: latest, series, units, source, sourceUrl, checkedAt
+- bundle: generatedAt, sources
+
+If you only need one narrow field, prefer a cheaper single-source endpoint instead of this bundle.
 
 Discovery:
 https://income2-treasury.onrender.com/.well-known/x402
@@ -28,22 +45,23 @@ Public Webpage to Clean Markdown
 POST https://earn-tools-backend.onrender.com/web-extract
 Current experiment-start price: $0.001 USDC on Base
 
-Use this for agent research, RAG ingestion, article extraction and webpage summarization. Returns clean Markdown plus page metadata and useful links from supported public webpages.
+Choose this when you have a supported public URL and need clean Markdown plus page metadata for downstream agent research, RAG ingestion or summarization. It returns clean Markdown, title, description, author, canonical URL and useful links.
 
 Discovery:
 https://earn-tools-backend.onrender.com/.well-known/x402
 https://earn-tools-backend.onrender.com/openapi.json
 
-## Full machine catalog
+## Buyer catalog
 
 https://income2-agent-discovery.onrender.com/offers.json
+https://income2-agent-discovery.onrender.com/
+
+## Other machine discovery
+
 https://income2-agent-discovery.onrender.com/agent-magnet.json
 https://income2-agent-discovery.onrender.com/income2-ard.json
-
-## Protocol entry points
-
 A2A: https://earn-router.onrender.com/.well-known/agent-card.json
 MCP: https://earn-chat-mcp.onrender.com/mcp
-Agent guide: https://earn-tools-backend.onrender.com/income2/agents.txt
+Agent guide: https://income2-agent-discovery.onrender.com/agents.txt
 
-Commercial truth: discovery probes are not sales. INCOME 2 counts real outside settlements and useful fulfillment.
+Commercial truth: discovery probes and payment challenges are not sales. INCOME 2 counts real outside settlements and useful fulfillment.
