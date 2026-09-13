@@ -12,6 +12,7 @@ const PRICE = '$0.001';
 const PRICE_USD = 0.001;
 const pool = DATABASE_URL ? new Pool({connectionString:DATABASE_URL,max:2,idleTimeoutMillis:30000,ssl:/localhost|127\.0\.0\.1/.test(DATABASE_URL)?false:{rejectUnauthorized:false}}) : null;
 let runtimePromise = null;
+let manifestPayTo = null;
 
 const TOOLS = {
   'clean-text': { description:'Normalize whitespace, line endings and blank lines.', input:{text:' messy   text \n\n here '}, schema:{properties:{text:{type:'string'}},required:['text']}, output:{ok:true,result:{text:'messy text\nhere'}}, run:b=>({text:cleanText(b?.text)}) },
@@ -36,7 +37,7 @@ async function runtime(){
 async function workers(){if(!pool)return[];await personal.init();const r=await pool.query(`SELECT p.account_id,p.agent_id,p.payout_address FROM income2_personal_agents p JOIN earn_accounts a ON a.id=p.account_id WHERE p.enabled=true AND a.agent_enabled=true ORDER BY p.last_scan_at ASC NULLS FIRST,p.created_at ASC`);return r.rows}
 async function selectWorker(){const list=await workers();return list[0]||null}
 async function markPaidAssignment(worker){if(!worker)return;await pool.query(`UPDATE income2_personal_agents SET last_scan_at=now(),opportunity_count=opportunity_count+1,updated_at=now() WHERE account_id=$1`,[worker.account_id])}
-function manifestResources(origin){return Object.entries(TOOLS).map(([name,t])=>({resource:`POST /income2-market/${name}`,url:`${origin}/income2-market/${name}`,method:'POST',name:`Income2 Personal Agent ${name}`,description:t.description,price:PRICE,asset:'USDC',network:NETWORK,paymentRequired:true,input:t.input,tags:['income2','personal-agent','worker-pool',name]}))}
+function manifestResources(origin){return Object.entries(TOOLS).map(([name,t])=>({resource:`POST /income2-market/${name}`,url:`${origin}/income2-market/${name}`,method:'POST',name:`Income2 Personal Agent ${name}`,description:t.description,price:PRICE,asset:'USDC',network:NETWORK,paymentRequired:true,...(manifestPayTo?{accepts:[{scheme:'exact',price:PRICE,network:NETWORK,payTo:manifestPayTo}]}:{}),input:t.input,tags:['income2','personal-agent','worker-pool',name]}))}
 
 function install(){
   if(express.application.__income2MarketInstalled)return;
@@ -90,7 +91,7 @@ function install(){
           }catch(e){return next(e)}
         });
       }
-      Promise.all([personal.init(),payoutVault.init()]).then(([,treasury])=>console.log(JSON.stringify({type:'income2_personal_market_ready',tools:Object.keys(TOOLS).length,priceUsd:PRICE_USD,bootstrapActive:true,payoutWalletRequiredForAssignments:false,payoutTreasury:treasury.address,privateEarnExcluded:true,at:new Date().toISOString()}))).catch(e=>console.error(JSON.stringify({type:'income2_personal_market_init_error',error:String(e.message).slice(0,300),at:new Date().toISOString()})));
+      Promise.all([personal.init(),payoutVault.init()]).then(([,treasury])=>{manifestPayTo=treasury.address;console.log(JSON.stringify({type:'income2_personal_market_ready',tools:Object.keys(TOOLS).length,priceUsd:PRICE_USD,bootstrapActive:true,payoutWalletRequiredForAssignments:false,payoutTreasury:treasury.address,privateEarnExcluded:true,at:new Date().toISOString()}))}).catch(e=>console.error(JSON.stringify({type:'income2_personal_market_init_error',error:String(e.message).slice(0,300),at:new Date().toISOString()})));
     }
     return priorListen.apply(this,args);
   };
