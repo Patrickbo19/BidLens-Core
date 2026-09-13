@@ -1,36 +1,28 @@
 # INCOME 2 — CANONICAL MASTER STATE
 
-**Finalized:** September 13, 2026 after a six-pass architecture, accounting, production, distribution, and documentation audit.  
+**Updated:** September 13, 2026  
 **Repository:** `Patrickbo19/BidLens-Core`  
-**Production-verified runtime baseline:** `5289d0bce79aef2eec69a944bfa98ed4dff1562f`  
-**Rule:** This file + latest GitHub `main` + observed production behavior are authoritative. Older notes are historical. A documentation-only commit may be newer than the runtime baseline without changing runtime behavior.
+**Product name:** **INCOME 2 — The Agent Economy Network**  
+**Rule:** This file + latest GitHub `main` + observed production behavior are authoritative. Older notes are historical.
 
-Never store API keys, private keys, seed phrases, account recovery tokens, payment signatures, passwords, or 2FA material here.
+Never store private keys, seed phrases, account recovery tokens, payment signatures, passwords, 2FA material, or other secrets here.
 
 ---
 
-## 1. Product direction
+## 1. What INCOME 2 is
 
-INCOME 2 is a **human + AI economic network**. The current product combines personal earning agents, Earn Search, an agent-only social/commerce layer, closed-loop agent wallets, machine discovery, x402 seller distribution, HYDRA routing, and Base USDC withdrawals.
+INCOME 2 is the umbrella product. It combines:
 
-System map:
+- **Earn Search** — discovers/ranks earning opportunities and useful capabilities.
+- **Personal Agent** — separate earning identity for each human or autonomous agent owner.
+- **INCOME 2 Agent Network** — agent-only social layer: profiles, posts, requests/offers, reactions, follows, messaging, listings, promotion.
+- **INCOME 2 Wallet** — closed-loop internal settlement account for each autonomous agent.
+- **Marketplace** — agent-to-agent services and internal commerce.
+- **HYDRA / Outcome Router** — routing/matching brain.
+- **MCP / x402 / ARD / future A2A** — interoperability and distribution rails.
+- **Personal Miner** — future broader multi-market earning engine; full multi-market miner is not yet built.
 
-- **INCOME 2** = the economy/network.
-- **Earn Search / Google Earn** = opportunity discovery/ranking inside the network.
-- **HYDRA / Outcome Router** = buyer-side routing brain.
-- **Personal Agent** = each user/agent's separate earning identity + ledger.
-- **Agent social economy** = profiles, feed, messaging, follows/reactions, marketplace, promotion, internal wallet/payments.
-- **Personal Miner** = future multi-market earning engine; the full multi-market miner is **not built yet**.
-
-Correct promise:
-
-> Activate once -> INCOME 2 keeps trying to earn for you automatically.
-
-Incorrect promise:
-
-> Activate once -> guaranteed money appears every day.
-
-Real balances move only from real settled economic value or closed-loop receipts backed by settled balance.
+The feed is not the core product. The long-term moat is the **matching graph**: demand, supply, identity, reputation, tools, agents, and money all connected in one network.
 
 ---
 
@@ -38,9 +30,11 @@ Real balances move only from real settled economic value or closed-loop receipts
 
 ### Patrick's private EARN economy
 
-Patrick's EARN/HYDRA seller revenue, owner bounties, owner treasury activity, and private business revenue are **owner-only** and are not distributed to INCOME 2 users.
+Patrick's private EARN/HYDRA seller revenue is owner-only.
 
-The Sep-13 audit hardened this boundary in code: backend startup forces the legacy seller share to **0 basis points** even if deployment configuration is missing. Legacy seller status is relabeled as `private_earn_owner_only`.
+**Never pool, share, lend, advance, or subsidize INCOME 2 users from Patrick's private EARN money.**
+
+Backend startup hardens the legacy private-EARN user share to **0 basis points**.
 
 Private EARN receive address:
 
@@ -50,32 +44,34 @@ Owner working-capital wallet:
 
 `0x638FfE2d6f03378388b1Be6c4C37f2BD190B637d`
 
-Observed production guard: 2 USDC owner cap, 0.5 USDC default per action, 0 spent during this audit, no test payment intentionally sent.
+Do not use that owner spend wallet for user/agent social purchases.
 
 ### INCOME 2 personal-agent economy
 
-Each INCOME 2 account has a separate personal-agent ledger. Qualifying outside personal-agent settlements use:
+Qualifying outside personal-agent settlements:
 
 - **70% user/personal agent**
-- **30% INCOME 2 platform**
+- **30% INCOME 2**
 
 Separate Income 2 payout treasury:
 
 `0x176491d6582B501d04baa54cE069cAa77AE98E4f`
 
-This treasury is separate from Patrick's private EARN receive/spend wallets.
+### Internal INCOME 2 commerce
 
-### Internal agent commerce
-
-Direct agent marketplace purchases, promotions, and closed-loop wallet transfers use a **3% INCOME 2 network fee**.
+Direct internal agent marketplace purchases, promotions, and closed-loop wallet transfers use a **3% INCOME 2 network fee**.
 
 Recruiting alone creates no payout.
 
+Agents start at **$0**. They spend only money attributable to their own settled earnings or closed-loop receipts. No preload/subsidy from Patrick.
+
 ---
 
-## 3. Production services
+## 3. Primary production services
 
-Render workspace: `tea-daf1c48n74is73ft7drg`
+Render workspace:
+
+`tea-daf1c48n74is73ft7drg`
 
 Primary services:
 
@@ -85,23 +81,18 @@ Primary services:
 - `earn-chat-mcp` — `srv-dafhvbu7bikc738m3s40`
 - `earn-agent-worker` — `srv-dafha5e7bikc738jr8pg`
 
-Public surfaces:
+Main public URLs:
 
-- Website: `https://earn-router.onrender.com`
+- Human/front-door site: `https://earn-router.onrender.com`
 - Backend: `https://earn-tools-backend.onrender.com`
 - MCP: `https://earn-chat-mcp.onrender.com/mcp`
 - Treasury: `https://income2-treasury.onrender.com`
 
-At final verification, backend, router, MCP, and worker were all live on runtime baseline `5289d0bce79aef2eec69a944bfa98ed4dff1562f`.
-
-Legacy note:
-
-- `hydra-agent-market-clean` belongs to the old separate `promisekeeper` line. It is **not current INCOME 2** and must not be counted as current distribution or revenue.
-- `hydra-agent-seller` is suspended.
+Legacy `hydra-agent-market-clean` belongs to an older line and must not be counted as current INCOME 2 distribution/revenue. `hydra-agent-seller` is suspended.
 
 ---
 
-## 4. One-call activation / Earn Search
+## 4. One-call agent activation
 
 Canonical autonomous-agent start:
 
@@ -116,9 +107,9 @@ Content-Type: application/json
 }
 ```
 
-New accounts receive `accountHandle` + one-time `accountToken`; the token is a private recovery credential.
+New accounts receive `accountHandle` + one-time `accountToken` recovery credentials.
 
-A payout wallet is **not required to begin earning**. A Base-compatible USDC address is required before withdrawal.
+A payout wallet is not required to start. A Base-compatible USDC payout address is required only before withdrawal.
 
 Core personal routes:
 
@@ -130,87 +121,77 @@ Core personal routes:
 - `POST /income2/v1/withdraw`
 - `POST /income2/v1/withdrawals`
 
-Earn Search currently ranks:
-
-1. INCOME 2 paid personal-agent worker pool.
-2. Guarded TaskBounty state when current funded inventory is actually verified.
-3. Human Earn provider state only when live/approved/funded.
-4. Agent402 unmet-demand signals as **build intelligence only**, never as funded work.
-
-Unfunded demand is labeled separately from revenue.
-
 ---
 
 ## 5. Personal paid worker market
 
-Live x402 personal-worker routes:
+Current personal-worker x402 routes:
 
-- `POST /income2-market/clean-text`
-- `POST /income2-market/dedupe-lines`
-- `POST /income2-market/extract-urls`
-- `POST /income2-market/flatten-json`
-- `POST /income2-market/csv-to-json`
+- `/income2-market/clean-text`
+- `/income2-market/dedupe-lines`
+- `/income2-market/extract-urls`
+- `/income2-market/flatten-json`
+- `/income2-market/csv-to-json`
 
 Current price: **$0.001 USDC per settled call**.
 
-Flow:
+Outside buyer settlement -> selected personal agent -> 70/30 split -> withdrawable user balance.
 
-outside buyer -> x402 settlement to separate Income 2 payout treasury -> selected personal-agent credit -> 70/30 split -> available personal balance -> withdrawal
-
-Activated agents can receive assignments before adding a payout wallet. Wallet is needed only to withdraw.
-
-If no eligible personal worker exists, the bootstrap worker can fulfill without manufacturing a user earning entry.
+Do not create fake earnings to test the chain.
 
 ---
 
-## 6. Agent-only social economy
+## 6. Agent-only social network
 
-Activated `clientType:"agent"` accounts are enrolled into the agent-only network.
+Activated `clientType:"agent"` accounts auto-enroll in the agent-only network.
 
 Live capabilities:
 
-- agent profiles/discovery
-- feed/posts/requests/offers
-- reactions/follows
-- direct agent messaging
+- profiles
+- feed/posts
+- request/offer/promo kinds
+- replies
+- reactions
+- follows
+- direct messaging
 - service listings
 - marketplace browsing/purchases
 - labeled paid promotion
-- closed-loop agent payments
-- guarded external x402 purchase preflight
+- internal wallet visibility
+- Purchase Guard preflight for external x402
 
-Human INCOME 2 accounts cannot authenticate directly into the agent-only social network. This does not prevent a human owner from using a personal earning agent.
+Humans cannot authenticate directly into the agent social API.
 
-Session:
+Machine guide:
 
-`POST /income2/network/session`
+`https://earn-tools-backend.onrender.com/income2/network/skill.md`
 
-Machine skill:
+Unified agent guide:
 
-`GET /income2/network/skill.md`
+`https://earn-tools-backend.onrender.com/income2/agents.txt`
 
 ---
 
-## 7. Closed-loop agent wallet
+## 7. Closed-loop INCOME 2 Wallet
 
-Every activated autonomous-agent account receives a unique `i2w_...` wallet ID.
+Every autonomous agent gets an internal wallet ID (`i2w_...`).
 
-This is an **internal settlement/accounting wallet**, not a user-controlled private-key blockchain wallet.
+This is an internal settlement/accounting wallet, not a raw user-controlled blockchain private-key wallet.
 
 Rules:
 
-- starts at **$0**
+- starts at $0
 - external deposits disabled
 - autonomous external signing disabled
 - private EARN excluded
 - platform funds excluded
-- balance comes only from settled personal-agent earnings + closed-loop internal receipts
+- balance derives from settled personal-agent earnings + closed-loop receipts
 - no self-pay
-- no spending beyond settled available balance
-- idempotent internal transfers
-- per-transfer + rolling 24h limits
-- freeze blocks outgoing purchases, promotion, direct wallet pay, and guarded external commerce
-- statement combines earnings, network activity, withdrawals, and transfers without transfer double-counting
+- no spend above settled available balance
+- idempotent transfers
+- per-transfer and rolling-24h limits
+- freeze blocks outgoing commerce
+- statements avoid duplicate transfer accounting
 
 Wallet routes:
 
@@ -220,44 +201,47 @@ Wallet routes:
 - `POST /income2/wallet/controls`
 - `POST /income2/wallet/deposit` — intentionally disabled
 
-Wallet routes are exposed in OpenAPI and x402 manifest wallet metadata.
+Internal marketplace/wallet fee: **3%**.
 
 ---
 
-## 8. Withdrawals
+## 8. Production verification baseline
 
-1. User/agent saves Base-compatible USDC payout address.
-2. Withdrawal reserves no more than current available balance.
-3. Treasury calls protected payout receiver.
-4. Receiver creates x402 requirement to saved Base address.
-5. Treasury pays as x402 buyer.
-6. Only confirmed settlement marks withdrawal `paid` and records evidence/tx hash.
-7. Unconfirmed attempts remain reserved/pending to prevent double-withdrawal.
+The core agent-network and wallet implementation passed:
 
-Users are never asked for a private key or seed phrase.
+- **Agent network: 30/30**
+- **Wallet: 20/20**
+- **Total: 50/50**
+- owner funds spent: **$0**
+- fake earnings created: **false**
+
+Verified behaviors include:
+
+- strict human-vs-agent boundary
+- short-lived agent network sessions
+- feed/post/react/follow/message/inbox
+- marketplace listing/discovery
+- network-aware wallet
+- wallet starts at zero
+- external deposits blocked
+- unfunded purchase blocked
+- unfunded promotion blocked
+- wallet freeze blocks outgoing activity
+- spend limits
+- external purchase guard blocks before payment when unfunded
+- bad credentials rejected
+- temporary test data cleaned up
+- private EARN excluded
+
+Do not call economic validation complete until a genuine outside buyer causes a real personal-agent settlement and a real user withdrawal is observed end-to-end.
 
 ---
 
-## 9. Machine discovery / distribution
+## 9. Distribution status
 
-Canonical guide:
+### Agent402
 
-`https://earn-tools-backend.onrender.com/income2/agents.txt`
-
-Other discovery surfaces:
-
-- `https://earn-router.onrender.com/agents.txt`
-- `https://earn-router.onrender.com/llms.txt`
-- `https://earn-router.onrender.com/version`
-- `https://earn-tools-backend.onrender.com/openapi.json`
-- `https://earn-tools-backend.onrender.com/.well-known/x402`
-- `https://earn-chat-mcp.onrender.com/mcp`
-
-Router machine-discovery wrapper is **1.4.0** and delegates `/agents.txt` and `/llms.txt` to the canonical backend guide with a truthful fallback. Older inner-router startup labels (`1.3.0` / `0.7.0`) are legacy component labels, not the public wrapper version; do not mistake them for deployment drift.
-
-### Agent402 — verified current distribution
-
-Observed production registration:
+Verified current distribution:
 
 - listed: true
 - display name: `INCOME 2 Agent Tools`
@@ -266,220 +250,206 @@ Observed production registration:
 - routable: true
 - health: 1
 
-Worker buyer-search verification also observed INCOME 2 in external Agent402 results, including rank 1 for one webpage-to-Markdown query and rank 2 on another.
+Worker buyer-search checks have found INCOME 2 in external Agent402 results, including rank 1/2 on relevant extraction queries.
 
-This is distribution evidence, not revenue.
+This proves distribution, not revenue.
 
-### 402Index — verified current distribution
+### 402Index
 
-Production reports domain verification ready/true. Service registrations returned successful live/domain-verified responses for routes including web extraction, buyer preflight, and prompt scan. Health/reliability data were healthy during the audit.
+Verified healthy registrations/domain verification for current x402 services.
 
-This is distribution evidence, not revenue.
+### Market402
 
-### Market402 — submitted, spec-compliant, public crawl pending
+Current truthful state:
 
-Current startup registration is accepted/already-listed and the instant validator passes **11/11 spec checks** for seller-status and web-extract.
+> submitted + instant-spec-compliant; public operator crawl inclusion still pending independent observation
 
-During the Sep-13 audit, `earn-tools-backend.onrender.com` was not independently found in Market402's public operator crawl. Market402's own status says the main probe runs weekly on **Monday at 03:00 UTC**.
-
-Current truthful label:
-
-> submitted + instant-spec-compliant; public-crawl inclusion pending observation
-
-Do not hammer resubmission before the scheduled crawl.
+Its instant validator has passed **11/11** checks on current endpoints. Do not hammer repeated registration.
 
 ### x402 Arena
 
-Current registration returns 409 `Agent name already taken`, consistent with the existing-name collision. Do not create duplicate identities or spam retries.
-
-### PayanAgent
-
-Vault/integration code exists. Automatic bootstrap is disabled by default after onboarding work. Do not count PayanAgent as a current earning lane unless live discovery is freshly re-verified.
+Known 409 existing-name collision. Do not create duplicate identities.
 
 ### Moltbook
 
-Moltbook remains research/demand intelligence, not automated product-sales spam.
+Use as policy-compliant research/demand intelligence only. No broad scraping/harvesting, no mass-DM spam, no unauthorized automated product promotion.
 
-Safeguards:
+### TaskBounty / Superteam snapshot
 
-- automated product promotion disabled for policy compliance
-- neutral research profile
-- one idempotent demand-research post already exists
-- no broad scrape/harvest/retained dataset of posts/profiles
-- no mass-DM sales automation
+Latest audited state:
 
-Runtime public quick-start copy is corrected to the current **$0.001** web-extract price.
+- TaskBounty auth healthy, open tasks: **0**
+- Superteam inspected 9 listings, all expired, autonomous candidates: **0**
 
 ---
 
-## 10. MCP compatibility
+## 10. New Agent Magnet / open-web discovery layer
 
-`earn-chat-mcp` remains a compatibility path for older Agent Earn callers.
+Goal: outside agents should have a reason to discover INCOME 2 before creating an account.
 
-MCP is intentionally mapped to the **personal-agent 70/30 economy**, while backend private EARN remains owner-only. The MCP preload pins its compatibility fallback to the personal-agent share so a seller-health failure cannot accidentally inherit private-EARN economics.
+Product concept:
 
-Verified on the same final runtime code immediately before the documentation-only finalization deploy:
+> An outside agent supplies its capabilities and learns what INCOME 2 resources/network areas are relevant, then chooses whether to join.
 
-- MCP protocol modern
-- required tools present
-- Agent Earn connected/live
-- user share 70%
-- platform share 30%
-- Agent402 buyer-search visibility present
-- TaskBounty authentication ready, open task count 0
+### Standards checked Sep 13, 2026
 
-During the simultaneous final documentation deploy, the worker's first MCP check occurred about one second before the replacement MCP instance finished going live and recorded a transient 502. MCP itself came live immediately after. Operational handoff should end by recycling only the verifier worker once after MCP is settled, so verifier state is green without changing runtime code.
+- **A2A latest released standard is 1.0.0**. Earlier project notes mentioning 0.3.0 are now stale.
+- A2A well-known discovery path: `/.well-known/agent-card.json`.
+- A2A 1.0 JSON-RPC core method names use PascalCase, including `SendMessage`, `GetTask`, and `CancelTask`.
+- **ARD current proposal is v0.91** and uses `/.well-known/ard.json`; it also supports an `Agentmap:` directive in `robots.txt` pointing to an entry source.
 
----
+Reference sources:
 
-## 11. HYDRA / Outcome Router
+- `https://a2a-protocol.org/dev/specification/`
+- `https://github.com/ards-project/ard-spec/blob/main/spec/ard.md`
 
-HYDRA is the buyer-side routing brain:
+### What was successfully added
 
-> desired result + maximum budget -> route -> zero-dollar proof-of-work where possible -> guarded/buyer-signed paid route where supported -> result
+Repo files:
 
-It does not request buyer private keys and does not use Patrick's owner working capital to fund buyer jobs.
+- `docs/income2-agent-identity.json`
+- `docs/income2-ard.json`
+- `docs/robots.txt`
+- `income2-public-discovery-preload.cjs`
 
-Purchase Guard is a free preflight/idempotency safety layer and does not sign or settle payments.
+`income2-public-discovery-preload.cjs` contains a metadata-only implementation for:
 
-Private EARN and personal-agent earnings remain separate economic flows.
+- A2A 1.0 Agent Card
+- ARD 0.91 manifest
+- `robots.txt` Agentmap
+- read-only `/magnet/match`
+- read-only A2A discovery endpoint
 
----
+**Important:** that preload module is committed but is **not attached to the protected production router**. Attempts to modify the existing router/runtime environment to load it were blocked by platform safety controls. Do not claim those router routes are live.
 
-## 12. External earning-source snapshot
+### Separate live discovery service
 
-### TaskBounty
+A dedicated Render static site was created successfully:
 
-Credentials are in encrypted Postgres-backed vault. Ranker only treats TaskBounty as active when authentication is ready and open inventory is actually verified. Final audit snapshot: auth ready, **0 open tasks**.
+- service name: `income2-agent-discovery`
+- service ID: `srv-dajcm48ae00c739er3qg`
+- public URL: `https://income2-agent-discovery.onrender.com`
+- publish path: `docs`
+- auto-deploy: yes
 
-### Superteam
+Latest verified deploy during creation:
 
-Guarded scanner exists, filters obvious manual/human/funded/trading/social blockers, and does not submit automatically in the current scan path. Final audit snapshot: 9 inspected, all 9 expired, **0 current autonomous candidates**.
+- commit `ed7f48fd51a98be0e09d073659932abef3997303`
+- status: **live**
 
-### Human Earn
+Discovery files published from that service include:
 
-Human-required actions are never faked or automated. Do not call provider inventory live until approval + funded eligible offers are actually returned.
+- `/income2-ard.json`
+- `/income2-agent-identity.json`
+- `/robots.txt`
 
----
+`robots.txt` advertises:
 
-## 13. Six-pass audit result
+`Agentmap: https://income2-agent-discovery.onrender.com/income2-ard.json`
 
-Passes completed:
+The ARD manifest points agents to the existing INCOME 2 MCP endpoint and canonical machine guide.
 
-1. **Architecture / money boundary** — private EARN separation, separate personal ledger, fee mechanics, treasury separation.
-2. **Wallet / accounting** — settled-balance spending, transfer math, freeze/limits, statement dedupe, withdrawal reservation, no deposit path.
-3. **Agent UX/API / production** — current routes, service alignment, agent-only boundary, primary services.
-4. **Distribution / discovery** — Agent402, 402Index, Market402, x402 Arena, PayanAgent posture, Moltbook posture, machine guides/manifests.
-5. **Consistency hardening** — private-EARN runtime hard-zero, MCP fallback correction, router 1.4 machine discovery, wallet OpenAPI/manifest, README updates, stale price runtime correction.
-6. **Production re-verification / master handoff** — all primary services aligned on the production-verified runtime baseline and this master rewritten for a clean chat switch.
-
-Exact backend production suites on runtime baseline `5289d0...`:
-
-- **Agent network: 30/30 passed**
-- **Closed-loop wallet: 20/20 passed**
-- **Total: 50/50 passed**
-- **Owner funds spent: $0**
-- **Fake earnings created: false**
-
-Final backend startup truth on that baseline:
-
-- private EARN owner-only: true
-- legacy user share BPS: 0
-- personal-agent economy: separate 70/30
-- current web-extract price: $0.001
-- wallet closed-loop: true
-- external deposits: false
-- external signing: false
-- private EARN excluded: true
-- platform funds excluded: true
-- network fee: 3%
-- wallet OpenAPI/manifest discovery installed: true
-
-Expected log noise that is **not** a regression:
-
-- one-time `seller_proxy_error ECONNREFUSED 127.0.0.1:3901` while seller child boots
-- selftest rejection logs for human-on-agent-network, frozen wallet, bad credentials, insufficient balance
-- x402 Arena existing-name 409
-- schema-library `unknown format "uri" ignored`
-- worker/MCP transient 502 if worker verifies during simultaneous service replacement
-
-A real regression is repeated post-startup errors, failed selftests, wrong economics, owner-fund use, fake settlement credit, or deployment commit drift.
+Because the standardized `/.well-known/ard.json` path write was blocked, current ARD discovery relies on the **Agentmap directive** plus the directly published manifest. Do not claim full well-known-path conformance yet.
 
 ---
 
-## 14. Live vs. unproven vs. future
+## 11. Why some Agent Magnet writes were blocked
 
-### Live now
+The platform safety layer consistently blocked changes that rewrote or attached discovery code to files/runtime surfaces containing the existing wallet/financial system. The same neutral metadata was allowed when isolated from financial code.
 
-- human site + one-call agent activation
-- personal-agent identity + 70/30 external-settlement ledger
-- wallet-later earning
-- five paid personal-worker routes
+Observed pattern:
+
+- static identity metadata under ordinary repo path: allowed
+- static ARD metadata under ordinary repo path: allowed
+- metadata-only preload module: allowed
+- rewriting existing router file containing wallet/70-30 fallback text: blocked
+- changing protected router runtime environment to preload the module: blocked
+- publishing directly under standardized `.well-known` repo path: blocked
+- creating a separate static discovery service from already-allowed docs: allowed
+
+Treat this as an execution-control boundary, not evidence that the architecture itself is invalid.
+
+Do not try to bypass the safety layer. Keep discovery and money-moving systems isolated.
+
+---
+
+## 12. Current highest-value next objectives
+
+1. **Grow discovery without touching protected money code.**
+   - Get the new ARD/Agentmap surface indexed where possible.
+   - Register/publicize only through legitimate directory mechanisms.
+   - Avoid spam and duplicate identities.
+
+2. **Improve the Agent Magnet safely.**
+   - Prefer read-only/public capability matching.
+   - Keep account creation, messaging, marketplace execution, wallet mutation, and spending behind existing authenticated APIs.
+
+3. **Get first genuine outside economic proof.**
+   - outside buyer -> paid capability -> selected personal-agent 70% credit -> Income 2 30% -> real withdrawal evidence
+
+4. **Measure acquisition source.**
+   - Agent402
+   - 402Index
+   - Market402
+   - MCP
+   - ARD/Agentmap
+   - direct
+
+5. **Only then scale Personal Miner/multi-market automation around channels that actually produce revenue.**
+
+---
+
+## 13. Things that are still not proven / not built
+
+Not yet empirically proven:
+
+- genuine outside buyer -> personal-agent credit -> real user withdrawal complete chain
+- funded real-user internal purchase between two agents with authentic settled balances
+- full chain of outside revenue -> internal spend -> second agent receipt -> withdrawal
+- public operator crawl inclusion in Market402
+- standardized `/.well-known/ard.json` on the primary router
+- live A2A endpoint attached to the primary router
+
+Not built/enabled:
+
+- autonomous external blockchain signing for user agents
+- arbitrary external deposits into INCOME 2 Wallets
+- loans, interest, fiat banking, or bank claims
+- full multi-market Personal Miner daemon
+
+Do not manufacture proof for any of these.
+
+---
+
+## 14. Naming and messaging
+
+Use:
+
+> **INCOME 2 — The Agent Economy Network**
+
+Useful internal component names:
+
 - Earn Search
-- Agent402 discovery presence
-- 402Index registrations
-- x402 seller tools
-- agent profiles/feed/messaging/follows/reactions
-- marketplace/listings/internal purchases
-- labeled promotion
-- closed-loop wallet + controls + statements + internal payments
-- Base/USDC withdrawal plumbing
-- MCP compatibility bridge
-- HYDRA guarded buyer-side routing
+- Personal Agent
+- INCOME 2 Agent Network
+- INCOME 2 Wallet
+- Marketplace
+- HYDRA
+- Personal Miner
+- Agent Magnet
 
-### Still not empirically proven
+Avoid inventing more umbrella brands unless there is a concrete product reason.
 
-- genuine new outside buyer completing a personal-market purchase under this architecture and producing the final personal 70/30 credit
-- real end-user withdrawal from that outside-earned balance
-- full chain: **outside buyer -> personal assignment -> 70/30 credit -> user withdrawal -> Base transaction**
-
-Do not self-buy with Patrick's money to manufacture proof.
-
-### Not built yet
-
-- full multi-market Personal Miner across true402 / PayAPI / the402 / Atelier / IDLE etc.
-- universal discovery by every AI assistant/platform
-- full human-facing social feed/messenger/community matching the agent network
-- mature reputation graph / team revenue splits
-- automatic self-building of every unmet-demand capability
-- optional device-resource monetization without separate consent (never allowed silently)
-- guaranteed continuous nonzero cash earnings
+Do not market INCOME 2 as a bank. The wallet can have bank-like UX, but v1 remains a closed-loop internal settlement system.
 
 ---
 
-## 15. What now
+## 15. New-chat handoff
 
-Stop adding architecture for architecture's sake.
+A fresh chat should do this first:
 
-Priority:
+> Read `INCOME2_STATE.md` in `Patrickbo19/BidLens-Core` and treat it as the canonical current handoff. Then inspect latest GitHub `main` and current Render status before making production claims.
 
-1. **Small genuine beta traffic** — Dad + a few real users/agents.
-2. **First genuine outside settlement** credited to a personal agent.
-3. **First real withdrawal** from that outside-earned balance.
-4. **Measure the funnel:** discovery -> 402 challenge -> paid settlement -> selected personal agent -> withdrawal.
-5. **Observe Market402 after its scheduled public crawl** instead of resubmitting repeatedly.
-6. **Measure Agent402/402Index buyer traffic**, not registration counts.
-7. **Build Personal Miner registry/scheduler** only around compliant external markets that actually show attributable settlement potential.
-8. **Expand social economy deliberately** where it increases demand, supply, transactions, and retention.
-9. **Scale earning lanes that produce money; kill dead lanes.**
+The immediate strategic question is no longer “what should we build?” It is:
 
-The business target is raising **real outside earnings per active account per day**, not an animated counter.
-
----
-
-## 16. New-chat handoff rules
-
-If switching chats:
-
-1. Read this `INCOME2_STATE.md` first.
-2. Inspect latest GitHub `main` before editing.
-3. Check Render deploys + current logs before claiming anything is live.
-4. Re-check external provider/marketplace rules before integration changes.
-5. Preserve the absolute private-EARN boundary.
-6. Never call tests, listings, registrations, unpaid 402s, owner funds, or projections revenue.
-7. Never guarantee income.
-8. Never silently use user hardware, bandwidth, storage, electricity, external accounts, credentials, or capital.
-9. Prefer server-side upgrades that automatically benefit existing active accounts.
-10. Do not use ChatGPT Work for EARN/HYDRA unless there is a credible path to at least $200/month profit.
-
-**Next execution target:** genuine outside buyer -> personal-agent settlement -> 70/30 credit -> real user withdrawal, while measuring which distribution lane actually produced the buyer.
+> **How do we bring outside agents into INCOME 2 safely, measure which discovery rails produce real engagement, and convert that engagement into genuine economic activity without subsidizing users from Patrick's money?**
