@@ -33,7 +33,7 @@ async function runtime(){
   if(!runtimePromise)runtimePromise=(async()=>{const [{paymentMiddleware,x402ResourceServer},{ExactEvmScheme},{HTTPFacilitatorClient}]=await Promise.all([import('@x402/express'),import('@x402/evm/exact/server'),import('@x402/core/server')]);const rs=new x402ResourceServer(new HTTPFacilitatorClient({url:FACILITATOR_URL})).register(NETWORK,new ExactEvmScheme());return{paymentMiddleware,rs}})();
   return runtimePromise;
 }
-async function workers(){if(!pool)return[];await personal.init();const r=await pool.query(`SELECT p.account_id,p.agent_id,p.payout_address FROM income2_personal_agents p JOIN earn_accounts a ON a.id=p.account_id WHERE p.enabled=true AND a.agent_enabled=true AND p.payout_address IS NOT NULL ORDER BY p.last_scan_at ASC NULLS FIRST,p.created_at ASC`);return r.rows}
+async function workers(){if(!pool)return[];await personal.init();const r=await pool.query(`SELECT p.account_id,p.agent_id,p.payout_address FROM income2_personal_agents p JOIN earn_accounts a ON a.id=p.account_id WHERE p.enabled=true AND a.agent_enabled=true ORDER BY p.last_scan_at ASC NULLS FIRST,p.created_at ASC`);return r.rows}
 async function selectWorker(){const list=await workers();return list[0]||null}
 async function markPaidAssignment(worker){if(!worker)return;await pool.query(`UPDATE income2_personal_agents SET last_scan_at=now(),opportunity_count=opportunity_count+1,updated_at=now() WHERE account_id=$1`,[worker.account_id])}
 function manifestResources(origin){return Object.entries(TOOLS).map(([name,t])=>({resource:`${origin}/income2-market/${name}`,method:'POST',name:`Income2 Personal Agent ${name}`,description:t.description,price:PRICE,asset:'USDC',network:NETWORK,paymentRequired:true,input:t.input,tags:['income2','personal-agent','worker-pool',name]}))}
@@ -45,7 +45,7 @@ function install(){
   express.response.json=function income2MarketJson(body){
     try{
       if((this.req?.path==='/.well-known/x402'||this.req?.path==='/.well-known/x402.json')&&body&&typeof body==='object'){
-        const proto=String(this.req.headers['x-forwarded-proto']||'https').split(',')[0];const host=String(this.req.headers['x-forwarded-host']||this.req.headers.host||'earn-tools-backend.onrender.com').split(',')[0];const origin=`${proto}://${host}`;const existing=Array.isArray(body.resources)?body.resources:[];const extra=manifestResources(origin);body={...body,resources:[...existing,...extra],personalAgentMarket:{separateEconomy:true,userRevenueOnly:true,privateEarnExcluded:true,bootstrapActive:true,payoutTreasury:'separate'}};
+        const proto=String(this.req.headers['x-forwarded-proto']||'https').split(',')[0];const host=String(this.req.headers['x-forwarded-host']||this.req.headers.host||'earn-tools-backend.onrender.com').split(',')[0];const origin=`${proto}://${host}`;const existing=Array.isArray(body.resources)?body.resources:[];const extra=manifestResources(origin);body={...body,resources:[...existing,...extra],personalAgentMarket:{separateEconomy:true,userRevenueOnly:true,privateEarnExcluded:true,bootstrapActive:true,payoutTreasury:'separate',payoutWalletRequiredForAssignments:false}};
       }
       if(this.req?.path==='/openapi.json'&&body&&body.paths){const extra={};for(const [name,t] of Object.entries(TOOLS)){extra[`/income2-market/${name}`]={post:{summary:`Income2 personal-agent ${name}`,description:t.description,responses:{'200':{description:'Paid worker result'},'402':{description:'x402 payment required'}}}}}body={...body,paths:{...body.paths,...extra}}}
     }catch{}
@@ -56,7 +56,7 @@ function install(){
   express.application.listen=function income2MarketListen(...args){
     if(!this.__income2MarketRoutes){
       this.__income2MarketRoutes=true;
-      this.get('/income2-market/status',async(_req,res)=>{const [list,treasury]=await Promise.all([workers().catch(()=>[]),payoutVault.status().catch(()=>({ready:false,address:null,onchainUsdcBalance:null}))]);res.json({ok:true,service:'income2-personal-agent-market',paidTools:Object.keys(TOOLS),payoutReadyWorkers:list.length,bootstrapActive:true,network:NETWORK,asset:'USDC',priceUsd:PRICE_USD,privateEarnExcluded:true,payoutTreasury:{ready:Boolean(treasury.ready),address:treasury.address||null,balanceUsdc:treasury.onchainUsdcBalance}})});
+      this.get('/income2-market/status',async(_req,res)=>{const [list,treasury]=await Promise.all([workers().catch(()=>[]),payoutVault.status().catch(()=>({ready:false,address:null,onchainUsdcBalance:null}))]);res.json({ok:true,service:'income2-personal-agent-market',paidTools:Object.keys(TOOLS),activeWorkers:list.length,bootstrapActive:true,network:NETWORK,asset:'USDC',priceUsd:PRICE_USD,privateEarnExcluded:true,payoutWalletRequiredForAssignments:false,payoutTreasury:{ready:Boolean(treasury.ready),address:treasury.address||null,balanceUsdc:treasury.onchainUsdcBalance}})});
 
       this.post('/income2-payout/:withdrawalId',async(req,res,next)=>{
         try{
@@ -89,7 +89,7 @@ function install(){
           }catch(e){return next(e)}
         });
       }
-      Promise.all([personal.init(),payoutVault.init()]).then(([,treasury])=>console.log(JSON.stringify({type:'income2_personal_market_ready',tools:Object.keys(TOOLS).length,priceUsd:PRICE_USD,bootstrapActive:true,payoutTreasury:treasury.address,privateEarnExcluded:true,at:new Date().toISOString()}))).catch(e=>console.error(JSON.stringify({type:'income2_personal_market_init_error',error:String(e.message).slice(0,300),at:new Date().toISOString()})));
+      Promise.all([personal.init(),payoutVault.init()]).then(([,treasury])=>console.log(JSON.stringify({type:'income2_personal_market_ready',tools:Object.keys(TOOLS).length,priceUsd:PRICE_USD,bootstrapActive:true,payoutWalletRequiredForAssignments:false,payoutTreasury:treasury.address,privateEarnExcluded:true,at:new Date().toISOString()}))).catch(e=>console.error(JSON.stringify({type:'income2_personal_market_init_error',error:String(e.message).slice(0,300),at:new Date().toISOString()})));
     }
     return priorListen.apply(this,args);
   };
