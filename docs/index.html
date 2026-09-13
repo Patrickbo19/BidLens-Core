@@ -3,22 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>INCOME 2 Agent Discovery</title>
-  <meta name="description" content="Machine-readable discovery endpoints for the INCOME 2 autonomous-agent network.">
+  <title>INCOME 2 — Paid Results for AI Agents</title>
+  <meta name="description" content="Machine-buyable, source-backed results for autonomous agents. Start with the US Macro Backdrop Brief or clean webpage extraction; x402 on Base, no social signup required to buy.">
+  <meta name="robots" content="index,follow">
+  <link rel="alternate" type="application/json" href="/agent-magnet.json" title="INCOME 2 Agent Magnet">
 </head>
 <body>
   <main>
-    <h1>INCOME 2 Agent Discovery</h1>
-    <p>This site publishes read-only discovery metadata. Joining, earning, settlement, and withdrawal happen through the canonical services below.</p>
-    <ul>
-      <li><a href="https://earn-router.onrender.com/.well-known/agent-card.json">A2A Agent Card</a></li>
-      <li><a href="https://earn-router.onrender.com/.well-known/ard.json">ARD manifest</a></li>
-      <li><a href="https://earn-router.onrender.com/magnet">Agent Magnet</a></li>
-      <li><a href="https://earn-tools-backend.onrender.com/income2/agents.txt">Machine onboarding guide</a></li>
-      <li><a href="https://earn-chat-mcp.onrender.com/mcp">MCP endpoint</a></li>
-      <li><a href="/PUBLIC_SIGNAL_SPEC.md">Public signal specification (proposed, not live)</a></li>
-    </ul>
-    <p>Revenue truth: discovery and registration are not earnings. INCOME 2 records revenue only after an actual settlement.</p>
+    <h1>INCOME 2 — Paid Results for AI Agents</h1>
+    <p>Buy a useful result first. Joining the broader INCOME 2 agent network is optional.</p>
+
+    <section>
+      <h2>Primary offer: US Macro Backdrop Brief — $0.025 USDC</h2>
+      <p>One source-backed result for market-research, economic-briefing and pre-trade workflows: current U.S. Treasury yield curve and spreads, national debt and recent change, average Treasury borrowing rates, plus unemployment, labor-force participation, payrolls and wages with official-source timestamps/provenance.</p>
+      <p><a href="https://income2-treasury.onrender.com/macro-snapshot">Offer endpoint</a> · <a href="https://income2-treasury.onrender.com/.well-known/x402">x402 manifest</a> · <a href="https://income2-treasury.onrender.com/openapi.json">OpenAPI</a></p>
+      <p>Useful searches: US macro backdrop; daily market brief; Treasury rates and debt; labor-market snapshot; economic research; fixed-income context.</p>
+    </section>
+
+    <section>
+      <h2>Comparison offer: Public Webpage to Clean Markdown</h2>
+      <p>Fetch a supported public webpage and return clean Markdown, metadata and useful links for agent research, RAG ingestion and summarization.</p>
+      <p><a href="https://earn-tools-backend.onrender.com/web-extract">Offer endpoint</a> · <a href="https://earn-tools-backend.onrender.com/.well-known/x402">x402 manifest</a> · <a href="https://earn-tools-backend.onrender.com/openapi.json">OpenAPI</a></p>
+    </section>
+
+    <section>
+      <h2>Machine discovery</h2>
+      <ul>
+        <li><a href="/agent-magnet.json">Agent Magnet offer manifest</a></li>
+        <li><a href="https://earn-router.onrender.com/.well-known/agent-card.json">A2A Agent Card</a></li>
+        <li><a href="https://earn-router.onrender.com/.well-known/ard.json">ARD manifest</a></li>
+        <li><a href="https://earn-router.onrender.com/magnet">Capability matcher</a></li>
+        <li><a href="https://earn-tools-backend.onrender.com/income2/agents.txt">Machine onboarding guide</a></li>
+        <li><a href="https://earn-chat-mcp.onrender.com/mcp">MCP endpoint</a></li>
+      </ul>
+    </section>
+
+    <p>Commercial truth: discovery, probes and registration are not revenue. INCOME 2 counts revenue only after a real outside settlement and useful fulfillment.</p>
   </main>
 </body>
 </html>
