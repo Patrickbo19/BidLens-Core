@@ -1,0 +1,62 @@
+name: Register INCOME 2 x402 directories
+
+on:
+  push:
+    paths:
+      - '.github/workflows/register-income2-directories.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Register macro offer with 402 Index
+        continue-on-error: true
+        run: |
+          curl -sS -X POST 'https://402index.io/api/v1/register' \
+            -H 'content-type: application/json' \
+            --data '{"url":"https://income2-treasury.onrender.com/macro-snapshot","name":"US Macro Backdrop Brief — Treasury Rates, Debt & Labor","protocol":"x402","http_method":"GET","provider":"INCOME 2"}' \
+            -w '\nHTTP %{http_code}\n'
+
+      - name: Register extraction offer with 402 Index
+        continue-on-error: true
+        run: |
+          curl -sS -X POST 'https://402index.io/api/v1/register' \
+            -H 'content-type: application/json' \
+            --data '{"url":"https://earn-tools-backend.onrender.com/web-extract","name":"Public Webpage to Clean Markdown","protocol":"x402","http_method":"POST","provider":"INCOME 2","probe_body":"{\"url\":\"https://example.com\"}"}' \
+            -w '\nHTTP %{http_code}\n'
+
+      - name: Submit macro offer to Market402
+        continue-on-error: true
+        run: |
+          curl -sS -X POST 'https://market402.com/submit' \
+            -H 'content-type: application/json' \
+            --data '{"url":"https://income2-treasury.onrender.com/macro-snapshot"}' \
+            -w '\nHTTP %{http_code}\n'
+
+      - name: Submit extraction offer to Market402
+        continue-on-error: true
+        run: |
+          curl -sS -X POST 'https://market402.com/submit' \
+            -H 'content-type: application/json' \
+            --data '{"url":"https://earn-tools-backend.onrender.com/web-extract"}' \
+            -w '\nHTTP %{http_code}\n'
+
+      - name: Refresh public-data origin on Agent402
+        continue-on-error: true
+        run: |
+          curl -sS -X POST 'https://agent402.tools/api/index/register' \
+            -H 'content-type: application/json' \
+            --data '{"origin":"https://income2-treasury.onrender.com"}' \
+            -w '\nHTTP %{http_code}\n'
+
+      - name: Refresh extraction origin on Agent402
+        continue-on-error: true
+        run: |
+          curl -sS -X POST 'https://agent402.tools/api/index/register' \
+            -H 'content-type: application/json' \
+            --data '{"origin":"https://earn-tools-backend.onrender.com"}' \
+            -w '\nHTTP %{http_code}\n'
