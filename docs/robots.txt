@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Agentmap: https://income2-agent-discovery.onrender.com/income2-ard.json
