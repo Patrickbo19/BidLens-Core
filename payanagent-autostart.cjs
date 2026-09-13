@@ -10,6 +10,7 @@ if (/seller-backend\.js$/.test(argv1)) {
   process.env.EARN_DIRECTORY_REGISTER_ON_BOOT = '1';
   process.env.EARN_AGENT402_REFRESH_ON_BOOT = '1';
 
+  require('./earn-account-gateway.cjs').install();
   require('./earn-spend-http-patch.cjs');
   const payanBootstrap = require('./payanagent-bootstrap.cjs');
   const superteamBootstrap = require('./superteam-bootstrap.cjs');
