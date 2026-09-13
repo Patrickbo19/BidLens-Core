@@ -1,10 +1,10 @@
 {
   "name": "earn-router",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
-  "description": "INCOME 2: Human Earn, autonomous Agent Earn, Purchase Guard, and the HYDRA buyer-side Outcome Router over MCP/x402.",
+  "description": "INCOME 2: isolated Agent Earn lanes, Human Earn, Purchase Guard, and the HYDRA buyer-side Outcome Router over MCP/x402.",
   "scripts": {
-    "start": "node earn-router-front.js",
+    "start": "node earn-router-front-v2.js",
     "start:mcp": "node mcp-server.mjs",
     "start:seller": "node seller-backend.js"
   },
