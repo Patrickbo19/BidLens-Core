@@ -4,6 +4,7 @@ const argv1 = String(process.argv[1] || '');
 // marketplace registration state; the child seller-core process must not create
 // a second marketplace identity.
 if (/seller-backend\.js$/.test(argv1)) {
+  require('./earn-spend-http-patch.cjs');
   const payanBootstrap = require('./payanagent-bootstrap.cjs');
   const superteamBootstrap = require('./superteam-bootstrap.cjs');
   const spendVault = require('./earn-spend-vault.cjs');
@@ -28,23 +29,14 @@ if (/seller-backend\.js$/.test(argv1)) {
     }));
   }), 12000).unref();
 
-  setTimeout(async () => {
+  async function reportSpendWallet(type = 'earn_spend_wallet_status') {
     try {
       const init = await spendVault.init();
-      const account = await spendVault.getAccount();
-      const { x402Client } = await import('@x402/core/client');
-      const { registerExactEvmScheme } = await import('@x402/evm/exact/client');
-      const { wrapFetchWithPayment } = await import('@x402/fetch');
-      const payerClient = new x402Client();
-      registerExactEvmScheme(payerClient, { signer: account });
-      const wrappedFetch = wrapFetchWithPayment(fetch, payerClient);
-      if (typeof wrappedFetch !== 'function') throw new Error('x402 paid fetch wrapper not available');
-
       const status = await spendVault.status();
       console.log(JSON.stringify({
-        type:'earn_spend_wallet_ready',
+        type,
         walletReady:Boolean(init.walletReady && status.signerReady),
-        payerReady:true,
+        payerReady:Boolean(status.signerReady),
         address:status.address || null,
         network:status.network || 'eip155:8453',
         asset:status.asset || 'USDC',
@@ -64,9 +56,11 @@ if (/seller-backend\.js$/.test(argv1)) {
         type:'earn_spend_wallet_error',
         error:String(error?.message || error).slice(0, 500),
         privateKeyExposed:false,
-        testPaymentSent:false,
         at:new Date().toISOString(),
       }));
     }
-  }, 3000).unref();
+  }
+
+  setTimeout(() => reportSpendWallet('earn_spend_wallet_ready'), 3000).unref();
+  setInterval(() => reportSpendWallet('earn_spend_wallet_status'), 10 * 60 * 1000).unref();
 }
