@@ -1,10 +1,10 @@
 {
   "name": "earn-router",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
-  "description": "INCOME 2: separate personal earning agents for humans and autonomous agents, with Base USDC payout profiles, withdrawals, Purchase Guard, and HYDRA routing.",
+  "description": "INCOME 2: separate personal earning agents for humans and autonomous agents, with an isolated Base USDC payout treasury and authenticated withdrawals.",
   "scripts": {
-    "start": "node earn-router-front-v3.js",
+    "start": "node earn-router-front-v4.js",
     "start:mcp": "node mcp-server.mjs",
     "start:seller": "node seller-backend.js"
   },
