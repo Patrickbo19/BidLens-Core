@@ -1,12 +1,14 @@
 const http = require('http');
 const ledger = require('./ledger.cjs');
+const personal = require('./income2-personal-ledger.cjs');
+const opportunityIndex = require('./income2-opportunity-index.cjs');
 
 let installed = false;
 let initPromise = null;
 const createWindows = new Map();
 
 function ensureInit() {
-  if (!initPromise) initPromise = ledger.init().catch(error => { initPromise = null; throw error; });
+  if (!initPromise) initPromise = Promise.all([ledger.init(), personal.init(), opportunityIndex.init()]).catch(error => { initPromise = null; throw error; });
   return initPromise;
 }
 
@@ -56,18 +58,46 @@ function readJson(req, max = 24000) {
   });
 }
 
-function accountResponse(summary, extra = {}) {
+function mergedSummary(base, personalState) {
+  if (!personalState) return { ...base, availableBalanceUsd:0, grossAttributedUsd:0, settlementCount:0, personalAgent:null };
+  const userShare = personal.USER_SHARE_BPS / 10000;
+  const userEarned = Number(personalState.grossUserEarningsUsd || 0);
+  return {
+    ...base,
+    availableBalanceUsd:Number(personalState.availableToWithdrawUsd || 0),
+    grossAttributedUsd:userShare > 0 ? Number((userEarned / userShare).toFixed(6)) : 0,
+    settlementCount:Number(personalState.settlementCount || 0),
+    personalAgent:personalState,
+  };
+}
+
+function accountResponse(summary, personalState, extra = {}) {
   return {
     ok: true,
     ...extra,
-    summary,
+    summary:mergedSummary(summary, personalState),
+    personalAgent:personalState || null,
     worker: summary?.worker || null,
     referral: summary?.referral || null,
-    userSharePercent: ledger.USER_SHARE_BPS / 100,
-    platformSharePercent: ledger.PLATFORM_SHARE_BPS / 100,
-    earningModel: 'isolated_worker_lane_shared_marketplace_demand',
-    cashout: 'external_cashout_not_enabled_in_beta',
+    userSharePercent: personal.USER_SHARE_BPS / 100,
+    platformSharePercent: personal.PLATFORM_SHARE_BPS / 100,
+    earningModel: 'personal_agent_new_external_revenue_only_private_earn_excluded',
+    cashout: 'base_usdc_withdrawals_enabled_after_wallet_setup',
   };
+}
+
+async function activatePersonal(handle, token) {
+  const account = await ledger.authenticate(handle, token);
+  if (!account) return null;
+  const state = await personal.activate(account, { clientType:'agent' });
+  await opportunityIndex.saveProfile(account, { autoEarn:true });
+  return state;
+}
+
+async function personalStatus(handle, token) {
+  const account = await ledger.authenticate(handle, token);
+  if (!account) return null;
+  return personal.status(account);
 }
 
 async function handleAccount(req, res) {
@@ -97,7 +127,8 @@ async function handleAccount(req, res) {
       sendJson(res, 401, { ok:false, message:'Account authentication failed.' });
       return true;
     }
-    sendJson(res, 200, accountResponse(summary));
+    const state = await personalStatus(handle, token);
+    sendJson(res, 200, accountResponse(summary, state));
     return true;
   }
 
@@ -111,12 +142,12 @@ async function handleAccount(req, res) {
       sendJson(res, 401, { ok:false, message:'Account authentication failed.' });
       return true;
     }
-    const summary = await ledger.getSummary(handle, token);
-    sendJson(res, 200, accountResponse(summary, {
+    const [summary,state] = await Promise.all([ledger.getSummary(handle, token), activatePersonal(handle, token)]);
+    sendJson(res, 200, accountResponse(summary, state, {
       created: false,
       accountHandle: handle,
       agentEnabled: true,
-      workerId: summary?.worker?.workerId || null,
+      workerId: state?.agentId || summary?.worker?.workerId || null,
       inviteCode: summary?.referral?.inviteCode || null,
     }));
     return true;
@@ -130,14 +161,14 @@ async function handleAccount(req, res) {
 
   const referralCode = ledger.normalizeInviteCode(body.referralCode || body.ref || body.referrer || '');
   const account = await ledger.createAccount({ enableAgent:true, referralCode });
-  const summary = await ledger.getSummary(account.handle, account.token);
-  sendJson(res, 201, accountResponse(summary, {
+  const [summary,state] = await Promise.all([ledger.getSummary(account.handle, account.token), activatePersonal(account.handle, account.token)]);
+  sendJson(res, 201, accountResponse(summary, state, {
     created: true,
     accountHandle: account.handle,
     accountToken: account.token,
     agentEnabled: true,
     ledgerPersistent: account.persistent,
-    workerId: account.workerId,
+    workerId: state?.agentId || account.workerId || null,
     inviteCode: account.inviteCode,
     referredByCode: account.referredByCode,
   }));
@@ -179,7 +210,7 @@ function install() {
       ? originalCreateServer.call(http, wrapped)
       : originalCreateServer.call(http, opts, wrapped);
   };
-  console.log(JSON.stringify({ type:'earn_account_gateway_installed', persistentLedgerRequired:true, at:new Date().toISOString() }));
+  console.log(JSON.stringify({ type:'earn_account_gateway_installed', persistentLedgerRequired:true, personalEconomyBridge:true, at:new Date().toISOString() }));
 }
 
 module.exports = { install };
