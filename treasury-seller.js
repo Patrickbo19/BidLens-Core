@@ -602,6 +602,37 @@ async function preflight(name, fn) {
   const paidPaths = new Set(RESOURCES.map(r => r.path));
   app.use((req,_res,next) => { if (paidPaths.has(req.path)) bumpRoute(req); next(); });
 
+  // Some x402 directories inspect the HTTP 402 JSON body rather than the
+  // PAYMENT-REQUIRED header used by v2. Mirror the signed requirement payload
+  // into the body without changing the official middleware's verification,
+  // settlement, discovery extensions, or paid-request path.
+  app.use((req,res,next) => {
+    if (!paidPaths.has(req.path)) return next();
+    const originalEnd = res.end;
+    res.end = function endWithX402Body(chunk, encoding, callback) {
+      if (res.statusCode === 402) {
+        const header = res.getHeader('payment-required');
+        const encoded = Array.isArray(header) ? header[0] : header;
+        if (typeof encoded === 'string' && encoded) {
+          try {
+            const requirement = JSON.parse(Buffer.from(encoded, 'base64').toString('utf8'));
+            if (requirement?.x402Version && Array.isArray(requirement?.accepts) && requirement.accepts.length) {
+              const body = JSON.stringify(requirement);
+              res.setHeader('content-type', 'application/json; charset=utf-8');
+              res.setHeader('content-length', Buffer.byteLength(body));
+              const done = typeof encoding === 'function' ? encoding : callback;
+              return originalEnd.call(this, body, 'utf8', done);
+            }
+          } catch (error) {
+            console.warn(JSON.stringify({type:'x402_body_compat_error',path:req.path,error:String(error?.message || error).slice(0,200),at:new Date().toISOString()}));
+          }
+        }
+      }
+      return originalEnd.call(this, chunk, encoding, callback);
+    };
+    next();
+  });
+
   const facilitatorClient = new HTTPFacilitatorClient({url:FACILITATOR_URL});
   const resourceServer = new x402ResourceServer(facilitatorClient).register(NETWORK,new ExactEvmScheme()).registerExtension(bazaarResourceServerExtension);
   resourceServer.onAfterSettle(async ctx => {
