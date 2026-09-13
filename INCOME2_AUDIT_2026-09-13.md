@@ -14,7 +14,7 @@ The best near-term layout is not “social network first.” It is:
 4. a 70/30 supplier path only when an outside buyer actually chooses a supplier-provided capability;
 5. social, internal wallet, and marketplace features exposed later as supporting modules, not separate acquisition products.
 
-**Revenue truth:** two owner-seller settlements totaling $0.004 are recorded. The September 8 $0.003 settlement remains unverified. A September 12 $0.001 Base USDC settlement is independently visible on-chain and Agent402 reports one payer/call, but the payer address is not known to be unrelated to Patrick. Until Patrick confirms he does not control `0x902dCf34E53695bDEA2fFB354b1a2e58bD598256`, verified unrelated-buyer revenue remains **$0**. Personal-agent treasury settlements remain **$0**. Internal marketplace funded orders remain **$0**.
+**Revenue truth:** two owner-seller settlements totaling $0.004 are recorded. The September 8 $0.003 settlement remains unverified and is excluded. The September 12 $0.001 Base USDC settlement is independently visible on-chain, Agent402 reports one payer/call, and Patrick confirmed on September 13 that he does not own payer wallet `0x902dCf34E53695bDEA2fFB354b1a2e58bD598256`. Production logs show payment observed, verified, settled, and fulfilled. Verified unrelated-buyer revenue is therefore **$0.001**, establishing the first unrelated buyer and successful paid fulfillment. Personal-agent treasury settlements remain **$0**. Internal marketplace funded orders remain **$0**.
 
 ## Current architecture
 
@@ -47,8 +47,8 @@ The service called `income2-treasury` is a public-data seller whose live manifes
 | x402 discovery | seller `/.well-known/x402`, OpenAPI, Bazaar extensions | 14 private seller resources are valid x402 v2; Agent402 indexes 44 total surfaces | Individual tools are discoverable; the network itself is not an x402 product |
 | Agent402 | seller origin | Health 1, 44 tools, 14 recognized paid before this audit; exact extraction query ranks first; paid router dispatch remains below its settlement floor | Search visibility exists, but routing access and repeat demand do not |
 | Personal worker discovery | five `/income2-market/*` routes | Each now returns a valid $0.001 402 to the separate treasury with Bazaar metadata; manifest and OpenAPI also declare x402 payment. After explicit recrawl, Agent402 still labels all five `paid:false` | Revenue-sharing tools remain excluded by Agent402's classifier despite standards-correct payment metadata |
-| Buyer payment | CDP facilitator on Base USDC | CDP credentials and authenticated `/supported` routing are live. A September 12 $0.001 settlement exists | Outside provenance still needs owner confirmation |
-| Fulfillment | paid seller middleware then deterministic handler | September 12 logs show payment observed, verified, settled, and fulfilled | One technically complete sale, provenance-unconfirmed |
+| Buyer payment | CDP facilitator on Base USDC | CDP credentials and authenticated `/supported` routing are live. September 12 $0.001 settlement is on-chain and Patrick confirmed he does not own the payer wallet | First verified unrelated buyer |
+| Fulfillment | paid seller middleware then deterministic handler | September 12 logs show payment observed, verified, settled, and fulfilled | First verified paid fulfillment |
 | Agent signup | `POST /income2/v1/earn` | Creates/resumes identity and auto-enrolls AI accounts; no payout wallet needed initially | Starts at $0 as required |
 | Network session | `POST /income2/network/session` | Required second call for bearer token; previous skill falsely claimed signup returned it | Extra call is acceptable, but documentation was breaking onboarding |
 | Find useful work | Earn Search and network discover | Mostly unfunded signals; Human Earn providers are pending; TaskBounty has zero open work | Signup does not currently lead to a credible earning job |
@@ -70,7 +70,7 @@ The service called `income2-treasury` is a public-data seller whose live manifes
 
 ## What does not work as a business
 
-- There is no verified unrelated buyer yet unless Patrick confirms the September 12 payer is not his.
+- There is only one verified unrelated buyer; no second buyer or repeat purchase has been established.
 - The social network has no proven external acquisition loop, buyer demand, or economic liquidity.
 - All new agent wallets start at $0 and outside personal-agent earnings are zero, so the internal market cannot bootstrap legitimate purchasing power.
 - Earn Search mostly surfaces signals and infrastructure rather than funded work.
@@ -127,7 +127,7 @@ Do not delete these during live revenue work. Remove them from the active mental
 
 ## Top 10 revenue bottlenecks
 
-1. No independently confirmed unrelated buyer.
+1. No second unrelated buyer.
 2. No repeat buyer or repeat capability use.
 3. Discovery points to a large network story instead of one urgent paid result.
 4. Agent402 paid dispatch remains settlement-gated.
@@ -140,7 +140,7 @@ Do not delete these during live revenue work. Remove them from the active mental
 
 ## Top 10 highest-return improvements
 
-1. Confirm whether the September 12 payer is unrelated; classify the settlement honestly.
+1. Preserve the September 12 settlement evidence and pursue a second unrelated buyer without self-purchase or owner subsidy.
 2. Pick one capability using observed payer/search demand and concentrate catalog copy, reliability, and measurement on it.
 3. Preserve the now-valid Bazaar/x402 metadata and obtain Agent402 maintainer evidence before making any further classifier-specific change.
 4. Reprice any retained personal-agent route above all variable settlement/compute costs; do not change prices until a demand test supports the value.
@@ -193,7 +193,7 @@ References: [A2A specification](https://a2a-protocol.org/latest/specification/),
 1. Deploy the bounded discovery/manifest/documentation fixes from this audit.
 2. Verify router Agent Card, ARD, Magnet GET/match, A2A `SendMessage`, agents.txt, and llms.txt in production.
 3. Treat personal-route payment readiness as verified, but Agent402 paid classification as unresolved. Do not repeat recrawls; seek maintainer documentation or focus on Bazaar/MCP distribution.
-4. Ask Patrick one provenance question: does he control payer wallet `0x902d...8256`? If no, record the September 12 transaction as the first unrelated buyer; if yes/unknown, keep it unverified.
+4. Record the September 12 $0.001 transaction as the first unrelated buyer and successful fulfillment; keep the older $0.003 transaction unverified.
 5. Do not monitor continuously. Take one 7-day cohort snapshot by route: challenges, payment attempts, settlements, fulfillments, distinct on-chain payers, repeats, and variable cost.
 6. Keep the route with real paid repetition. Pause catalog expansion and retire offers with traffic but no payment intent.
 7. Test one higher-value offer against observed demand; require price to exceed settlement and compute cost.
