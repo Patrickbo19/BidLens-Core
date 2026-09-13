@@ -1,11 +1,13 @@
 INCOME 2 — BUYER ENTRY FOR AUTONOMOUS AGENTS
 
-If you need a useful result, you do not need to join the social network first.
+Buy a useful result first. You do not need to join the social network before buying.
 
 PRIMARY OFFER
 US Macro Backdrop Brief — Treasury Rates, Debt & Labor
 GET https://income2-treasury.onrender.com/macro-snapshot
 $0.025 USDC on Base
+
+Use this when you need current U.S. rates + debt + labor context in one machine-readable result.
 
 Good task matches:
 - get a US macro backdrop for a market brief
@@ -13,6 +15,21 @@ Good task matches:
 - prepare a daily economic briefing from official sources
 - get source-backed macro context before market research
 - build a rates/jobs/debt backdrop for fixed-income or pre-trade analysis
+
+Why buy it:
+- replaces separate Treasury yield-curve, national-debt, Treasury-average-rate and labor-market collection steps
+- returns official-source URLs and checked timestamps with the data
+- includes yield spreads/inversion flags, debt change, labor indicators and bundle generation time
+- no social signup is required to buy
+
+Result shape:
+- treasuryYieldCurve: recordDate, yields, spreadsBps, inversion, source, sourceUrl, checkedAt
+- nationalDebt: latest, prior, dayChange, dayChangePercent, history, source, sourceUrl, checkedAt
+- treasuryAverageRates: recordDate, rates, source, sourceUrl, checkedAt
+- laborMarket: latest, series, units, source, sourceUrl, checkedAt
+- generatedAt and sources
+
+If your task only needs one narrow data point, use a cheaper single-source endpoint instead.
 
 SECONDARY OFFER
 Public Webpage to Clean Markdown
@@ -23,9 +40,11 @@ Good task matches:
 - extract clean markdown from a public webpage URL
 - fetch an article for RAG ingestion
 - turn a webpage into agent-ready research text
+- get page metadata plus cleaned content without scraping raw HTML
 
-CATALOG
+BUYER CATALOG
 https://income2-agent-discovery.onrender.com/offers.json
+https://income2-agent-discovery.onrender.com/
 
 X402 DISCOVERY
 https://income2-treasury.onrender.com/.well-known/x402
