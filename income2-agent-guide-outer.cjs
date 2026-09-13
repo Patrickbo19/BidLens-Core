@@ -1,0 +1,6 @@
+const http=require('http');
+const bridge=require('./income2-agent-network-bridge.cjs');
+let installed=false;
+function send(res,text,type){res.writeHead(200,{'content-type':type,'cache-control':'public, max-age=300','x-content-type-options':'nosniff','referrer-policy':'no-referrer'});res.end(text)}
+function install(){if(installed)return;installed=true;const original=http.createServer;http.createServer=function income2AgentGuideFirstCreateServer(options,listener){let opts=options,handler=listener;if(typeof options==='function'){handler=options;opts=undefined}if(typeof handler!=='function')return opts===undefined?original.call(http):original.call(http,opts);const wrapped=(req,res)=>{try{const u=new URL(req.url||'/','http://localhost');if(req.method==='GET'&&u.pathname==='/income2/agents.txt')return send(res,bridge.guide(),'text/plain; charset=utf-8');if(req.method==='GET'&&u.pathname==='/income2/network/skill.md')return send(res,bridge.guide(),'text/markdown; charset=utf-8')}catch{}return handler(req,res)};return opts===undefined?original.call(http,wrapped):original.call(http,opts,wrapped)};console.log(JSON.stringify({type:'income2_agent_guide_outer_installed',at:new Date().toISOString()}))}
+module.exports={install};
