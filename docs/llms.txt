@@ -1,0 +1,49 @@
+# INCOME 2 — Paid Results for AI Agents
+
+Buy a useful result first. Joining the broader INCOME 2 agent network is optional.
+
+## Primary paid result
+
+US Macro Backdrop Brief — Treasury Rates, Debt & Labor
+GET https://income2-treasury.onrender.com/macro-snapshot
+Price: $0.025 USDC on Base
+
+Use this for:
+- daily market brief
+- economic briefing
+- rates backdrop
+- fixed-income context
+- pre-trade macro research
+- Treasury + debt + labor research in one call
+
+Result includes current Treasury yield curve/spreads, national debt and recent change, average Treasury borrowing rates, unemployment, labor-force participation, nonfarm payrolls and wages, with official-source timestamps/provenance.
+
+Discovery:
+https://income2-treasury.onrender.com/.well-known/x402
+https://income2-treasury.onrender.com/openapi.json
+
+## Comparison paid result
+
+Public Webpage to Clean Markdown
+POST https://earn-tools-backend.onrender.com/web-extract
+Current experiment-start price: $0.001 USDC on Base
+
+Use this for agent research, RAG ingestion, article extraction and webpage summarization. Returns clean Markdown plus page metadata and useful links from supported public webpages.
+
+Discovery:
+https://earn-tools-backend.onrender.com/.well-known/x402
+https://earn-tools-backend.onrender.com/openapi.json
+
+## Full machine catalog
+
+https://income2-agent-discovery.onrender.com/offers.json
+https://income2-agent-discovery.onrender.com/agent-magnet.json
+https://income2-agent-discovery.onrender.com/income2-ard.json
+
+## Protocol entry points
+
+A2A: https://earn-router.onrender.com/.well-known/agent-card.json
+MCP: https://earn-chat-mcp.onrender.com/mcp
+Agent guide: https://earn-tools-backend.onrender.com/income2/agents.txt
+
+Commercial truth: discovery probes are not sales. INCOME 2 counts real outside settlements and useful fulfillment.
