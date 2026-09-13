@@ -46,7 +46,7 @@ The service called `income2-treasury` is a public-data seller whose live manifes
 | MCP registry | `io.github.Patrickbo19/income2` v0.3.1 | Official registry entry and live MCP initialize/tools-list verified; exactly six tools | Useful distribution, but tool set is still oriented to old Earn/HYDRA concepts rather than network discovery |
 | x402 discovery | seller `/.well-known/x402`, OpenAPI, Bazaar extensions | 14 private seller resources are valid x402 v2; Agent402 indexes 44 total surfaces | Individual tools are discoverable; the network itself is not an x402 product |
 | Agent402 | seller origin | Health 1, 44 tools, 14 recognized paid before this audit; exact extraction query ranks first; paid router dispatch remains below its settlement floor | Search visibility exists, but routing access and repeat demand do not |
-| Personal worker discovery | five `/income2-market/*` routes | Each returned a valid $0.001 402, but manifest shape made Agent402 label them free and their challenges omitted Bazaar metadata; fixed pending deploy | Revenue-sharing tools were effectively invisible to paid discovery |
+| Personal worker discovery | five `/income2-market/*` routes | Each now returns a valid $0.001 402 to the separate treasury with Bazaar metadata; manifest and OpenAPI also declare x402 payment. After explicit recrawl, Agent402 still labels all five `paid:false` | Revenue-sharing tools remain excluded by Agent402's classifier despite standards-correct payment metadata |
 | Buyer payment | CDP facilitator on Base USDC | CDP credentials and authenticated `/supported` routing are live. A September 12 $0.001 settlement exists | Outside provenance still needs owner confirmation |
 | Fulfillment | paid seller middleware then deterministic handler | September 12 logs show payment observed, verified, settled, and fulfilled | One technically complete sale, provenance-unconfirmed |
 | Agent signup | `POST /income2/v1/earn` | Creates/resumes identity and auto-enrolls AI accounts; no payout wallet needed initially | Starts at $0 as required |
@@ -76,6 +76,7 @@ The service called `income2-treasury` is a public-data seller whose live manifes
 - Earn Search mostly surfaces signals and infrastructure rather than funded work.
 - Human Earn inventory is still provider-gated; TaskBounty has no open tasks.
 - Agent402 paid router dispatch is settlement-gated despite good crawl health and exact-query rank.
+- Agent402 still classifies all five personal paid routes as free after a post-fix recrawl; no further metadata rewriting is justified without maintainer evidence.
 - Personal worker tools are commodities priced at $0.001. The platform keeps only $0.0003 per call, while CDP charges $0.001 per settlement after its free monthly allowance. That becomes negative unit economics before infrastructure.
 - The internal marketplace marks an order paid immediately. It has no enforceable delivery, acceptance, timeout, escrow, refund, or dispute lifecycle.
 - HYDRA charges a $0 platform fee, so usage cannot directly generate platform revenue.
@@ -110,7 +111,7 @@ Do not delete these during live revenue work. Remove them from the active mental
 |---:|---|---|---|
 | 1 | One proven paid capability with Bazaar/Agent402 distribution | Focus | Highest path to first and repeat buyers |
 | 2 | Settlement-to-fulfillment attribution and payer provenance | Keep/improve | Converts ambiguous activity into revenue truth |
-| 3 | Personal-agent paid routes with correct x402/Bazaar metadata | Fix | Makes 70/30 inventory purchasable and discoverable |
+| 3 | Personal-agent paid routes with correct x402/Bazaar metadata | Fixed; escalate classifier issue | Routes are purchasable, but Agent402 still does not classify them as paid |
 | 4 | Higher-value public-data bundles | Test selectively | Better prices and recurring data use than commodity transforms |
 | 5 | MCP canonical onboarding and discovery | Improve | Low-friction machine access through an established registry |
 | 6 | A2A Agent Card plus A2A-x402 extension | Add incrementally | Emerging agent-native discovery/payment interop |
@@ -141,7 +142,7 @@ Do not delete these during live revenue work. Remove them from the active mental
 
 1. Confirm whether the September 12 payer is unrelated; classify the settlement honestly.
 2. Pick one capability using observed payer/search demand and concentrate catalog copy, reliability, and measurement on it.
-3. Complete Bazaar metadata and paid classification for personal-agent routes.
+3. Preserve the now-valid Bazaar/x402 metadata and obtain Agent402 maintainer evidence before making any further classifier-specific change.
 4. Reprice any retained personal-agent route above all variable settlement/compute costs; do not change prices until a demand test supports the value.
 5. Publish canonical A2A/ARD/Magnet discovery on the router and test zero-knowledge onboarding in three calls.
 6. Add the official A2A-x402 extension after the basic Agent Card is verified live.
@@ -191,7 +192,7 @@ References: [A2A specification](https://a2a-protocol.org/latest/specification/),
 
 1. Deploy the bounded discovery/manifest/documentation fixes from this audit.
 2. Verify router Agent Card, ARD, Magnet GET/match, A2A `SendMessage`, agents.txt, and llms.txt in production.
-3. Verify all five personal routes issue x402 challenges with Bazaar extensions and appear as paid after one legitimate Agent402 recrawl.
+3. Treat personal-route payment readiness as verified, but Agent402 paid classification as unresolved. Do not repeat recrawls; seek maintainer documentation or focus on Bazaar/MCP distribution.
 4. Ask Patrick one provenance question: does he control payer wallet `0x902d...8256`? If no, record the September 12 transaction as the first unrelated buyer; if yes/unknown, keep it unverified.
 5. Do not monitor continuously. Take one 7-day cohort snapshot by route: challenges, payment attempts, settlements, fulfillments, distinct on-chain payers, repeats, and variable cost.
 6. Keep the route with real paid repetition. Pause catalog expansion and retire offers with traffic but no payment intent.
@@ -207,6 +208,7 @@ References: [A2A specification](https://a2a-protocol.org/latest/specification/),
 - Corrected the false claim that earn signup returns a network bearer token.
 - Corrected personal-route manifest identities so paid registries can classify them.
 - Added Bazaar discovery declarations to all five personal paid routes.
+- Added accepted-payment and OpenAPI x402 metadata; Agent402 still reports these five routes as `paid:false` after recrawl, so that limitation remains explicit.
 - Updated MCP onboarding/cash-out language without changing the six-tool contract.
 - Fixed the integration-test child-process teardown and added a reproducible lockfile.
 - Added an honest root page to the static discovery service and aligned ARD/Magnet/robots metadata.

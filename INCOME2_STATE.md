@@ -1,6 +1,6 @@
 # INCOME 2 — CANONICAL MASTER STATE
 
-> **Takeover reconciliation (2026-09-13):** Read `INCOME2_AUDIT_2026-09-13.md` before operating. It supersedes stale live-status claims below. In particular, CDP credentials are now configured; the router's A2A/ARD/Agent Magnet preload has now been attached pending deployment verification; personal paid-route discovery defects were fixed pending verification; and a September 12 $0.001 on-chain settlement is externally observed but remains unrelated-buyer provenance-unconfirmed. Verified unrelated-buyer revenue therefore remains $0 until payer ownership is resolved.
+> **Takeover reconciliation (2026-09-13):** Read `INCOME2_AUDIT_2026-09-13.md` before operating. It supersedes stale live-status claims below. CDP credentials are configured; router A2A/ARD/Agent Magnet routes are verified live; and all five personal routes now return valid x402/Bazaar payment challenges to the separate treasury. Agent402 still labels those five routes `paid:false` after an explicit recrawl, so do not claim registry paid classification. A September 12 $0.001 on-chain settlement is externally observed but remains unrelated-buyer provenance-unconfirmed. Verified unrelated-buyer revenue therefore remains $0 until payer ownership is resolved.
 
 **Updated:** September 13, 2026  
 **Repository:** `Patrickbo19/BidLens-Core`  
