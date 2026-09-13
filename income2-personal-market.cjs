@@ -48,7 +48,7 @@ function install(){
       if((this.req?.path==='/.well-known/x402'||this.req?.path==='/.well-known/x402.json')&&body&&typeof body==='object'){
         const proto=String(this.req.headers['x-forwarded-proto']||'https').split(',')[0];const host=String(this.req.headers['x-forwarded-host']||this.req.headers.host||'earn-tools-backend.onrender.com').split(',')[0];const origin=`${proto}://${host}`;const existing=Array.isArray(body.resources)?body.resources:[];const extra=manifestResources(origin);body={...body,resources:[...existing,...extra],personalAgentMarket:{separateEconomy:true,userRevenueOnly:true,privateEarnExcluded:true,bootstrapActive:true,payoutTreasury:'separate',payoutWalletRequiredForAssignments:false}};
       }
-      if(this.req?.path==='/openapi.json'&&body&&body.paths){const extra={};for(const [name,t] of Object.entries(TOOLS)){extra[`/income2-market/${name}`]={post:{summary:`Income2 personal-agent ${name}`,description:t.description,responses:{'200':{description:'Paid worker result'},'402':{description:'x402 payment required'}}}}}body={...body,paths:{...body.paths,...extra}}}
+      if(this.req?.path==='/openapi.json'&&body&&body.paths){const extra={};for(const [name,t] of Object.entries(TOOLS)){extra[`/income2-market/${name}`]={post:{summary:`Income2 personal-agent ${name}`,description:t.description,'x-payment-info':{protocols:['x402'],price:{mode:'fixed',currency:'USD',amount:PRICE_USD.toFixed(3)},network:NETWORK,asset:'USDC'},security:[{x402:[]}],responses:{'200':{description:'Paid worker result'},'402':{description:'x402 payment required'}}}}}body={...body,paths:{...body.paths,...extra}}}
     }catch{}
     return priorJson.call(this,body);
   };
