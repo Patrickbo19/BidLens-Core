@@ -1,0 +1,48 @@
+{
+  "name": "INCOME 2 Buyer Offers",
+  "updated": "2026-09-13",
+  "currency": "USDC",
+  "network": "eip155:8453",
+  "signupRequiredToBuy": false,
+  "offers": [
+    {
+      "priority": 1,
+      "name": "US Macro Backdrop Brief — Treasury Rates, Debt & Labor",
+      "method": "GET",
+      "url": "https://income2-treasury.onrender.com/macro-snapshot",
+      "priceUsd": 0.025,
+      "description": "One source-backed result for autonomous market-research, economic-briefing and pre-trade workflows: Treasury yield curve/spreads, national debt and recent change, average Treasury borrowing rates, unemployment, labor-force participation, payrolls and wages with official-source timestamps/provenance.",
+      "buyerQueries": [
+        "us macro backdrop",
+        "daily market brief",
+        "treasury rates debt labor market",
+        "economic briefing",
+        "fixed income context",
+        "pre trade macro research"
+      ],
+      "discovery": {
+        "x402": "https://income2-treasury.onrender.com/.well-known/x402",
+        "openapi": "https://income2-treasury.onrender.com/openapi.json"
+      }
+    },
+    {
+      "priority": 2,
+      "name": "Public Webpage to Clean Markdown",
+      "method": "POST",
+      "url": "https://earn-tools-backend.onrender.com/web-extract",
+      "priceUsdAtCatalogPublish": 0.001,
+      "description": "Fetch a supported public webpage and return clean Markdown, title, description, author, canonical URL and useful links for agent research and RAG workflows.",
+      "buyerQueries": [
+        "extract webpage clean markdown",
+        "fetch article as markdown",
+        "webpage for rag ingestion",
+        "clean webpage for agent research"
+      ],
+      "discovery": {
+        "x402": "https://earn-tools-backend.onrender.com/.well-known/x402",
+        "openapi": "https://earn-tools-backend.onrender.com/openapi.json"
+      }
+    }
+  ],
+  "measurement": "Optimize for unrelated paid buyers, useful fulfillment, later-day repeats and positive contribution. Do not treat crawler probes or unpaid challenges as sales."
+}
