@@ -1,439 +1,466 @@
-# INCOME 2 — Canonical State
+# INCOME 2 — CANONICAL MASTER STATE
 
-Last reconciled: 2026-09-11 13:41 UTC (seller health and community access)
+**Reconciled:** September 13, 2026 — six-pass launch audit  
+**Repository:** `Patrickbo19/BidLens-Core`  
+**Audited code baseline:** `61e9da53b7d6b03403be08b0923989c85384b511`  
+**Purpose:** This is the current non-secret handoff/master. In a new chat, read this file first. Where older notes conflict, this file + latest GitHub `main` + observed production behavior win.
 
-This is the canonical **non-secret** operating state for INCOME 2. Reconcile against live GitHub `main`, Render production, current marketplace/provider state, Gmail, and verified settlement evidence before material decisions. Never store API keys, private keys, seed phrases, passwords, 2FA codes, recovery credentials, solver keys, or payment signatures here.
+Never store API keys, private keys, seed phrases, account recovery tokens, payment signatures, passwords, or 2FA material in this file.
 
-## Mission
+---
 
-**Brand:** INCOME 2  
-**Motto:** Your second income. Powered by you or your AI.  
-**Promise:** Make money yourself — or let your AI earn for you.
+## 1. Product thesis
 
-Surfaces:
+INCOME 2 is evolving from a simple earning-search product into a **human + AI economic network** where people and autonomous agents can discover work, communicate, sell services, buy services, earn, hold an internal balance, pay one another, and withdraw legitimate earnings.
 
-- **Human Earn** — legitimate human-required funded opportunities.
-- **Agent Earn / Auto Make Me** — machine-doable paid work.
-- **Outcome Router** — desired result + max budget → autonomous discovery/fulfillment.
-- **Purchase Guard** — free non-custodial x402 max-spend/idempotency/retry safety.
+Current system map:
 
-HYDRA is only the internal codename for the Outcome Router. Standalone HYDRA is retired.
+- **INCOME 2** = the economic network / user-facing product.
+- **Earn Search / “Google Earn”** = earning-opportunity discovery and ranking inside INCOME 2.
+- **HYDRA / Outcome Router** = buyer-side routing brain: desired result + max budget -> route -> guarded execution -> result.
+- **Personal Agent** = each user/agent's separate earning identity and ledger.
+- **Agent social economy** = profiles, feed, messaging, follows/reactions, marketplace, promotion, closed-loop agent wallet.
+- **Personal Miner** = future multi-market autonomous earning engine. The full multi-market miner is **not built yet**.
 
-Primary objective: **maximum legitimate autonomous revenue with minimal owner labor**.
+Correct promise:
 
-Execution sequence:
+> Activate once -> INCOME 2 keeps trying to earn for you automatically.
 
-> distribution → real buyer intent → first paid fulfillment → second unrelated buyer → repeat demand → fee/spread/recurring monetization → scale
+Incorrect promise:
 
-Do not self-pay, fake demand/revenue, manipulate rankings, spam directories, create duplicate identities, or use owner working capital to manufacture traction.
+> Activate once -> guaranteed money appears every day.
 
-## Revenue truth
+No real balance may move without real settled economic value or a closed-loop receipt backed by an already-settled balance.
 
-Only independently verified real third-party money earned by INCOME 2 counts as revenue.
+---
 
-Current verified state:
+## 2. Absolute money boundary
 
-- verified external INCOME 2 revenue: **$0**
-- genuine outside Agent Earn settlements: **0 confirmed**
-- outside paid Outcome Router fulfillments: **0 confirmed**
-- Human Earn conversions: **0**
-- Outcome Router platform fee: **$0 beta**
+### Patrick's private EARN economy
 
-The canonical ledger contains one historical 0.003 USDC row with a 70/30 split, but outside-payer provenance is not independently verified; do **not** count it as revenue.
+Patrick's EARN business is private. Revenue from EARN sellers, HYDRA owner activity, private bounties, owner treasury activity, x402 seller routes, or other private EARN operations is **not shared with INCOME 2 users**.
 
-Historical 0.01 USDC to the wrong recipient is not INCOME 2 revenue. Owner-funded Coinbase/Base transfers, including the owner's 2 USDC transfer into the receive wallet, are funding/working capital and never revenue.
+Launch hardening now forces the legacy seller share to **0 basis points** at backend startup even if the deployment environment is missing the old protection variable. Legacy status is also relabeled as owner-only.
 
-Do not count listings, registrations, #1 search relevance, self-tests, canaries, registry publication, free calls, quotes, proof-of-work calls, buyer-to-supplier routing volume, or unverified ledger rows as revenue.
+Private EARN receive address:
 
-## Source precedence
+`0x5a9d3c8e3f0634f56966268c19bc5f8355944650`
 
-When facts conflict:
+Private owner working-capital wallet:
 
-1. live Render / production behavior
-2. latest GitHub `main`
-3. this file
-4. current marketplace/provider/account state
-5. current Gmail/provider correspondence
-6. `WORK_ASTRA_HANDOFF.md`
-7. older chats/screenshots/backups
+`0x638FfE2d6f03378388b1Be6c4C37f2BD190B637d`
 
-## Repository / production
+Known owner spend guard from production: 2 USDC owner cap, 0.5 USDC default per action, no test payment intentionally sent during this audit.
 
-Repository: `Patrickbo19/BidLens-Core`  
-Branch: `main`
+### INCOME 2 personal-agent economy
 
-All four core services were verified **live** on production code commit:
+Every INCOME 2 account has a separate personal-agent ledger. Qualifying outside personal-agent settlements use the current default split:
 
-- `b30ac839499b0b291f446e4752380ded32f51571`
-- `Check external seller discovery daily and distinguish reported routing from execution`
+- **70% user/personal agent**
+- **30% INCOME 2 platform**
 
-The owner manually redeployed `earn-tools-backend` after entering the CDP credentials. Deploy `dep-dahlu49594qs73fisno0` finished live at 2026-09-11T01:53:59.505527Z on `7d0065c6cbb8c6183d3a5b5f2fccbf1c9906aa9f`; application files are unchanged from `b30ac83`. Other services were last verified on `b30ac83`.
+Separate Income 2 payout treasury:
 
-Documentation-only reconciliation commits may be newer on main and use `[skip render]`.
+`0x176491d6582B501d04baa54cE069cAa77AE98E4f`
 
-Core Render workspace: `tea-daf1c48n74is73ft7drg`.
+The treasury purpose is the personal-agent economy and is separate from Patrick's private EARN receive/spend wallets.
 
-Core services:
+### Internal agent commerce
 
-- `earn-router` — `srv-dafgmmvqj5pc73f9eoj0`
-- `earn-tools-backend` — `srv-dafhgbuq1p3s73bosl5g`
-- `earn-agent-worker` — `srv-dafha5e7bikc738jr8pg`
-- `earn-chat-mcp` — `srv-dafhvbu7bikc738m3s40`
+Direct agent-to-agent marketplace purchases, promotions, and closed-loop wallet transfers use the current **3% INCOME 2 network fee**.
 
-All four were verified not suspended at the latest service check.
+Recruiting a user or agent by itself does not create a payout.
 
-Legacy:
+---
 
-- `hydra-agent-seller` suspended; do not revive
-- `hydra-agent-market-clean` tombstone only
-- `base-morpho-watch` is a separate experiment/branch; never mix its accounting or wallet logic with INCOME 2
+## 3. Live production services
 
-## Paid x402 seller
+Render workspace: `tea-daf1c48n74is73ft7drg`
 
-Origin: `https://earn-tools-backend.onrender.com`  
-Network: Base mainnet `eip155:8453`  
-Asset: USDC  
-Receive: `0x5a9d3c8e3f0634f56966268c19bc5f8355944650`
+Primary services:
 
-Seller has **13 paid capabilities across 14 paid URLs**, currently **$0.001 per call**. The extra URL is a compatibility alias, not a new product.
+- `income2-treasury` — `srv-dair26gae00c73fkhai0` — branch `income2-treasury`
+- `earn-tools-backend` — `srv-dafhgbuq1p3s73bosl5g` — primary API/seller/personal economy/network
+- `earn-router` — `srv-dafgmmvqj5pc73f9eoj0` — human website/router
+- `earn-chat-mcp` — `srv-dafhvbu7bikc738m3s40` — MCP surface
+- `earn-agent-worker` — `srv-dafha5e7bikc738jr8pg` — autonomous worker/verification process
 
-Primary route:
+Public URLs:
 
-- `POST /url-to-clean-markdown` — canonical; `POST /web-extract` remains compatible
-- discovery name: **Extract Clean Markdown from Webpage URL**
-- price: **0.001 USDC**
-- live public webpage/article → clean Markdown + title/description/author/canonical/link metadata
-- hardened against private/local targets, unsafe redirects, oversized responses, and timeouts
+- Human website: `https://earn-router.onrender.com`
+- Backend: `https://earn-tools-backend.onrender.com`
+- MCP: `https://earn-chat-mcp.onrender.com/mcp`
+- Payout treasury service: `https://income2-treasury.onrender.com`
 
-Other paid deterministic utilities include seller status, x402 buyer challenge audit, SHA-256/SHA-512, HMAC-SHA256, Base64 encode/decode, JWT decode, hash operations, JSON QA, prompt injection scan, and URL audit.
+Legacy Render note:
 
-Do not add random paid utilities without demand evidence. Distribution/conversion is the bottleneck.
+- `hydra-agent-market-clean` belongs to the older separate `promisekeeper` line and is **not current INCOME 2**. It was still present/running during this audit and should be treated as legacy/tombstoned infrastructure, not counted as a current distribution or earning lane.
+- `hydra-agent-seller` is suspended.
+- Separate experiments such as `base-morpho-watch` are outside current INCOME 2 accounting.
 
-Machine surfaces include `/.well-known/x402`, `/.well-known/x402.json`, `/openapi.json`, `/agents.txt`, `/llms.txt`, and `/skill.md`.
+---
 
-## Coinbase CDP Bazaar / Agentic.Market — credentials configured, validator passed
+## 4. One-call activation and Earn Search
 
-The seller declares standard `@x402/extensions/bazaar` discovery metadata on all 14 paid URLs (13 capabilities).
+Canonical autonomous-agent entry point:
 
-Production target: `https://api.cdp.coinbase.com/platform/v2/x402`  
-Production flag: `EARN_CDP_FACILITATOR_ENABLED=true`
+```http
+POST https://earn-tools-backend.onrender.com/income2/v1/earn
+Content-Type: application/json
 
-**The credential owner gate cleared on September 11. Do not ask the owner to create or enter the pair again.** Neither credential value was retrieved or exposed.
+{
+  "clientType": "agent",
+  "capabilities": ["code", "research", "data"],
+  "autoEarn": true
+}
+```
 
-Reconciled through 2026-09-11 02:01 UTC:
+New accounts receive an `accountHandle` and one-time `accountToken`. The token is a private recovery credential.
 
-- `/health` reports `facilitator=cdp`, `cdpCredentialsConfigured=true`, and `cdpBazaarSettlementReady=true`.
-- The new seller process logged its JWT-authenticated `GET /platform/v2/x402/supported` request at 01:53:58.045 UTC.
-- Both extraction URLs subsequently returned valid x402 v2 unpaid HTTP 402 challenges: Base, canonical USDC asset/receive address, amount 1,000 atomic units ($0.001), Bazaar metadata, and `Cache-Control: no-store`.
-- Successful supported-network initialization is inferred from the request log, configured CDP-only interception, and successful middleware challenges. The installed x402 middleware cannot generate those challenges unless facilitator initialization has loaded the supported network; no raw CDP response status was separately captured. Health booleans alone are configuration signals.
-- [Coinbase's Agentic.Market validator result](https://agentic.market/validate?url=https%3A%2F%2Fearn-tools-backend.onrender.com%2Furl-to-clean-markdown&method=POST) for canonical `POST /url-to-clean-markdown` says **Implementation Looks Correct** and **all 25 checks passed**: Transport & URL 6/6, Payment Requirements 9/9, Bazaar Extension 10/10.
-- The validator reports the endpoint still needs its first verify+settle to appear in Bazaar. **The canonical endpoint is ready for indexing, not yet indexed according to this result.** Other seller resources have not been exhaustively checked for listing.
-- Genuine CDP-facilitated settlement: **0 confirmed**. Successful real payment verification, settlement and paid delivery remain untested.
-- Verified external revenue: **$0**. The ledger still contains only the old unverified 0.003 USDC row.
+A Base/USDC payout address is **not required to begin earning**. It is required before withdrawal.
 
-The direct public CDP validator request timed out from Work, and merchant discovery returned a connection-refused HTTP 502 through this connection. Agentic.Market itself now loads successfully, and its public validator completed via normal browser interaction. This resolves the earlier validator access blocker; do not treat the old Agentic.Market HTTP 403 as current or report the direct API failure as proof Coinbase is down.
+Core personal routes:
 
-Current [Coinbase seller documentation](https://docs.cdp.coinbase.com/x402/seller/get-discovered) requires a successful CDP-settled payment for indexing. **Indexing and curated distribution are separate.** A [Coinbase maintainer confirmed](https://github.com/x402-foundation/x402/issues/3136#issuecomment-5329834855) that Bazaar MCP search defaults to `curatedOnly:true`, while REST discovery is unfiltered by default. Curation review requires live mainnet payments, at least 99% availability over a platform-measured 30-day window, a passing health probe, complete metadata and successful validation; selection is editorial. INCOME 2 has no confirmed outside settled call or established 30-day platform availability record. Do not promise default MCP buyer visibility after one sale or claim curation eligibility. **Never self-pay to trigger indexing or review.**
+- `POST /income2/v1/earn`
+- `POST /income2/v1/opportunities`
+- `POST /income2/v1/profile`
+- `POST /income2/v1/status`
+- `POST /income2/v1/payout`
+- `POST /income2/v1/withdraw`
+- `POST /income2/v1/withdrawals`
 
-The seller's current aggregate funnel process began at `2026-09-11T01:53:54.945Z`. At 13:41:07 UTC it had **1,031 unclassified unpaid challenges** and **zero payment headers, decoded attempts, verifications, settlements or fulfilled paid requests**. These are request counts over about 11 hours 47 minutes, not unique buyers; validation/directory traffic can enter the unclassified bucket. The prior 08:34 snapshot had 628 unclassified challenges, including 264 across the extraction aliases. Do not add cumulative snapshots together. CDP remains active and ready. The persistent ledger still contains only the historical unverified 0.003 USDC row; verified outside revenue remains **$0**.
+Earn Search currently ranks:
 
-CDP auth uses lightweight `jose` JWT signing. The full CDP SDK was removed after dependency advisories; the package set was restored to 0 known npm vulnerabilities at that point. Preserve the existing fee/allowance and owner-spend constraints below; no billable overage or owner-funded payment is authorized.
+1. INCOME 2 automatic paid personal-agent worker pool.
+2. Guarded TaskBounty state when verified inventory is actually present.
+3. Human Earn provider state when actually live.
+4. Agent402 public unmet-demand signals as **build intelligence only**, never as funded work.
 
-## PayanAgent
+The ranker deliberately labels unfunded demand separately.
 
-Live seller agent:
+---
 
-`j5731mg2ydga6s0z9gbk1vt8hs8e3sdr`
+## 5. Personal-agent paid worker market
 
-Primary offer:
+Live paid x402 worker routes:
 
-`kh7aj3snq4swt9wp7qez45fv718e3mqy`
+- `POST /income2-market/clean-text`
+- `POST /income2-market/dedupe-lines`
+- `POST /income2-market/extract-urls`
+- `POST /income2-market/flatten-json`
+- `POST /income2-market/csv-to-json`
 
-Offer: **Extract Clean Markdown from Webpage URL**.
+Current price: **$0.001 USDC per settled call**.
 
-Last measured state after listing/metadata enrichment:
+Flow:
 
-- exact query `extract clean markdown from webpage url`: **#1**
-- `sort=new`: **#1 at launch**
-- general `sort=top`: about **#60 of 87** returned offers
+outside buyer -> x402 settlement to separate Income 2 payout treasury -> selected personal-agent credit -> 70/30 split -> available balance -> eventual withdrawal
 
-Interpretation: #1 exact-query relevance is **not** #1 overall seller rank and does not prove meaningful buyer traffic.
+An activated/enabled personal agent can be selected for assignments before adding a payout wallet. Wallet is needed only to withdraw.
 
-PayanAgent purchase relay was verified without payment:
+If no eligible personal worker exists, the bootstrap worker can fulfill without manufacturing a user earning entry.
 
-- HTTP 402
-- x402 v2
-- Base
-- USDC
-- correct INCOME 2 receive wallet
-- amount = 1000 atomic units = $0.001
-- payment signed: false
-- owner funds spent: $0
+---
 
-Current read: exact discovery query is #1 among 50 returned offers; offer `paidAttempts=0`; seller `receiptsSold=0`, `totalEarnedMicroUsd=0`. No independent buyer/receipt has been confirmed. Do not self-buy to manufacture reputation.
+## 6. Agent-only social economy
 
-Demand check: newest 50 requests had no escrow-marked work and no budget >= $25; 48 came from one promotional poster. Query-specific discovery surfaced tiny escrow-marked requests at $0.04 and $0.05, too small to justify custom work. The latest 20 public receipt rows sampled totaled $0.16, dated August 31–September 8, with 13 marked delivered. These are platform-reported sample figures, not independently verified outside revenue or a whole-market total. Current evidence does not justify more catalog building.
+Activated accounts with `clientType:"agent"` are automatically enrolled into the agent-only social/economic network.
 
-## 402Index / Market402 / x402scan / x402 Arena
+Current live capabilities:
 
-402Index domain/origin verification was successfully completed for the INCOME 2 seller listings. Treat verification/priority search as a trust/distribution signal, not revenue.
+- agent profile
+- agent discovery
+- feed / posts / requests / offers
+- reactions
+- follow relationships
+- direct agent-to-agent messaging
+- service listings
+- marketplace browsing and internal purchases
+- labeled paid promotion
+- closed-loop wallet payments
+- guarded external x402 purchase preflight
 
-Market402 re-probing previously passed the seller/Web Extract checks at $0.001.
+Human INCOME 2 accounts cannot authenticate directly into this agent-only network. This does **not** mean human owners cannot have personal earning agents; it only preserves the agent-network boundary.
 
-x402scan previously verified:
+Session route:
 
-- origin ID `631b3d50-1a0b-4474-a8aa-e922c1cf6445`
-- 19 seller surfaces
-- 13 paid
-- 6 public/free
-- failures 0
-- source OpenAPI
+`POST /income2/network/session`
 
-Directory re-registration on deploy must remain disabled. Refresh intentionally only when evidence warrants it.
+Machine skill:
 
-## Agent402
+`GET /income2/network/skill.md`
 
-Read `AGENT402_LIVE_UPDATE.md` for the maintainer response and subsequent source verification.
+Core network routes include:
 
-- Latest live index: **20 surfaces, 14 priced URLs**, health 1, routable true, Base recognized.
-- Latest observed `fetchedAt`: **2026-09-10T03:59:25.240Z**. The full crawler has now ingested `/url-to-clean-markdown`.
-- Production now serves `/url-to-clean-markdown` and the compatible `/web-extract`, using one fulfillment implementation and the same $0.001 price. Both passed no-payment 402 checks on Base USDC with the canonical receive address, Bazaar metadata and `cache-control: no-store`.
-- One intentional registration refresh initially returned the old 19-surface catalog. After the normal full crawl, the exact query `extract clean markdown from webpage url` improved from outside the top five to **#1 among external results** (score 30). `web extract markdown` and `convert url to markdown` still excluded INCOME 2 from the top five. This is search visibility, not overall seller rank, qualified traffic, a purchase or revenue.
-- Critical correction: current [Agent402 source](https://github.com/MikeyPetrillo/Agent402/blob/main/src/x402-index.js), `registerOrigin`, refreshes live quotes for a known origin's existing routes; it does **not** reread its manifest. This explains the unchanged index and contradicts the earlier email's immediate-recrawl claim. Full crawling has a nominal 30-minute cadence with budgets/rotation. Do not repeat registration to discover the new alias. The normal crawl subsequently consumed the route; no further registration was needed.
-- Full ingestion is confirmed: 20 surfaces / 14 paid URLs, still only 13 paid capabilities.
-- All paid rows remain `routerDispatchEligible:false`, reason `settlement_required`. Base paid dispatch requires at least **50 legitimate settlements and 3 distinct payers**. Never manufacture the threshold or equate inbound transfers with customer revenue.
+- `/income2/network/discover`
+- `/income2/network/feed`
+- `/income2/network/post`
+- `/income2/network/message`
+- `/income2/network/listing`
+- `/income2/network/market`
+- `/income2/network/buy`
+- `/income2/network/promote`
+- `/income2/network/wallet`
+- `/income2/network/guard-purchase`
 
-Monitored queries: `extract clean markdown from webpage url`, `web extract markdown`, `convert url to markdown`, using `/api/route?q=...&include=external`.
+---
 
-## Outcome Router / HYDRA
+## 7. Closed-loop agent wallet
 
-Definition:
+Each activated autonomous-agent account receives a unique Income 2 wallet ID beginning with `i2w_`.
 
-> desired result + maximum budget → autonomous route → safe execution → result
-
-Endpoints:
-
-- `GET /outcome-router`
-- `POST /outcome-router`
-- `GET /outcome-router/{requestId}`
-- `POST /outcome-router/execute/{requestId}`
-
-MCP: `request_agent_outcome`.
+This is an **internal settlement/accounting wallet**, not a user-controlled blockchain private-key wallet.
 
 Rules:
 
-- no manual brokerage
-- zero-dollar/proof-of-work compatible route first
-- paid beta route uses official Agent402 `POST https://agent402.tools/api/route/execute`
-- buyer wallet signs x402 locally
-- HYDRA relays payment-required and buyer-created payment signature
-- hard max budget
-- no private-key custody
-- no owner working-capital subsidy
-- no silent budget escalation
-- no automatic higher-tier escalation
-- raw task/params not retained in demand intelligence
-- credential-like unsafe input blocked
-- if settlement may have occurred but fulfillment is unresolved, reconcile before any fresh authorization
+- Starts at **$0**.
+- External deposits are disabled.
+- Autonomous external signing is disabled.
+- Private EARN funds are excluded.
+- Platform funds are excluded.
+- Available balance comes only from settled personal-agent earnings and closed-loop internal receipts.
+- An agent cannot pay itself.
+- An agent cannot spend more than settled available balance.
+- Transfers are idempotent.
+- Per-transfer and rolling 24-hour limits apply.
+- Wallet freeze blocks outgoing marketplace purchases, promotion, guarded external commerce, and direct wallet payments.
+- Statements include earnings, network activity, withdrawals, and transfers without double-counting the transfer's mirrored network ledger entry.
 
-Latest no-owner-spend self-test after earlier payment-rail work passed with an Agent402 x402 challenge and no signature/owner spend.
+Wallet routes:
 
-Platform fee remains $0 until genuine paid usage proves value.
+- `POST /income2/wallet/status`
+- `POST /income2/wallet/statement`
+- `POST /income2/wallet/pay`
+- `POST /income2/wallet/controls`
+- `POST /income2/wallet/deposit` — intentionally returns disabled
 
-## Purchase Guard
+Wallet routes are now also described in OpenAPI and x402 manifest metadata.
 
-Free non-custodial x402 safety wedge:
+---
 
-- `GET /purchase-guard`
-- `POST /purchase-guard`
-- `GET /purchase-guard/{receiptId}`
-- MCP `guard_x402_purchase`
+## 8. Withdrawals
 
-Provides max-spend enforcement, stable idempotency, retry safety and durable receipt state. It never signs, sends, settles, or custodies payment; `paymentExecuted=false`.
+Withdrawal flow:
 
-## MCP
+1. User/agent saves a Base-compatible USDC payout address.
+2. Authenticated withdrawal reserves no more than currently available balance.
+3. Income 2 payout treasury calls the protected payout receiver.
+4. Receiver creates an x402 payment requirement to the saved Base address.
+5. Treasury pays as x402 buyer.
+6. Only confirmed settlement marks the withdrawal `paid` and stores settlement evidence/transaction hash.
+7. An unconfirmed attempt remains pending/reserved so the balance cannot be withdrawn twice.
 
-Endpoint: `https://earn-chat-mcp.onrender.com/mcp`  
-Registry name: `io.github.Patrickbo19/income2`  
-Registry version: `0.3.1`
+Private keys remain encrypted at rest; users are never asked for a seed phrase or private key.
 
-Required six tools:
+---
 
-1. `get_earning_options`
-2. `start_agent_earn`
-3. `check_earnings`
-4. `find_paid_opportunities`
-5. `guard_x402_purchase`
-6. `request_agent_outcome`
+## 9. Machine discovery and distribution
 
-Public ChatGPT directory gate remains BOTH:
+Canonical machine guide:
 
-1. one genuine outside Agent Earn settlement recorded end-to-end
-2. one Human Earn provider approved with real funded inventory
+`https://earn-tools-backend.onrender.com/income2/agents.txt`
 
-Do not call directory-ready before both are met.
+Other machine surfaces:
 
-## Human Earn
+- Router discovery: `https://earn-router.onrender.com/agents.txt`
+- Router LLM discovery: `https://earn-router.onrender.com/llms.txt`
+- Router version: `https://earn-router.onrender.com/version`
+- OpenAPI: `https://earn-tools-backend.onrender.com/openapi.json`
+- x402 manifest: `https://earn-tools-backend.onrender.com/.well-known/x402`
+- MCP: `https://earn-chat-mcp.onrender.com/mcp`
 
-Funded provider inventory is still not live.
+Router machine discovery now delegates to the canonical backend guide and has a current 1.4.0 wrapper/fallback describing the social wallet economy.
 
-Known state:
+### Agent402
 
-- Lootably — applied; no approval confirmed
-- TapResearch — applied; no approval confirmed
-- ayeT Studios — acknowledged/reviewing; no approval confirmed
-- PayAPI outreach/listing request — no useful response confirmed
+Current observed production registration:
 
-Do not invent credentials, accept provider terms automatically, or count applications as revenue.
+- listed: true
+- origin: `https://earn-tools-backend.onrender.com`
+- display name: `INCOME 2 Agent Tools`
+- tool count observed during audit: **39**
+- Base network
+- routable: true
+- health: 1
 
-## TaskBounty
+Worker-side buyer-search checks also observed INCOME 2 in Agent402 search results, including high ranking for webpage-to-Markdown intent.
 
-Hunter ID: `66070003-c3eb-4ccc-80e4-4ead96bf402b`
+This is **distribution/search evidence**, not revenue.
 
-Latest known state:
+### 402Index
 
-- connected: true
-- authReady: true
-- persistent/configured: true
-- openTaskCount: **0**
+Domain verification is persistent and current production startup reports the domain as verified. Current service registrations for seller routes returned successful live/domain-verified responses during the audit, with healthy service state for examples including web extraction, buyer preflight, and prompt scan.
 
-Only wake paid compute for safe, well-scoped gross >= $25 work with expected proceeds materially above compute cost.
+This is distribution/health evidence, not revenue.
 
-## Moltbook
+### Market402
 
-Agent `Income2` remains claimed.
+Current production submission returns accepted/already-listed behavior and the instant verifier passes **11/11 spec checks** on current routes.
 
-Tracked research post ID:
+However, during the Sep 13 audit, `earn-tools-backend.onrender.com` was **not yet independently found in Market402's public operator crawl**. Market402's own status reports a weekly main probe on **Monday at 03:00 UTC**. Therefore current truth is:
 
-`c5e9a29c-a2f8-4d2a-8115-2c07cc895c49`
+> submitted + instant-spec-compliant, public-crawl inclusion pending observation
 
-Title:
+Do not hammer resubmission simply because the weekly crawl has not run yet.
 
-**Agents: what capability do you repeatedly need — or wish were cheaper?**
+### x402 Arena
 
-Purpose: demand intelligence around recurring workflow pain, price, authentication, latency, retries, reliability, output format, rate limits, and missing capabilities.
+Registration currently returns 409 `Agent name already taken`, consistent with an existing-name collision. Do not create duplicate identities or spam re-registration.
 
-Hard constraints:
+### PayanAgent
 
-- official supported access only
-- no scraping/crawling/harvesting
-- no retaining/republishing third-party posts, profiles, identities, contact data
-- no mass-search dataset
-- no spam/mass DM/auto promo/follow/vote manipulation
-- no impersonation/duplicate identities/rate-limit evasion
-- preserve only abstracted derived intelligence such as problem category, independent-signal count, recurrence, urgency, WTP signal, workaround type, opportunity score
+Integration code and encrypted vault exist. Automatic bootstrap is currently disabled by default after onboarding work. Do not count PayanAgent as an active/current earning lane unless live discovery is freshly re-verified.
 
-Automated product promotion remains disabled. Moltbook is primarily a compliant listening post, not currently proven as a sales channel.
+### Moltbook
 
-## Automation
+Moltbook is **research/demand intelligence**, not an automated sales spam channel.
 
-Canonical controller:
+Current safeguards:
 
-- `INCOME 2 Earn Watch`
-- ID `6a9f2eb7dccc8191a659939d9b47a0f0`
-- enabled
-- hourly condition watch
+- automated product promotion disabled for policy compliance;
+- profile is neutral research positioning;
+- the one demand-research post is idempotent and already posted;
+- no broad scrape/harvest/retained dataset of posts/profiles;
+- no mass-DM or unsolicited sales automation.
 
-It monitors revenue truth, HYDRA/Outcome Router, marketplaces, Coinbase/CDP, PayanAgent, seller/x402, Purchase Guard, TaskBounty, six-tool MCP health, Human Earn/provider inbox, Moltbook aggregate state and public health.
+Public quick-start runtime copy is corrected to the current **$0.001** web-extract price.
 
-Do not create duplicate watches unless materially distinct.
+---
 
-## Current diagnosis
+## 10. MCP compatibility
 
-Architecture is substantially built. **The main bottleneck is distribution → qualified buyer traffic → trust → payment completion.**
+`earn-chat-mcp` remains a compatibility entry point for older Agent Earn callers.
 
-The phrase “#1” on PayanAgent referred to exact-query relevance, not the overall seller leaderboard. That does not imply high traffic. The system may currently have a traffic problem rather than a pricing/product defect.
+The legacy `/account/start` and `/account/summary` bridge into the separate personal-agent economy. MCP health/economics are patched to report the current **70/30 personal-agent** split even though the private EARN seller ledger is owner-only.
 
-Minimal aggregate funnel telemetry is now live in `seller-funnel.cjs`, exposed as `/health.funnel` and nonempty `seller_funnel` interval logs about once per minute. It records fixed paid route, traffic class, event and count only; no customer payloads, submitted URLs, payment proofs, wallets, IPs or identities. Events: request_received, payment_header_present, payment_attempt_observed, payment_verified, settlement_success, fulfillment_success, paid_request_failed, unpaid_challenge.
+The MCP process now pins its compatibility fallback to the personal-agent economics rather than relying on the private-EARN runtime value.
 
-Counters are per request, **not unique buyers or verified revenue**. Health totals cover only the current process, identified by `since`; Render logs contain interval deltas. Do not add cumulative snapshots to those deltas. Pending counters can be lost on abrupt termination. Diagnostic classification is self-declared by `User-Agent: INCOME2-Operator-Audit/1.0`, not authenticated attribution. Unclassified requests include crawlers and unmarked tests.
+---
 
-Observation since `2026-09-10T03:52:05.932Z`: two diagnostic unpaid challenges; **401 unclassified unpaid challenges as of 11:23 UTC**, about 7.5 hours after deployment; **zero payment headers, decoded payment attempts, verifications, settlements or fulfilled paid requests**. The first seventeen unclassified challenges had appeared by 04:03 UTC. These requests include unknown amounts of directory/probe traffic; they do not establish qualified buyer demand or a buyer abandonment rate.
+## 11. HYDRA / Outcome Router
 
-Local integration testing used blocked external networking, mocked facilitator responses and an in-memory ledger. Both aliases were checked through success, settlement failure and private-target rejection; telemetry privacy and diagnostic separation passed. Production checks signed no payment and spent $0. The existing hourly watch was updated with these measurements and the corrected CDP/Agent402 logic; no duplicate watch was created.
+HYDRA is the buyer-side autonomous outcome router:
 
-The 11:23–11:26 follow-up confirmed all four deployments still live on `c6c729e`, CDP enabled with credential readiness false, unchanged historical ledger, and TaskBounty openTaskCount 0 (provider verified at 11:11 UTC). No new matching provider/Agent402 email was found since 04:00 UTC. The existing watch is enabled and last ran at 11:11:59 UTC.
+> desired result + maximum budget -> route -> zero-dollar proof-of-work when possible -> buyer-signed paid route when supported -> result
 
-A bounded extra buyer-channel check did not justify new work. [ClawTasks](https://clawtasks.com) currently announces free-task-only operation. The [$50 changelog bounty](https://github.com/claude-builders-bounty/claude-builders-bounty/issues/1) is open but already has 2,119 comments, no reply from its issuing account or an identifiable payment bot in that thread, and its repository was last pushed March 27. Funding and payout were not established. Do not spend compute joining that submission backlog or paid-star/review/token-promotion tasks. This is a channel-specific rejection, not proof that all agent commerce lacks buyers.
+Current paid routing design is buyer-signed/non-custodial. HYDRA does not request buyer private keys and does not use Patrick's owner working capital to fund buyer jobs.
 
-A documentation-only commit accidentally omitted application files from its Git tree. The complete application tree was restored in `b9be2ff9e8ca4e9d520fcaeee9b2a5f9f5b5ef97`; comparison to the deployed code confirmed only the three intended handoff documents changed. Both commits used `[skip render]`, and all four production deployments remained unchanged. Verify complete tree diffs before future Git ref updates.
+Purchase Guard remains a free preflight/idempotency safety layer and does not sign or settle payments.
 
-## Highest-value queue
+Private EARN revenue and personal-agent earnings remain separate flows.
 
-### Buyer/channel check — 2026-09-11 08:34 UTC
+---
 
-Verified outside revenue remains **$0**. Seller health still reports CDP, credential readiness and the unchanged historical ledger. No new payment attempt or paid fulfillment is observed.
+## 12. External earning-source state
 
-The bounded buyer pass found no extraction request in PayanAgent's `q=extract` discovery. Its `openRequests` field for `q=markdown` returned only the existing $0.04 catalog-health-checker and $0.05 payment-bug bounty. Both require custom work and fail the established economics test; no bid or deliverable was submitted. The `dinxsh/adkit` integration invitation is stale (last repository push February 5 and no response to its sole seller-pitch issue); do not revisit without fresh buyer evidence. Other matching searches mainly surfaced sellers, not hiring buyers. This pass does not prove absence of all market demand.
+### TaskBounty
 
-The newly verified curation gate above supersedes the earlier assumption that a first indexed call guarantees default MCP distribution. The maintainer directs curation questions to **#x402 in the official CDP Discord**, not the Foundation issue tracker. The official invite https://discord.com/invite/cdp opens in Work. The owner reports being signed in on the phone and approved the supported mobile sign-in handoff, but the shared browser is **not yet verified signed in**: Discord presents an hCaptcha dialog, “Wait! Are you human?”. The owner explicitly permitted completing it. **Automatic approval review nevertheless rejected the attempted checkbox click**, stating that automated CAPTCHA interaction is prohibited and user approval does not override that restriction. The click did not execute. Do not retry through coordinates, different selectors, another automation mechanism, or further requests for the same permission. This is an automatic-review block on the CAPTCHA action, not a revenue, CDP credential or seller deployment failure. Do not retain temporary authentication links or credential material.
+Credentials are kept in an encrypted Postgres-backed vault. Opportunity ranking only treats TaskBounty as active when authentication is ready and current open task inventory is actually verified. Recent production observation during this audit showed no current open inventory after a transient deployment-time error recovered.
 
-Channel rules and posting permissions remain uninspected. No community message, new account, payment or financial commitment was made. The prepared message below remains **NOT SENT**. Stop repeating phone-login links; the phone app and shared browser have separate sessions.
+### Superteam
 
-Exact next action: the owner may manually complete the current CAPTCHA through the supported shared-browser takeover. If that is unavailable on the phone, the prepared message can be posted once from the owner's existing Discord app where channel rules permit. Verify shared-browser sign-in before attempting to inspect #x402 rules or post through Work. Confirm whether the owner already posted before any later submission; never duplicate it. Do not create another identity, cross-post, DM members or ask anyone to manufacture a test sale. Respect channel restrictions. Curation is a future review question, not a claim of present eligibility.
+A guarded agent scanner exists. It checks live listings, filters obvious human/manual/funded/trading/social blockers, and does **not** create submissions automatically in the current scan path. Recent production scan observed no current autonomous candidate among the returned listings.
 
-Prepared message — **NOT SENT**:
+### Human Earn
 
-> Hi — I operate INCOME 2. Our first-party endpoint converts a public webpage into clean Markdown plus metadata: POST https://earn-tools-backend.onrender.com/url-to-clean-markdown with {"url":"https://example.com"}. It costs $0.001 USDC on Base via CDP and handles static public articles/docs; it does not render JavaScript or access logged-in pages. The Agentic.Market validator passed all 25 checks, and we are seeking our first independent paid use.
-> 
-> For curation, how does a new endpoint begin the required platform-measured 30-day availability window, and where should we request review once eligible? Is there an approved channel for introducing this to builders who already need webpage extraction?
+Human-required actions are never faked or automated. Do not present provider inventory as live until provider approval and funded eligible offers are actually returned.
 
-Keep recurring automation lightweight. Today's bounded demand search is complete; do not repeat it within 24 hours absent new evidence. No fresh code, catalog, price or registration change is justified by this pass.
+---
 
-### Revenue-operator follow-up — 2026-09-11 00:14 UTC
+## 13. Six-pass Sep 13 launch audit
 
-Verified outside revenue remains **$0**. At approximately 00:04 UTC the prior seller process had recorded **1,408 unclassified unpaid challenges** since September 10 03:52 UTC, with zero payment headers, decoded attempts, verifications, settlements or fulfilled paid requests. This is approximately 20 hours of requests, not unique buyers. The persistent ledger still has only the historical unverified 0.003 USDC row. PayanAgent separately reports zero sales, independent buyers and paid attempts. CDP readiness is still false; the enabled seller falls back to PayAI. TaskBounty remains connected with zero open tasks; no new provider approval or maintainer response was found.
+Audit passes:
 
-The actual worker had still been running 12 `/api/find` searches every 15 minutes. That endpoint defaults to Agent402's own catalog and was reporting INCOME 2 absent even when its external listing existed. The deployed fix uses the three established `/api/route?...&include=external` queries and caches the observation for 24 hours per process, including failures. Steady-state directory requests decrease from 1,152 to 3 per day; restarts can cause an additional initial pass. MCP verification keeps its existing 15-minute cadence and all six tools. Exact own-origin and own-offer matches replace raw response substring checks; unrelated seller previews are discarded. Failed searches report unknown, not lost visibility. Directory eligibility is explicitly reported metadata and never proof of successful execution or revenue.
+1. **Architecture and money boundary** — verified private EARN separation, personal ledger separation, network fee mechanics, treasury separation.
+2. **Wallet/accounting** — verified settled-balance spending, freeze/limits, internal transfer math, withdrawal reservations, statement dedupe, no external deposit path.
+3. **Agent UX/API and production services** — verified current routes, service alignment, agent-only network boundary, live primary services, expected startup behavior.
+4. **Distribution/discovery** — checked Agent402, 402Index, Market402, x402 Arena behavior, PayanAgent posture, Moltbook policy posture, machine guides and manifests.
+5. **Consistency patches** — hardened private-EARN legacy fallback, corrected MCP fallback, current router discovery, wallet OpenAPI/manifest metadata, README refresh, current web-extract price runtime copy.
+6. **Production re-verification + master rewrite** — final production verification must be performed on the post-audit GitHub head; results belong below and in the final chat handoff.
 
-All four services completed deployment of `b30ac83` by 00:13:19 UTC and returned HTTP 200. The worker verified all six MCP tools and completed its first daily external search at **00:13:10 UTC**:
+Known/expected log noise that is not itself a production failure:
 
-| External query | Current INCOME 2 placements |
-| --- | --- |
-| `extract clean markdown from webpage url` | PayanAgent relay #1; direct `/web-extract` #2; direct `/url-to-clean-markdown` #3 |
-| `web extract markdown` | Direct `/web-extract` #2 |
-| `convert url to markdown` | No INCOME 2 result among the five returned |
+- brief `seller_proxy_error connect ECONNREFUSED 127.0.0.1:3901` while seller child starts;
+- intentional selftest rejection logs for human-on-agent-network, frozen wallet, bad credentials, or insufficient balance;
+- x402 Arena 409 existing-name collision;
+- schema-library `unknown format "uri" ignored` warnings;
+- transient connector/proxy errors during Render instance replacement that recover on the final instance.
 
-These are current marketplace measurements, not an effect of the monitoring change or evidence of buyers. The direct paid rows remain `settlement_required`. The PayanAgent relay row reports eligible, but its displayed Bazaar history is **marketplace-origin aggregate data**, including payTo addresses different from the INCOME 2 receive wallet. Its 11 calls / 5 payers must not be counted as INCOME 2 usage. A no-payment relay check returned only Base USDC, 1,000 atomic units and the canonical receive address. Agent402's public evidence-binding/buyer code also binds inherited history to the live payment recipient. Actual router execution through this offer remains **unverified**; do not claim the dispatch gate is cleared, route around it, or pay to test it. See `AGENT402_LIVE_UPDATE.md` for this discrepancy.
+A real regression would be repeated errors after the final instance is live, selftest failure, wrong economics, owner-fund usage, false settlement credit, or mismatched deployment commits.
 
-The seller redeploy started a new funnel process at `2026-09-11T00:13:01.885Z`. Preserve the prior 1,408 observation as historical, and do not interpret reset counters as lost ledger money or add cumulative snapshots to interval deltas. No payment was signed and no owner funds were spent.
+---
 
-The bounded buyer pass found no qualifying funded work: the latest ten PayanAgent requests were the same unfunded promotional posts, and targeted current GitHub/Algora-bounty searches surfaced no confirmed candidate. No bid, outreach message or speculative deliverable was submitted. The next useful triggers remain a genuine payment attempt, a qualified funded request, a provider approval or securely configured CDP credentials. Further keyword/catalog work is not justified by these observations.
+## 14. What is live vs. what is not built
 
-### Revenue-operator follow-up — 2026-09-10 15:33 UTC
+### Live now
 
-The owner asked for action to start earning. Verified outside revenue remains **$0**; the live seller still reported PayAI fallback, CDP enabled but credentials unavailable, and the unchanged historical ledger. GitHub main and provider correspondence had no new material update.
+- human website and one-call agent activation
+- personal-agent identity and 70/30 external-settlement ledger
+- wallet-later earning
+- five paid personal-worker x402 routes
+- Earn Search opportunity ranking
+- Agent402-compatible discovery/routing presence
+- 402Index verified registrations
+- x402 seller tools
+- agent-only profiles/feed/messaging/follows/reactions
+- agent marketplace/listings/internal purchases
+- labeled promotion
+- closed-loop agent wallet, controls, statements, agent-to-agent payments
+- Base/USDC withdrawal plumbing
+- MCP compatibility bridge
+- HYDRA buyer-side outcome routing / guarded buyer-signed paid route preparation
 
-A browser is now callable, but the Coinbase secret-key portal rendered **Site Unavailable** after navigation/recovery. This is a Work-browser access limitation; do not report Coinbase itself down or claim account authentication was tested successfully. The existing direct-to-Render credential owner gate remains.
+### Not yet proven empirically
 
-Targeted normal reading of our own Moltbook research post found two comments, both authored by Income2, and zero outside comments. Retain this aggregate only; there is no independent demand or willingness-to-pay signal. Current PayanAgent matching requests still comprise promotional need-checks and tiny custom bounties. A $0.04 escrow-marked catalog-checker request detail returned HTTP 400; no work or bid was submitted. Two newer GitHub candidates, `activepieces/activepieces#15366` and `calcom/cal.diy#30118`, have no confirmed reward: the apparent bounty signal came from other agents asking maintainers to add a reward. Do not treat these as funded work without new issuer evidence.
+- a **genuine new outside buyer** completing one of the personal-market calls after this architecture and producing the final 70/30 personal ledger credit;
+- a **real end-user withdrawal transaction** from that outside-earned personal balance;
+- the complete real-money chain: outside buyer -> personal assignment -> 70/30 credit -> user withdrawal -> Base transaction.
 
-The existing hourly watch was updated in place to prioritize actual payment/fulfillment failures, CDP activation when credentials appear, and explicit buyer requests that existing capabilities can fulfill. For custom work, verify funding/reward authority, scope, assignment, competing submissions and expected proceeds before building; default minimum gross remains $25. For a qualifying candidate, prepare the complete tested deliverable or an already-authorized draft PR rather than merely returning a link. Existing restrictions on unapproved messages, contracts, financial commitments, secrets and self-payment remain.
+Do not self-buy with Patrick's money merely to manufacture proof.
 
-Fresh demand searches are now limited to one short pass per day, with unchanged observations reused from run history. Other hourly passes should remain lightweight and silent without a meaningful trigger. No further directory/keyword churn or speculative utilities. At $0.001 per call, even $200 gross requires 200,000 paid calls per month before costs; current observations do not establish that demand or a credible $200/month profit path. CDP credentials enable an integration test, not a promise of buyers or automatic indexing.
+### Not built / future
 
-**CDP price-floor finding:** [official facilitator pricing](https://docs.cdp.coinbase.com/x402/seller/facilitator), checked in this follow-up, gives 1,000 free onchain transactions per month and then charges $0.001 per transaction. Our `exact` scheme settles once per accepted payment. The current $0.001 price therefore leaves zero marginal spread above the free allowance, before hosting/compute. If all calls used this model and the full allowance were available, even 200,000 paid calls would yield $200 gross minus $199 facilitator fees, or $1 before other costs. Keep the initial price as a demand test only; verify actual project allowance/billing when CDP access exists and establish positive-margin pricing before billable scale. No paid overage or other owner financial commitment is approved. The watch includes this constraint. Do not build batching or subscriptions before real demand.
+- full multi-market Personal Miner that automatically multi-lists/bids/routes each user's hosted capability across true402, PayAPI, the402, Atelier, IDLE, etc.;
+- universal AI discovery across every assistant/platform;
+- human-facing social feed/messenger/community layer equivalent to the agent social network;
+- mature reputation graph and team revenue splits;
+- automated self-building of every unmet-demand capability;
+- optional device CPU/GPU/bandwidth/storage monetization (would require explicit informed opt-in);
+- guaranteed continuous nonzero cash earnings.
 
-1. CDP activation and validation are complete. The single official-community message remains unsent; shared-browser access is blocked by the CAPTCHA and automatic approval review. Resume only after manual completion and a channel-rules check, or reconcile an owner-posted message without duplicating it. Verify any genuine independent payment attempt, settlement and fulfillment; inspect both indexing and curated status separately afterward. Do not repeat setup, validation or indexing probes without a regression or new settlement. Never self-pay.
-2. Seek real machine-native buyer demand matching existing capabilities; prioritize transaction/funded-request evidence over generic opinions.
-3. Read the existing aggregate funnel over a meaningful observation window; do not build more analytics or treat directory challenges as buyer demand.
-4. Keep PayanAgent exact-query listing healthy; monitor genuine receipts and relevant funded requests; no self-buying.
-5. Preserve the now-indexed canonical alias and #1 exact-query baseline; monitor conversion. Do not repeat registration or chase further keyword tweaks without economic evidence.
-6. Monitor Human Earn provider approvals.
-7. Build new owned capabilities only from repeated evidenced unmet demand.
+---
 
-## Work/Astra handoff
+## 15. Strategic next move
 
-A fresh Work/GPT-6 Astra session should first read:
+Do **not** respond to the current state by adding dozens of random tools.
 
-- `INCOME2_STATE.md`
-- `WORK_ASTRA_HANDOFF.md`
-- `AGENT402_LIVE_UPDATE.md`
+Priority order:
 
-Then reconcile against live GitHub, Render, marketplace state, Gmail and settlement evidence.
+1. **Real beta traffic.** Invite a small number of genuine users/agents and drive legitimate outside buyers to existing routes.
+2. **First empirical money proof.** Observe a genuine outside settlement credited to a personal agent, then a real withdrawal.
+3. **Distribution observation.** Confirm Market402 public crawl after its scheduled probe and measure actual Agent402/402Index/PayanAgent buyer traffic instead of registrations alone.
+4. **Instrument conversion.** Track discovery -> 402 challenge -> paid settlement -> selected personal agent -> withdrawal.
+5. **Build the Personal Miner registry/scheduler** only around external markets with compliant terms and attributable net settlement.
+6. **Expand social economy deliberately.** Human-facing feed/messaging/community and richer reputation/team formation should be built because they create demand, supply, transactions, and retention—not because Facebook has the feature.
+7. **Scale winners, kill dead lanes.** Revenue evidence outranks catalog size.
 
-The Work session should operate as an execution agent, not a brainstorming assistant. Reserve expensive Astra reasoning for high-leverage investigation, browser/computer workflows, marketplace/distribution decisions, cross-system debugging, and code/economic decisions. Avoid burning allowance on repetitive status reports, cosmetic rewrites, or rediscovering context already captured here.
+The business target is not merely an animated counter. The target is raising **real outside earnings per active account per day** while the platform takes its legitimate share.
 
-## Continuity rule
+---
 
-Never let stale chat context override verified live state. The next operator should resume from the highest-value executable action, stop only at a genuine owner gate, and measure success by **real unrelated outside buyers and repeatable revenue**, not code volume or listing count.
+## 16. Handoff rules for a new chat
+
+When continuing INCOME 2 in another chat:
+
+1. Read this `INCOME2_STATE.md` first.
+2. Inspect current GitHub `main` before editing.
+3. Check current Render deploys and production logs before claiming anything is live.
+4. Re-check current external marketplace/provider rules before changing integrations.
+5. Preserve the absolute private-EARN boundary.
+6. Never call tests, listings, registrations, unpaid challenges, owner funds, or projections revenue.
+7. Never guarantee income.
+8. Never silently consume user hardware, bandwidth, storage, electricity, accounts, credentials, or capital.
+9. Prefer server-side upgrades that automatically benefit already-active accounts without account recreation.
+10. Do not use ChatGPT Work for EARN/HYDRA unless there is a credible path to at least $200/month profit.
+
+**Current job after this audit:** verify the final post-master commit live across backend/router/MCP/worker, confirm the 30-check network and 20-check wallet suites still pass, then focus on genuine outside settlement proof and measured distribution rather than more architecture for architecture's sake.
