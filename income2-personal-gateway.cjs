@@ -1,6 +1,8 @@
 const http = require('http');
 const ledger = require('./ledger.cjs');
 const personal = require('./income2-personal-ledger.cjs');
+const payoutVault = require('./income2-payout-vault.cjs');
+const withdrawalStore = require('./income2-withdrawal-store.cjs');
 
 let installed = false;
 const createWindows = new Map();
@@ -28,11 +30,12 @@ async function handle(req,res,url){
   await personal.init();
 
   if(req.method==='GET'&&url.pathname==='/income2/health'){
-    return send(res,200,{ok:true,service:'income2-personal-agents',economy:'separate_from_private_earn',clients:['human','agent'],payout:{network:'Base',asset:'USDC',mode:'wallet_profile_and_withdrawal_request'},automatedPayoutExecution:false});
+    const treasury=await payoutVault.status().catch(()=>({ready:false,address:null,onchainUsdcBalance:null}));
+    return send(res,200,{ok:true,service:'income2-personal-agents',economy:'separate_from_private_earn',clients:['human','agent'],payout:{network:'Base',asset:'USDC',mode:'isolated_x402_payout_treasury',automatedExecution:Boolean(treasury.ready),treasuryAddress:treasury.address||null,treasuryBalanceUsdc:treasury.onchainUsdcBalance}});
   }
   if(req.method==='GET'&&url.pathname==='/income2/agents.txt'){
     res.writeHead(200,{'content-type':'text/plain; charset=utf-8','cache-control':'public, max-age=300'});
-    return res.end('INCOME 2 Personal Agent API\nPOST /income2/v1/activate - create/resume a human or autonomous-agent earning identity\nPOST /income2/v1/payout - set a Base USDC payout wallet\nPOST /income2/v1/status - read personal-agent earnings and withdrawal state\nPOST /income2/v1/withdraw - request withdrawal of personal-agent earnings\nPOST /income2/v1/withdrawals - list withdrawal requests\nMoney boundary: private EARN settlements are excluded.\n');
+    return res.end('INCOME 2 Personal Agent API\nPOST /income2/v1/activate - create/resume a human or autonomous-agent earning identity\nPOST /income2/v1/payout - set a Base USDC payout wallet\nPOST /income2/v1/status - read personal-agent earnings and withdrawal state\nPOST /income2/v1/withdraw - withdraw settled personal-agent earnings to the saved wallet\nPOST /income2/v1/withdrawals - list withdrawals\nPaid worker market: /income2-market/{clean-text|dedupe-lines|extract-urls|flatten-json|csv-to-json}\nMoney boundary: private EARN settlements are excluded. Personal-market receipts use a separate encrypted payout treasury.\n');
   }
   if(req.method!=='POST')return send(res,405,{ok:false,message:'POST required'});
   const body=await readJson(req);
@@ -44,7 +47,7 @@ async function handle(req,res,url){
   }
   if(url.pathname==='/income2/v1/payout'){
     const account=await authenticate(body);const state=await personal.setPayout(account,body.payoutAddress);
-    return send(res,200,{ok:true,personalAgent:state,message:'Payout wallet saved. Automated transfer execution remains gated until the safe payout rail is activated.'});
+    return send(res,200,{ok:true,personalAgent:state,message:'Base USDC payout wallet saved. Future authenticated withdrawals use the isolated Income2 payout treasury.'});
   }
   if(url.pathname==='/income2/v1/status'){
     const account=await authenticate(body);let state=await personal.status(account);if(!state)state=await personal.activate(account,{clientType:body.clientType});
@@ -52,8 +55,17 @@ async function handle(req,res,url){
     return send(res,200,{ok:true,personalAgent:state,withdrawals});
   }
   if(url.pathname==='/income2/v1/withdraw'){
-    const account=await authenticate(body);const withdrawal=await personal.requestWithdrawal(account,body.amountUsd);
-    return send(res,201,{ok:true,withdrawal,message:'Withdrawal request recorded. No transfer is executed by this request.'});
+    const account=await authenticate(body);
+    const withdrawal=await personal.requestWithdrawal(account,body.amountUsd);
+    try{
+      const result=await payoutVault.execute(withdrawal);
+      const paid=await withdrawalStore.markPaid(withdrawal.withdrawalId,result.txHash||null);
+      console.log(JSON.stringify({type:'income2_withdrawal_paid',withdrawalId:withdrawal.withdrawalId,amountUsd:withdrawal.amountUsd,txHash:result.txHash||null,at:new Date().toISOString()}));
+      return send(res,201,{ok:true,withdrawal:paid,payout:{paid:true,txHash:result.txHash||null,network:'Base',asset:'USDC'}});
+    }catch(error){
+      console.warn(JSON.stringify({type:'income2_withdrawal_pending',withdrawalId:withdrawal.withdrawalId,amountUsd:withdrawal.amountUsd,reason:String(error?.message||error).slice(0,300),at:new Date().toISOString()}));
+      return send(res,202,{ok:true,withdrawal,payout:{paid:false,status:'pending',reason:String(error?.message||error).slice(0,220)},message:'Withdrawal is reserved but payment was not confirmed. The reserved balance cannot be withdrawn again until reconciled.'});
+    }
   }
   if(url.pathname==='/income2/v1/withdrawals'){
     const account=await authenticate(body);return send(res,200,{ok:true,withdrawals:await personal.listWithdrawals(account)});
@@ -70,6 +82,6 @@ function install(){
     const wrapped=async(req,res)=>{try{const url=new URL(req.url||'/','http://localhost');const handled=await handle(req,res,url);if(handled!==false)return;}catch(e){console.error(JSON.stringify({type:'income2_personal_gateway_error',error:String(e?.message||e).slice(0,400),at:new Date().toISOString()}));if(!res.headersSent)return send(res,Number(e.statusCode||500),{ok:false,message:String(e.message||'personal agent error').slice(0,220)});return res.end();}return handler(req,res);};
     return opts===undefined?original.call(http,wrapped):original.call(http,opts,wrapped);
   };
-  console.log(JSON.stringify({type:'income2_personal_gateway_installed',moneyBoundary:'private_earn_excluded',clients:['human','agent'],at:new Date().toISOString()}));
+  Promise.all([personal.init(),payoutVault.init()]).then(([,treasury])=>console.log(JSON.stringify({type:'income2_personal_gateway_installed',moneyBoundary:'private_earn_excluded',clients:['human','agent'],payoutTreasury:treasury.address,at:new Date().toISOString()}))).catch(error=>console.error(JSON.stringify({type:'income2_personal_gateway_init_error',error:String(error?.message||error).slice(0,300),at:new Date().toISOString()})));
 }
 module.exports={install,handle};
