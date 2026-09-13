@@ -390,40 +390,72 @@ const BLS_SERIES = {
   totalNonfarmPayrollsThousands: 'CES0000000001',
   averageHourlyEarningsPrivate: 'CES0500000003',
 };
-async function getBlsSeriesBatch() {
-  const ids = Object.values(BLS_SERIES);
-  let lastError = null;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const json = await fetchJson('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ seriesid: ids }),
-      }, 20000, 2_000_000);
-      if (String(json?.status || '').toUpperCase() !== 'REQUEST_SUCCEEDED') {
-        throw new Error(`BLS request failed: ${String(json?.message?.[0] || json?.status || 'unknown error').slice(0, 180)}`);
-      }
-      const results = Array.isArray(json?.Results) ? json.Results[0] : json?.Results;
-      const rowsById = new Map((results?.series || []).map(item => [item.seriesID, item.data || []]));
-      const series = {};
-      for (const [name, id] of Object.entries(BLS_SERIES)) {
-        const rows = rowsById.get(id) || [];
-        if (!rows.length) throw new Error(`BLS series ${id} returned no data`);
-        series[name] = rows.slice(0, 14).map(row => ({
-          year: row.year,
-          period: row.period,
-          periodName: row.periodName,
-          value: Number(row.value),
-          latest: row.latest === 'true',
-        }));
-      }
-      return series;
-    } catch (error) {
-      lastError = error;
-      if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 750));
+function mapBlsRows(series) {
+  return series.data.slice(0, 14).map(row => ({
+    year: row.year,
+    period: row.period,
+    periodName: row.periodName,
+    value: Number(row.value),
+    latest: row.latest === 'true',
+  }));
+}
+
+function parseBlsSeriesPage(html, seriesId) {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const rows = [];
+  for (const tableRow of String(html || '').match(/<tr\b[\s\S]*?<\/tr>/gi) || []) {
+    const cells = (tableRow.match(/<(?:th|td)\b[^>]*>[\s\S]*?<\/(?:th|td)>/gi) || []).map(cell =>
+      cell.replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/gi, ' ').replace(/&amp;/gi, '&').replace(/\s+/g, ' ').trim()
+    );
+    if (!/^\d{4}$/.test(cells[0] || '')) continue;
+    for (let month = 1; month <= 12; month += 1) {
+      const match = String(cells[month] || '').match(/^-?\d+(?:\.\d+)?/);
+      if (!match) continue;
+      rows.push({
+        year: cells[0],
+        period: `M${String(month).padStart(2, '0')}`,
+        periodName: months[month - 1],
+        value: Number(match[0]),
+        latest: false,
+      });
     }
   }
-  throw lastError;
+  rows.sort((a, b) => (b.year + b.period).localeCompare(a.year + a.period));
+  if (!rows.length) throw new Error(`BLS series page ${seriesId} returned no data`);
+  rows[0].latest = true;
+  return rows.slice(0, 14);
+}
+
+async function getBlsSeriesBatch() {
+  const ids = Object.values(BLS_SERIES);
+  try {
+    const json = await fetchJson('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ seriesid: ids }),
+    }, 20000, 2_000_000);
+    if (String(json?.status || '').toUpperCase() !== 'REQUEST_SUCCEEDED') {
+      throw new Error(`BLS request failed: ${String(json?.message?.[0] || json?.status || 'unknown error').slice(0, 180)}`);
+    }
+    const results = Array.isArray(json?.Results) ? json.Results[0] : json?.Results;
+    const rowsById = new Map((results?.series || []).map(item => [item.seriesID, item]));
+    const series = {};
+    for (const [name, id] of Object.entries(BLS_SERIES)) {
+      const item = rowsById.get(id);
+      if (!item?.data?.length) throw new Error(`BLS series ${id} returned no data`);
+      series[name] = mapBlsRows(item);
+    }
+    return series;
+  } catch (error) {
+    console.warn(JSON.stringify({ type:'bls_api_fallback', error:String(error?.message || error).slice(0, 240), at:new Date().toISOString() }));
+    const entries = await Promise.all(Object.entries(BLS_SERIES).map(async ([name, id]) => {
+      const html = await fetchText(`https://data.bls.gov/timeseries/${id}`, {
+        headers: { accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.1' },
+      }, 20000, 2_000_000);
+      return [name, parseBlsSeriesPage(html, id)];
+    }));
+    return Object.fromEntries(entries);
+  }
 }
 
 async function getLaborMarket() {
