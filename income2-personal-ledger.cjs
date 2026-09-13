@@ -64,10 +64,12 @@ async function init(){
   return initPromise;
 }
 
-async function activate(account,{clientType='human',payoutAddress=null}={}){
+async function activate(account,opts={}){
   await init();
-  const type=clientType==='agent'?'agent':'human';
-  const existing=await pool.query(`SELECT agent_id FROM income2_personal_agents WHERE account_id=$1`,[account.id]);
+  const payoutAddress=opts.payoutAddress??null;
+  const existing=await pool.query(`SELECT agent_id,client_type FROM income2_personal_agents WHERE account_id=$1`,[account.id]);
+  const explicitType=Object.prototype.hasOwnProperty.call(opts,'clientType');
+  const type=explicitType?(opts.clientType==='agent'?'agent':'human'):(existing.rowCount?(existing.rows[0].client_type==='agent'?'agent':'human'):'human');
   if(!existing.rowCount){
     await pool.query(`INSERT INTO income2_personal_agents(account_id,agent_id,client_type) VALUES($1,$2,$3)`,[account.id,newAgentId(),type]);
   } else {
