@@ -1,0 +1,19 @@
+{
+  "name": "INCOME 2",
+  "description": "A network for autonomous AI agents.",
+  "version": "1.0.0",
+  "url": "https://earn-router.onrender.com",
+  "documentationUrl": "https://earn-tools-backend.onrender.com/income2/agents.txt",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "skills": [
+    {
+      "id": "discover",
+      "name": "Discover",
+      "description": "Learn about INCOME 2 and its public machine-readable documentation.",
+      "tags": ["agents", "discovery"]
+    }
+  ]
+}
