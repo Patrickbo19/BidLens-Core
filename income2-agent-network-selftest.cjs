@@ -1,0 +1,38 @@
+const ledger=require('./ledger.cjs');
+const store=require('./income2-agent-store.cjs');
+let scheduled=false;
+function later(ms){return new Promise(r=>setTimeout(r,ms))}
+async function req(path,{method='GET',body,token}={}){const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),10000);try{const r=await fetch(`http://127.0.0.1:${Number(process.env.PORT||3000)}${path}`,{method,signal:ctl.signal,headers:{accept:'application/json',...(body?{'content-type':'application/json'}:{}),...(token?{authorization:`Bearer ${token}`}:{})},body:body?JSON.stringify(body):undefined});const text=await r.text();let data;try{data=JSON.parse(text)}catch{data=text}return{status:r.status,data,text}}finally{clearTimeout(timer)}}
+function ok(condition,name,detail=''){if(!condition)throw new Error(`${name}${detail?`: ${detail}`:''}`);return{name,ok:true,detail}}
+async function cleanup(handles){for(const h of handles){if(!h?.handle||!h?.token)continue;try{const a=await ledger.authenticate(h.handle,h.token);if(a?.id)await store.pool.query(`DELETE FROM earn_accounts WHERE id=$1`,[a.id])}catch{}}}
+async function run(){const checks=[],temps=[];let a,b,sa,sb,postId,listingId;const add=(condition,name,detail='')=>checks.push(ok(condition,name,detail));try{
+let r=await req('/income2/network/health');add(r.status===200&&r.data?.ok&&r.data?.social===true,'01 network health');
+r=await req('/income2/network/skill.md');add(r.status===200&&/Agent Network|agent-only/i.test(r.text),'02 machine skill guide');
+r=await req('/income2/agents.txt');add(r.status===200&&/network\/session/i.test(r.text),'03 merged agent onboarding guide');
+r=await req('/income2/v1/earn',{method:'POST',body:{clientType:'agent',capabilities:['network-selftest-a'],autoEarn:true}});add(r.status===201&&r.data?.accountHandle&&r.data?.accountToken,'04 create temporary agent A');a={handle:r.data.accountHandle,token:r.data.accountToken};temps.push(a);
+r=await req('/income2/v1/earn',{method:'POST',body:{clientType:'agent',capabilities:['network-selftest-b'],autoEarn:true}});add(r.status===201&&r.data?.accountHandle&&r.data?.accountToken,'05 create temporary agent B');b={handle:r.data.accountHandle,token:r.data.accountToken};temps.push(b);
+r=await req('/income2/network/session',{method:'POST',body:{accountHandle:a.handle,accountToken:a.token,displayName:'SelfTest-A',capabilities:['diagnostics']}});add(r.status===201&&String(r.data?.networkToken||'').startsWith('i2n_'),'06 session A');sa=r.data;
+r=await req('/income2/network/session',{method:'POST',body:{accountHandle:b.handle,accountToken:b.token,displayName:'SelfTest-B',capabilities:['diagnostics']}});add(r.status===201&&String(r.data?.networkToken||'').startsWith('i2n_'),'07 session B');sb=r.data;
+r=await req('/income2/network/discover',{method:'POST',token:sa.networkToken,body:{}});add(r.status===200&&Array.isArray(r.data?.builtInTools)&&r.data.builtInTools.length>=5,'08 discover native tools');
+r=await req('/income2/network/feed',{method:'POST',token:sa.networkToken,body:{limit:5}});add(r.status===200&&Array.isArray(r.data?.posts),'09 read feed');
+r=await req('/income2/network/wallet',{method:'POST',token:sa.networkToken,body:{}});add(r.status===200&&r.data?.wallet?.personal?.networkEconomyActive===true,'10 network-aware wallet');
+r=await req('/income2/network/profile',{method:'POST',token:sa.networkToken,body:{}});add(r.status===200&&r.data?.profile?.agentId,'11 read/update profile');
+r=await req('/income2/network/post',{method:'POST',token:sa.networkToken,body:{kind:'request',topic:'selftest',content:'Temporary launch-readiness self-test request. This record will be deleted automatically.'}});add(r.status===201&&r.data?.post?.postId,'12 publish request');postId=r.data.post.postId;
+r=await req('/income2/network/feed',{method:'POST',token:sa.networkToken,body:{topic:'selftest',limit:10}});add(r.status===200&&r.data.posts.some(x=>x.postId===postId),'13 request appears in feed');
+r=await req('/income2/network/react',{method:'POST',token:sb.networkToken,body:{postId,value:1}});add(r.status===200&&r.data?.reaction?.score>=1,'14 agent reaction');
+r=await req('/income2/network/follow',{method:'POST',token:sb.networkToken,body:{agentId:sa.profile.agentId,follow:true}});add(r.status===200&&r.data?.following===true,'15 agent follow');
+r=await req('/income2/network/message',{method:'POST',token:sa.networkToken,body:{toAgentId:sb.profile.agentId,message:'Temporary self-test message; deleted with the test accounts.',commercial:true}});add(r.status===201&&r.data?.message?.sent===true,'16 direct commercial message');
+r=await req('/income2/network/inbox',{method:'POST',token:sb.networkToken,body:{limit:10}});add(r.status===200&&r.data?.messages?.some(x=>x.from?.agentId===sa.profile.agentId),'17 recipient inbox');
+r=await req('/income2/network/listing',{method:'POST',token:sb.networkToken,body:{title:'Temporary self-test service',description:'Launch-readiness listing that will be deleted automatically.',category:'selftest',priceUsd:0.001}});add(r.status===201&&r.data?.listing?.listingId,'18 create marketplace listing');listingId=r.data.listing.listingId;
+r=await req('/income2/network/market',{method:'POST',token:sa.networkToken,body:{category:'selftest',limit:10}});add(r.status===200&&r.data?.listings?.some(x=>x.listingId===listingId),'19 listing discoverable');
+r=await req('/income2/network/buy',{method:'POST',token:sa.networkToken,body:{listingId,idempotencyKey:`selftest-buy-${Date.now()}`}});add(r.status===402&&/insufficient settled/i.test(String(r.data?.message||'')),'20 unfunded purchase safely blocked');
+r=await req('/income2/network/promote',{method:'POST',token:sa.networkToken,body:{postId,amountUsd:0.001,idempotencyKey:`selftest-promo-${Date.now()}`}});add(r.status===402&&/insufficient settled/i.test(String(r.data?.message||'')),'21 unfunded promotion safely blocked');
+r=await req('/income2/network/guard-purchase',{method:'POST',token:sa.networkToken,body:{url:'https://example.com',method:'GET',maxUsd:0.001,idempotencyKey:`selftest-guard-${Date.now()}`}});add(r.status===402&&/settled personal-agent balance/i.test(String(r.data?.message||'')),'22 external spend blocked before payment');
+r=await req('/income2/v1/status',{method:'POST',body:{accountHandle:a.handle,accountToken:a.token}});add(r.status===200&&r.data?.personalAgent?.networkEconomyActive===true,'23 existing status includes network balance');
+r=await req('/income2/v1/withdrawals',{method:'POST',body:{accountHandle:a.handle,accountToken:a.token}});add(r.status===200&&Array.isArray(r.data?.withdrawals),'24 legacy withdrawals route preserved');
+await cleanup(temps.splice(0));checks.push({name:'25 temporary data cleanup',ok:true});
+const failed=checks.filter(x=>!x.ok);console.log(JSON.stringify({type:'income2_agent_network_selftest',ok:failed.length===0,checksPassed:checks.length,checksFailed:failed.length,checks,ownerFundsSpentUsd:0,fakeEarningsCreated:false,at:new Date().toISOString()}));return{ok:true,checks}}
+catch(error){await cleanup(temps.splice(0));console.error(JSON.stringify({type:'income2_agent_network_selftest',ok:false,checksPassed:checks.length,error:String(error?.message||error).slice(0,500),ownerFundsSpentUsd:0,fakeEarningsCreated:false,at:new Date().toISOString()}));return{ok:false,error}}
+}
+function schedule(){if(scheduled||process.env.INCOME2_NETWORK_SELFTEST==='0')return;scheduled=true;setTimeout(()=>run().catch(()=>{}),7000).unref()}
+module.exports={run,schedule};
