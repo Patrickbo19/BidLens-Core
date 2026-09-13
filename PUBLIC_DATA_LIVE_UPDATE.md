@@ -1,16 +1,20 @@
 # INCOME 2 Public Data — Live Update
 
-Updated: 2026-09-13 02:20 UTC
+Updated: 2026-09-13 after Sol + Astra strategy review
 
 ## Revenue truth
 
-Verified unrelated outside revenue remains **$0** until independently proven otherwise. Never count owner-funded transfers, test transactions, directory probes, unpaid 402 challenges, or unverified ledger rows as revenue.
+INCOME 2 has one verified unrelated outside buyer from the separate private seller path: **$0.001**, with successful fulfillment recorded in the canonical audit.
+
+This public-data service itself still has **0 established settlements** in the latest reviewed state.
+
+Never count owner-funded transfers, test transactions, directory probes, unpaid 402 challenges, or unverified ledger rows as revenue.
 
 ## What is live
 
-Production origin: `https://income2-treasury.onrender.com`
+Production origin:
 
-The Treasury-only transaction-backed demand experiment has been expanded into a **9-route public-data seller** after researching categories with independent paid x402 activity on Agentic Market.
+`https://income2-treasury.onrender.com`
 
 Live routes and prices:
 
@@ -24,72 +28,57 @@ Live routes and prices:
 8. `GET /labor-market` — **$0.01**
 9. `GET /macro-snapshot` — **$0.025**
 
-Official/public upstream sources:
-- U.S. Treasury / FiscalData
-- National Weather Service
-- USAspending.gov
-- ClinicalTrials.gov
-- SEC EDGAR APIs
-- Bureau of Labor Statistics
+Official/public upstream sources include U.S. Treasury/FiscalData, National Weather Service, USAspending.gov, ClinicalTrials.gov, SEC EDGAR APIs, and Bureau of Labor Statistics.
 
-Latest stable public-data deploy:
-- Render service: `income2-treasury`
-- service ID: `srv-dair26gae00c73fkhai0`
-- branch: `income2-treasury`
-- application commit: `f520f77ae678d69c3b896b7c6e49137888addd5a`
-- transport-hardening commit: `6ee0785f66f66b9f209524c3fdb7c86d4dc046e9`
-- status: **live**
+The service maintains privacy-safe per-route aggregate request/payment-header/settlement counters and settlement logs.
 
-Startup verification after the hardening deploy passed for **all eight independent upstream source groups**:
-- treasury-yield-curve: healthy, latest record `2026-09-11`
-- national-debt: healthy, latest record `2026-09-10`
-- treasury-average-rates: healthy, latest record `2026-08-31`
-- us-weather: healthy
-- federal-awards: healthy
-- clinical-trials: healthy
-- sec-company-facts: healthy
-- labor-market: healthy
+## Current commercial decision
 
-The service keeps privacy-safe per-route aggregate request/payment-header/settlement counts and logs `income2_public_data_settlement` on a successful settlement.
+For the next bounded revenue test, **`/macro-snapshot` is the primary public-data offer**.
 
-## Why these routes were selected
+Reason:
+- already deployed
+- higher-value bundle than single commodity transforms
+- recurring official/public source updates
+- plausible later-day repeat use by briefing/research/reporting agents
+- low owner labor once running
 
-Fresh Agentic Market evidence showed real paid demand in closely related categories, including:
-- generic weather: **114 calls / 44 payers** in the prior 30 days on one seller
-- U.S. national debt: **6 calls / 5 payers**
-- GDP: **5 calls / 5 payers**
-- FOMC calendar: **4 calls / 3 payers**
-- money supply: **4 calls / 3 payers**
-- Treasury average rates: **2 calls / 2 payers**
-- clinical trials: **1 call / 1 payer**
-- federal awards: **1 call / 1 payer**
-- multiple SEC/regulatory/public-data endpoints with independent payers
+The other eight routes remain available, but do not expand the catalog during this test merely to increase route count.
 
-This does **not** prove those buyers will use INCOME 2. It is independent evidence that wallet-enabled agents are already paying for these categories, which is materially stronger than adding generic tools from intuition.
+## Experiment success criteria
 
-## Agent402 state
+Primary scoreboard:
+- additional unrelated paid buyers
+- successful paid fulfillments
+- later-day repeat buyers
+- useful paid calls
+- positive measured variable contribution
+- acquisition source when observable
 
-The origin is listed, routable, and detected on Base. The immediate registration response still reports the older one-tool snapshot because Agent402 is known to refresh existing healthy origins without always doing an immediate full manifest crawl. Do not spam recrawl. Allow the normal crawl to ingest the 9-route manifest and verify the expanded tool count later.
+Do not use crawler rank, manifest size, unpaid challenges, or probe traffic as the commercial success metric.
+
+## External demand evidence behind this catalog
+
+Prior category research found independent paid x402 activity in related categories such as weather, U.S. debt, GDP/macro, Treasury rates, clinical trials, federal awards, and SEC/regulatory data.
+
+That evidence supports testing these categories. It does **not** prove INCOME 2 will capture those buyers.
 
 ## Operating rule
 
-INCOME 2 should behave as a demand-following seller, not a static catalog.
+INCOME 2 should behave as a demand-following seller, not a vanity catalog.
 
 - Preserve working routes.
-- Measure genuine route-specific payment headers and independent settlements.
 - Never self-buy or manufacture transaction history.
-- Keep researching categories where independent x402 buyers are already paying.
-- Add a route only when buyer evidence is real, upstream rights permit use, marginal cost is near zero, pricing has positive margin, and owner labor stays near zero.
-- Prefer bundles and adjacent products after a category shows repeat demand.
-- Hold/kill weak routes after a reasonable exposure window rather than growing a vanity catalog.
-- First real buyer is validation, not scale. Repeat buyers and higher-value pricing are the target.
+- Prefer repeated paid use over route count.
+- Add or bundle adjacent products only after real buyer evidence.
+- Hold or retire weak routes after a bounded exposure window.
+- Treat buyer #1 as validation, not scale.
 
 ## Immediate objective
 
-1. Let Agent402 ingest the full 9-route manifest through normal crawling.
-2. Watch route-specific requests and payment headers.
-3. Verify the first genuine unrelated settlement independently.
-4. Identify which category generated it.
-5. Expand that category deliberately and test pricing/packaging.
-6. Continue transaction-backed discovery until a repeatable buyer cohort appears.
-7. Do not call the project finished until genuine external revenue is repeatable.
+1. Test `/macro-snapshot` as the primary public-data offer.
+2. Measure real paid buyers and later-day repeats.
+3. Compare its behavior with the existing extraction benchmark on the main seller.
+4. Do not build new public-data products until the current test produces evidence.
+5. If recurring research demand appears, consider a higher-value source-backed change packet as the next gated experiment.
+6. Do not call the public-data line successful until unrelated paid demand repeats.
