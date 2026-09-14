@@ -153,7 +153,7 @@ function tuneResource(resource) {
   if (['/web-extract', '/url-to-clean-markdown'].includes(path)) {
     return {
       ...resource,
-      name: DISCOVERY_NAMES.webExtract,
+      name: path === '/url-to-clean-markdown' ? 'Convert URL to Markdown' : DISCOVERY_NAMES.webExtract,
       category: 'web-documents',
       description: WEB_EXTRACT_DESCRIPTION,
       tags: ['webpage', 'url', 'article', 'markdown', 'convert', 'extract', 'fetch', 'document', 'research'],
@@ -224,7 +224,7 @@ express.response.json = function income2DiscoveryTruthJson(body) {
         ...paths[extractPath],
         post: {
           ...paths[extractPath].post,
-          summary: DISCOVERY_NAMES.webExtract,
+          summary: extractPath === '/url-to-clean-markdown' ? 'Convert URL to Markdown' : DISCOVERY_NAMES.webExtract,
           description: WEB_EXTRACT_DESCRIPTION,
           tags: ['web documents', 'webpage extraction', 'markdown'],
           'x-intents': ['extract clean markdown from webpage url', 'convert webpage article to clean markdown', 'fetch webpage and return markdown'],
