@@ -1,9 +1,13 @@
 # INCOME 2 — CANONICAL CURRENT OPERATING HANDOFF
 
-**Updated:** September 13, 2026  
+**Updated:** September 14, 2026  
 **Repository:** `Patrickbo19/BidLens-Core`
 
 This is the current operating handoff after reconciling the September 13 audit, second-opinion review, revenue experiment, and the latest `main` history. Dated audits remain evidence/history; they are not competing masters.
+
+## Active writer designation
+
+Patrick explicitly designated the current ChatGPT conversation as the sole active INCOME 2 writer on September 14, 2026. Until Patrick changes that designation, other sessions should remain read-only and must not write production or GitHub `main` for INCOME 2.
 
 ## Current commercial mode
 
