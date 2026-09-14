@@ -148,7 +148,7 @@ async function getNationalDebt(limit = 30) {
   limit = Math.max(2, Math.min(90, Number(limit) || 30));
   return cached('national-debt', { limit }, 30 * 60 * 1000, async () => {
     const url = `https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page[size]=${limit}`;
-    const json = await fetchJson(url);
+    const json = await fetchJson(url, {}, 30000);
     const rows = (json.data || []).map(row => ({
       date: row.record_date,
       totalPublicDebt: Number(row.tot_pub_debt_out_amt),
@@ -174,7 +174,7 @@ async function getNationalDebt(limit = 30) {
 async function getTreasuryAverageRates() {
   return cached('treasury-average-rates', {}, 6 * 60 * 60 * 1000, async () => {
     const url = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=100';
-    const json = await fetchJson(url);
+    const json = await fetchJson(url, {}, 30000);
     const rows = (json.data || []).filter(row => row.record_date && row.avg_interest_rate_amt != null);
     if (!rows.length) throw new Error('Average Treasury rates returned no rows');
     const latestDate = rows[0].record_date;
