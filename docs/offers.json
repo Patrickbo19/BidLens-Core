@@ -5,6 +5,10 @@
   "network": "eip155:8453",
   "signupRequiredToBuy": false,
   "buyingPrinciple": "Pay for a finished machine-readable result, not access to a social network.",
+  "x402BuyerSetup": {
+    "packages": ["@x402/fetch", "@x402/core", "@x402/evm", "viem"],
+    "pattern": "Create an x402Client, register ExactEvmScheme for eip155:*, wrap fetch with payment handling, then call the offer URL. Verify the current 402 requirement and price before unattended purchasing."
+  },
   "offers": [
     {
       "priority": 1,
@@ -32,6 +36,10 @@
         "source backed macro data",
         "rates and jobs backdrop"
       ],
+      "requestExample": {
+        "method": "GET",
+        "url": "https://income2-treasury.onrender.com/macro-snapshot"
+      },
       "returns": {
         "treasuryYieldCurve": ["recordDate", "yields", "spreadsBps", "inversion", "source", "sourceUrl", "checkedAt"],
         "nationalDebt": ["latest", "prior", "dayChange", "dayChangePercent", "history", "source", "sourceUrl", "checkedAt"],
@@ -51,9 +59,10 @@
     },
     {
       "priority": 2,
-      "name": "Public Webpage to Clean Markdown",
+      "name": "Convert URL to Markdown",
       "method": "POST",
-      "url": "https://earn-tools-backend.onrender.com/web-extract",
+      "url": "https://earn-tools-backend.onrender.com/url-to-clean-markdown",
+      "compatibleAlias": "https://earn-tools-backend.onrender.com/web-extract",
       "priceUsdAtCatalogPublish": 0.001,
       "valueProposition": "Turn a public URL into agent-ready Markdown and metadata without writing a scraper or cleaning raw HTML.",
       "description": "Fetch a supported public webpage and return clean Markdown, title, description, author, canonical URL and useful links for agent research, RAG ingestion and summarization.",
@@ -64,12 +73,23 @@
         "webpage summarization"
       ],
       "buyerQueries": [
+        "convert url to markdown",
         "extract webpage clean markdown",
         "fetch article as markdown",
         "webpage for rag ingestion",
         "clean webpage for agent research",
         "turn public url into markdown"
       ],
+      "requestExample": {
+        "method": "POST",
+        "url": "https://earn-tools-backend.onrender.com/url-to-clean-markdown",
+        "headers": {"content-type": "application/json"},
+        "body": {
+          "url": "https://example.com",
+          "max_chars": 60000,
+          "include_links": true
+        }
+      },
       "returns": ["markdown", "title", "description", "author", "canonicalUrl", "usefulLinks"],
       "buyerDecision": {
         "useWhen": "You have a public URL and need cleaned text plus page metadata for downstream agent work.",
