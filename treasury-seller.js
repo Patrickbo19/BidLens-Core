@@ -695,6 +695,5 @@ async function preflight(name, fn) {
     setTimeout(()=>preflight('clinical-trials',()=>getClinicalTrials({sponsor:'Pfizer',limit:3})),6000).unref();
     setTimeout(()=>preflight('sec-company-facts',()=>getSecCompanyFacts('AAPL')),7000).unref();
     setTimeout(()=>preflight('labor-market',getLaborMarket),8000).unref();
-    setTimeout(()=>registerAgent402(1),40000).unref();
   });
 })().catch(error=>{console.error(error);process.exit(1)});
