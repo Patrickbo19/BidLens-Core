@@ -35,17 +35,57 @@ Result shape includes:
 
 If you only need one narrow field, prefer a cheaper single-source endpoint instead of this bundle.
 
+### Runnable x402 v2 buyer example
+
+Install:
+`npm install @x402/fetch @x402/core @x402/evm viem`
+
+```ts
+import { wrapFetchWithPayment } from "@x402/fetch";
+import { x402Client } from "@x402/core/client";
+import { ExactEvmScheme } from "@x402/evm/exact/client";
+import { privateKeyToAccount } from "viem/accounts";
+
+const signer = privateKeyToAccount(process.env.EVM_PRIVATE_KEY as `0x${string}`);
+const client = new x402Client();
+client.register("eip155:*", new ExactEvmScheme(signer));
+const payFetch = wrapFetchWithPayment(fetch, client);
+
+const response = await payFetch("https://income2-treasury.onrender.com/macro-snapshot", {
+  method: "GET"
+});
+if (!response.ok) throw new Error(`macro request failed: ${response.status}`);
+console.log(await response.json());
+```
+
+Before unattended use, verify the current 402 payment requirement and price exposed by the service.
+
 Discovery:
 https://income2-treasury.onrender.com/.well-known/x402
 https://income2-treasury.onrender.com/openapi.json
 
 ## Comparison paid result
 
-Public Webpage to Clean Markdown
-POST https://earn-tools-backend.onrender.com/web-extract
+Convert URL to Markdown
+POST https://earn-tools-backend.onrender.com/url-to-clean-markdown
+Compatible alias: https://earn-tools-backend.onrender.com/web-extract
 Current experiment-start price: $0.001 USDC on Base
 
 Choose this when you have a supported public URL and need clean Markdown plus page metadata for downstream agent research, RAG ingestion or summarization. It returns clean Markdown, title, description, author, canonical URL and useful links.
+
+```ts
+const response = await payFetch("https://earn-tools-backend.onrender.com/url-to-clean-markdown", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    url: "https://example.com",
+    max_chars: 60000,
+    include_links: true
+  })
+});
+if (!response.ok) throw new Error(`extraction failed: ${response.status}`);
+console.log(await response.json());
+```
 
 Discovery:
 https://earn-tools-backend.onrender.com/.well-known/x402
