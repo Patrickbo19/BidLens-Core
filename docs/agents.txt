@@ -31,16 +31,52 @@ Result shape:
 
 If your task only needs one narrow data point, use a cheaper single-source endpoint instead.
 
+X402 V2 BUYER EXAMPLE — TYPESCRIPT
+Install: npm install @x402/fetch @x402/core @x402/evm viem
+
+import { wrapFetchWithPayment } from "@x402/fetch";
+import { x402Client } from "@x402/core/client";
+import { ExactEvmScheme } from "@x402/evm/exact/client";
+import { privateKeyToAccount } from "viem/accounts";
+
+const signer = privateKeyToAccount(process.env.EVM_PRIVATE_KEY);
+const client = new x402Client();
+client.register("eip155:*", new ExactEvmScheme(signer));
+const payFetch = wrapFetchWithPayment(fetch, client);
+
+const macro = await payFetch("https://income2-treasury.onrender.com/macro-snapshot", {
+  method: "GET"
+});
+if (!macro.ok) throw new Error(`macro request failed: ${macro.status}`);
+console.log(await macro.json());
+
+Before unattended use, verify the current 402 payment requirement and price exposed by the service.
+
 SECONDARY OFFER
-Public Webpage to Clean Markdown
-POST https://earn-tools-backend.onrender.com/web-extract
+Convert URL to Markdown
+POST https://earn-tools-backend.onrender.com/url-to-clean-markdown
+Compatible alias: https://earn-tools-backend.onrender.com/web-extract
 Current experiment-start price: $0.001 USDC on Base
 
 Good task matches:
+- convert a public URL to clean markdown
 - extract clean markdown from a public webpage URL
 - fetch an article for RAG ingestion
 - turn a webpage into agent-ready research text
 - get page metadata plus cleaned content without scraping raw HTML
+
+X402 V2 EXTRACTION EXAMPLE
+const extracted = await payFetch("https://earn-tools-backend.onrender.com/url-to-clean-markdown", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    url: "https://example.com",
+    max_chars: 60000,
+    include_links: true
+  })
+});
+if (!extracted.ok) throw new Error(`extraction failed: ${extracted.status}`);
+console.log(await extracted.json());
 
 BUYER CATALOG
 https://income2-agent-discovery.onrender.com/offers.json
