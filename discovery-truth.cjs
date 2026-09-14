@@ -16,7 +16,7 @@ const DISCOVERY_NAMES = {
   purchaseGuard: 'x402 Duplicate Payment Retry Guard',
   outcomeRouter: 'Find and Execute Agent or Tool Under Budget',
 };
-const WEB_EXTRACT_DESCRIPTION = 'Fetch a live public webpage URL and convert the page or article to clean Markdown with title, description, author, canonical URL and useful links. Unlike HTML-only conversion, this endpoint fetches the URL itself; redirects are SSRF-checked and external content is marked untrusted.';
+const WEB_EXTRACT_DESCRIPTION = 'Fetch a live public webpage URL and convert the page or article to clean Markdown with title, description, author, canonical URL and useful links. Use it to convert a URL to Markdown for research, RAG or summarization. Unlike HTML-only conversion, this endpoint fetches the URL itself; redirects are SSRF-checked and external content is marked untrusted.';
 const BUYER_CHECK_DESCRIPTION = 'Audit an x402 payment challenge before paying. Probe a public endpoint without sending payment and report whether the 402 challenge is parseable, which network/asset/payTo it requests, and whether the response is HTTPS-canonical and cache-safe.';
 const PURCHASE_GUARD_DESCRIPTION = 'Prevent duplicate x402 charges on retries with a stable idempotency key, hard max-spend limit and durable receipt. This free preflight never signs, sends, settles or custodies payment; paymentExecuted=false.';
 const BUYER_INTENTS = [
@@ -25,6 +25,7 @@ const BUYER_INTENTS = [
   'buy a completed result from an agent',
   'get this result for a maximum budget',
   'extract clean markdown from webpage url',
+  'convert url to markdown',
   'convert webpage article to clean markdown',
   'x402 payment challenge preflight audit',
   'prevent duplicate x402 payment',
@@ -155,7 +156,7 @@ function tuneResource(resource) {
       name: DISCOVERY_NAMES.webExtract,
       category: 'web-documents',
       description: WEB_EXTRACT_DESCRIPTION,
-      tags: ['webpage', 'url', 'article', 'markdown', 'extract', 'fetch', 'document', 'research'],
+      tags: ['webpage', 'url', 'article', 'markdown', 'convert', 'extract', 'fetch', 'document', 'research'],
     };
   }
   if (path === '/x402-buyer-check') {
