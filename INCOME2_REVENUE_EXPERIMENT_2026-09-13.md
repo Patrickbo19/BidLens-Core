@@ -130,3 +130,13 @@ At the end of the bounded test:
 - hold or retire offers that attract probes but not payment intent
 - expand the 70/30 supplier economy only after external supplier contribution and positive contribution are demonstrated
 - scale distribution only through channels that produce real buyers
+
+## Distribution update — September 14, 2026
+
+- Public Data cold-start Agent402 re-registration was disabled after repeated boot registration correlated with the indexed Base network temporarily degrading to `network_unknown`.
+- After the change settled, the hourly Agent402 demand probe again showed the Macro Snapshot at rank 2 for `US macro backdrop market brief` and rank 1 for `treasury rates debt labor market`, with `dispatchReason=settlement_required` rather than `network_unknown`. Web Extract was rank 1 for `extract clean markdown from webpage url` with the same healthy settlement-required state.
+- true402 discovery was added at zero owner spend. Registry service `72279705-f142-45c9-ac50-1266cc9f6291` is the Macro Snapshot seller and `55333361-13a1-4ab1-8a76-4d10b7da4294` is the Web Extract seller.
+- true402 registered both as new services with zero observed transactions/trust score at registration. That is discovery evidence only, not revenue evidence.
+- Market402 submissions for both active experiment offers also completed successfully in the same explicit directory-maintenance workflow.
+- No new settlement was confirmed after these distribution changes as of the last September 14 check. Buyer #2 remains the next revenue milestone.
+- No owner-funded purchase, validator invocation, payment authorization, or self-buy was used to create these signals.

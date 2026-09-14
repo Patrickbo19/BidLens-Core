@@ -3,6 +3,7 @@ require('./income2-earn-discovery.cjs').install();
 require('./income2-agent-discovery.cjs').install();
 require('./income2-wallet-discovery.cjs').install();
 require('./true402-service-patch.cjs').install();
+require('./discovery-price-consistency.cjs').install();
 
 // Directory registration is an explicit maintenance action, not a deploy side effect.
 // The repo already has an explicit registration workflow; seller boots must not create
