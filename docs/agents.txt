@@ -36,12 +36,12 @@ Install: npm install @x402/fetch @x402/core @x402/evm viem
 
 import { wrapFetchWithPayment } from "@x402/fetch";
 import { x402Client } from "@x402/core/client";
-import { ExactEvmScheme } from "@x402/evm/exact/client";
+import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { privateKeyToAccount } from "viem/accounts";
 
 const signer = privateKeyToAccount(process.env.EVM_PRIVATE_KEY);
 const client = new x402Client();
-client.register("eip155:*", new ExactEvmScheme(signer));
+registerExactEvmScheme(client, { signer, networks: ["eip155:8453"] });
 const payFetch = wrapFetchWithPayment(fetch, client);
 
 const macro = await payFetch("https://income2-treasury.onrender.com/macro-snapshot", {
