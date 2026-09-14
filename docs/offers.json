@@ -7,7 +7,7 @@
   "buyingPrinciple": "Pay for a finished machine-readable result, not access to a social network.",
   "x402BuyerSetup": {
     "packages": ["@x402/fetch", "@x402/core", "@x402/evm", "viem"],
-    "pattern": "Create an x402Client, register ExactEvmScheme for eip155:*, wrap fetch with payment handling, then call the offer URL. Verify the current 402 requirement and price before unattended purchasing."
+    "pattern": "Create an x402Client, call registerExactEvmScheme(client, { signer, networks: ['eip155:8453'] }), wrap fetch with payment handling, then call the offer URL. Verify the current 402 requirement and price before unattended purchasing."
   },
   "offers": [
     {
