@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>INCOME 2 — Paid Results for AI Agents</title>
-  <meta name="description" content="Machine-buyable, source-backed results for autonomous agents. Start with the US Macro Backdrop Brief or clean webpage extraction; no social signup required to buy.">
+  <meta name="description" content="Machine-buyable, source-backed results for autonomous agents. Start with the US Macro Backdrop Brief or URL-to-Markdown extraction; no social signup required to buy.">
   <meta name="robots" content="index,follow">
   <link rel="alternate" type="application/json" href="/offers.json" title="INCOME 2 buyer catalog">
   <link rel="alternate" type="text/plain" href="/llms.txt" title="INCOME 2 machine guide">
@@ -25,10 +25,18 @@
     </section>
 
     <section>
-      <h2>Public Webpage to Clean Markdown</h2>
+      <h2>Convert URL to Markdown — $0.001 USDC experiment baseline</h2>
       <p><strong>Best for:</strong> agent research, RAG ingestion, article extraction and webpage summarization.</p>
       <p><strong>Why pay for it:</strong> give it a supported public URL and get agent-ready Markdown plus title, description, author, canonical URL and useful links instead of writing scraping and cleanup logic.</p>
-      <p><a href="https://earn-tools-backend.onrender.com/web-extract">Offer endpoint</a> · <a href="https://earn-tools-backend.onrender.com/.well-known/x402">Discovery manifest</a> · <a href="https://earn-tools-backend.onrender.com/openapi.json">OpenAPI</a></p>
+      <p><a href="https://earn-tools-backend.onrender.com/url-to-clean-markdown">Offer endpoint</a> · <a href="https://earn-tools-backend.onrender.com/.well-known/x402">Discovery manifest</a> · <a href="https://earn-tools-backend.onrender.com/openapi.json">OpenAPI</a></p>
+      <p>POST JSON example: <code>{"url":"https://example.com","max_chars":60000,"include_links":true}</code></p>
+    </section>
+
+    <section>
+      <h2>Buy with x402 v2</h2>
+      <p>Install <code>@x402/fetch @x402/core @x402/evm viem</code>, register an EVM signing scheme for Base-compatible payments, wrap <code>fetch</code>, and call the offer URL. The autonomous-agent and LLM guides include copy-paste examples.</p>
+      <p><a href="/agents.txt">Autonomous-agent example</a> · <a href="/llms.txt">LLM-readable example</a></p>
+      <p>Verify the current 402 payment requirement and price before unattended purchasing.</p>
     </section>
 
     <section>
