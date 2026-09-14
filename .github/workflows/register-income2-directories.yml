@@ -1,4 +1,4 @@
-name: Register INCOME 2 x402 directories
+name: One-time INCOME 2 402Index registration
 
 on:
   push:
@@ -9,58 +9,18 @@ permissions:
   contents: read
 
 jobs:
-  register-market402:
+  register-402index:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Submit macro offer to Market402
-        continue-on-error: true
+      - name: Register Macro Snapshot with 402Index
         run: |
-          curl -sS -X POST 'https://market402.com/submit' \
+          curl -fsS -X POST 'https://402index.io/api/v1/register' \
             -H 'content-type: application/json' \
-            --data '{"resource":"https://income2-treasury.onrender.com/macro-snapshot"}' \
-            -w '\nHTTP %{http_code}\n'
+            --data '{"url":"https://income2-treasury.onrender.com/macro-snapshot","name":"INCOME 2 US Macro Snapshot Bundle","protocol":"x402","http_method":"GET","description":"One-call source-backed U.S. macro snapshot: Treasury yield curve, national debt, average Treasury rates, and labor-market indicators.","price_usd":0.025,"payment_asset":"USDC","payment_network":"Base","category":"data/finance","provider":"INCOME 2"}'
 
-      - name: Submit extraction offer to Market402
-        continue-on-error: true
+      - name: Register Web Extract with 402Index
         run: |
-          curl -sS -X POST 'https://market402.com/submit' \
+          curl -fsS -X POST 'https://402index.io/api/v1/register' \
             -H 'content-type: application/json' \
-            --data '{"resource":"https://earn-tools-backend.onrender.com/web-extract"}' \
-            -w '\nHTTP %{http_code}\n'
-
-  register-true402:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Register macro seller with true402
-        continue-on-error: true
-        run: |
-          origin='https://income2-treasury.onrender.com'
-          for attempt in 1 2 3 4 5 6 7 8; do
-            if curl -fsS "$origin/.well-known/x402-service.json" >/dev/null; then
-              curl -fsS -X POST 'https://true402.dev/api/v1/services' \
-                -H 'content-type: application/json' \
-                --data "{\"url\":\"$origin\"}"
-              exit 0
-            fi
-            sleep 15
-          done
-          echo 'true402 macro descriptor did not become ready in time' >&2
-          exit 1
-
-      - name: Register extraction seller with true402
-        continue-on-error: true
-        run: |
-          origin='https://earn-tools-backend.onrender.com'
-          for attempt in 1 2 3 4 5 6 7 8; do
-            if curl -fsS "$origin/.well-known/x402-service.json" >/dev/null; then
-              curl -fsS -X POST 'https://true402.dev/api/v1/services' \
-                -H 'content-type: application/json' \
-                --data "{\"url\":\"$origin\"}"
-              exit 0
-            fi
-            sleep 15
-          done
-          echo 'true402 extraction descriptor did not become ready in time' >&2
-          exit 1
+            --data '{"url":"https://earn-tools-backend.onrender.com/web-extract","name":"INCOME 2 Webpage to Clean Markdown","protocol":"x402","http_method":"POST","probe_body":"{\"url\":\"https://example.com\"}","description":"Convert a public webpage into clean Markdown plus metadata and links for research and RAG workflows.","price_usd":0.001,"payment_asset":"USDC","payment_network":"Base","category":"web/extraction","provider":"INCOME 2"}'
