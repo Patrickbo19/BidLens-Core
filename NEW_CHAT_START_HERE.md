@@ -12,7 +12,7 @@ If any older file conflicts with `INCOME2_CANONICAL_CURRENT.md`, the canonical c
 Operating discipline:
 
 - Only one active session may write to production or GitHub `main` for INCOME 2 at a time.
-- Other sessions remain read-only unless Patrick explicitly designates them as the writer.
+- Patrick designated the current ChatGPT conversation as the active writer on September 14, 2026; other sessions remain read-only until Patrick changes that designation.
 - Inspect latest `main` before making changes.
 - Verify the specific production surface before calling anything live.
 - Do not infer runtime state from file presence alone.
