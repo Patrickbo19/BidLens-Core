@@ -247,26 +247,39 @@ async function getFederalAwards({ days = 30, minAmount = 1000000, limit = 20, aw
   return cached('federal-awards', { days, minAmount, limit, awardType }, 15 * 60 * 1000, async () => {
     const contractCodes = ['A','B','C','D'];
     const grantCodes = ['02','03','04','05'];
-    const awardTypeCodes = awardType === 'contracts' ? contractCodes : awardType === 'grants' ? grantCodes : [...contractCodes, ...grantCodes];
-    const payload = {
-      filters: {
-        time_period: [{ start_date: isoDateDaysAgo(days), end_date: new Date().toISOString().slice(0, 10) }],
-        award_type_codes: awardTypeCodes,
-        award_amounts: [{ lower_bound: minAmount }],
-      },
-      fields: ['Award ID','Recipient Name','Start Date','End Date','Award Amount','Awarding Agency','Awarding Sub Agency','Award Type'],
-      page: 1,
-      limit,
-      sort: 'Award Amount',
-      order: 'desc',
-      subawards: false,
-    };
-    const json = await fetchJson('https://api.usaspending.gov/api/v2/search/spending_by_award/', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
-    }, 20000, 3_000_000);
-    const results = Array.isArray(json.results) ? json.results : [];
+    // USAspending rejects award_type_codes mixed across contract and grant
+    // groups. Query each group independently for "all", then merge the
+    // already ranked results into one top-value response.
+    const codeGroups = awardType === 'contracts'
+      ? [contractCodes]
+      : awardType === 'grants'
+        ? [grantCodes]
+        : [contractCodes, grantCodes];
+    const endDate = new Date().toISOString().slice(0, 10);
+    const responses = await Promise.all(codeGroups.map(async awardTypeCodes => {
+      const payload = {
+        filters: {
+          time_period: [{ start_date: isoDateDaysAgo(days), end_date: endDate }],
+          award_type_codes: awardTypeCodes,
+          award_amounts: [{ lower_bound: minAmount }],
+        },
+        fields: ['Award ID','Recipient Name','Start Date','End Date','Award Amount','Awarding Agency','Awarding Sub Agency','Award Type'],
+        page: 1,
+        limit,
+        sort: 'Award Amount',
+        order: 'desc',
+        subawards: false,
+      };
+      return fetchJson('https://api.usaspending.gov/api/v2/search/spending_by_award/', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      }, 20000, 3_000_000);
+    }));
+    const results = responses
+      .flatMap(json => Array.isArray(json.results) ? json.results : [])
+      .sort((a, b) => Number(b?.['Award Amount'] || 0) - Number(a?.['Award Amount'] || 0))
+      .slice(0, limit);
     return {
       filters: { days, minAmount, limit, awardType },
       count: results.length,
