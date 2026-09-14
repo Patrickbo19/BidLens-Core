@@ -4,6 +4,10 @@ Date: September 13, 2026
 
 This document converts the Sol audit plus Astra second-opinion review into the current revenue test. It does not authorize self-buying, owner subsidy, fabricated settlements, spam, or production money movement.
 
+## Writer status
+
+Patrick designated the current ChatGPT conversation as the sole active INCOME 2 writer on September 14, 2026. Other sessions remain read-only until Patrick changes that designation.
+
 ## Current revenue baseline
 
 - Verified unrelated outside revenue: **$0.001**.
