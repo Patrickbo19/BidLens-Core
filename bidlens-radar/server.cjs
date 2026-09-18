@@ -93,6 +93,7 @@ function parseRows(html, source, profile) {
   }
   return rows.slice(0,80);
 }
+const scanCache=new Map();
 async function scan(profile) {
   const all=[]; const errors=[];
   await Promise.all(SOURCES.map(async source=>{
@@ -104,6 +105,19 @@ async function scan(profile) {
     const key=(x.title+'|'+x.url).toLowerCase(); if (seen.has(key)) continue; seen.add(key); dedup.push(x);
   }
   return {generatedAt:new Date().toISOString(),profile,opportunities:dedup.slice(0,40),errors};
+}
+async function scanCached(profile) {
+  const key=JSON.stringify(profile);
+  const now=Date.now();
+  const cached=scanCache.get(key);
+  if (cached && now-cached.at < 5*60*1000) return cached.value;
+  const value=await scan(profile);
+  scanCache.set(key,{at:now,value});
+  if (scanCache.size>30) {
+    const oldest=[...scanCache.entries()].sort((a,b)=>a[1].at-b[1].at).slice(0,10);
+    for (const [k] of oldest) scanCache.delete(k);
+  }
+  return value;
 }
 function profileFromUrl(u) {
   const keywords=(u.searchParams.get('keywords')||'').split(',').map(s=>s.trim()).filter(Boolean).slice(0,25);
@@ -135,7 +149,7 @@ const server=http.createServer(async(req,res)=>{
   const u=new URL(req.url,`http://${req.headers.host||'localhost'}`);
   if (u.pathname==='/health') { res.writeHead(200,{'content-type':'application/json'}); return res.end(JSON.stringify({ok:true,service:'bidlens-radar',checkoutConfigured:Boolean(CHECKOUT_URL),sources:SOURCES.length})); }
   if (u.pathname==='/api/opportunities') {
-    try { const result=await scan(profileFromUrl(u)); res.writeHead(200,{'content-type':'application/json','cache-control':'public,max-age=300'}); return res.end(JSON.stringify(result)); }
+    try { const result=await scanCached(profileFromUrl(u)); res.writeHead(200,{'content-type':'application/json','cache-control':'public,max-age=300'}); return res.end(JSON.stringify(result)); }
     catch(e){ res.writeHead(500,{'content-type':'application/json'}); return res.end(JSON.stringify({ok:false,error:'scan_failed'})); }
   }
   if (u.pathname==='/robots.txt') {
@@ -165,4 +179,9 @@ const server=http.createServer(async(req,res)=>{
   if (u.pathname==='/') { res.writeHead(200,{'content-type':'text/html; charset=utf-8'}); return res.end(page()); }
   res.writeHead(404,{'content-type':'text/plain'}); res.end('Not found');
 });
-server.listen(PORT,'0.0.0.0',()=>console.log(JSON.stringify({type:'bidlens_radar_started',port:PORT,sources:SOURCES.length,checkoutConfigured:Boolean(CHECKOUT_URL),at:new Date().toISOString()})));
+server.listen(PORT,'0.0.0.0',()=>{
+  console.log(JSON.stringify({type:'bidlens_radar_started',port:PORT,sources:SOURCES.length,checkoutConfigured:Boolean(CHECKOUT_URL),at:new Date().toISOString()}));
+  scanCached({keywords:DEFAULT_KEYWORDS,region:'East Tennessee',minScore:25})
+    .then(r=>console.log(JSON.stringify({type:'bidlens_startup_scan',opportunities:r.opportunities.length,errors:r.errors,top:r.opportunities.slice(0,3).map(x=>({score:x.score,title:x.title,source:x.source})),at:new Date().toISOString()})))
+    .catch(e=>console.log(JSON.stringify({type:'bidlens_startup_scan_error',error:String(e.message||e),at:new Date().toISOString()})));
+});
