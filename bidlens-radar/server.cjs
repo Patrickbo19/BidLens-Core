@@ -29,6 +29,26 @@ const SOURCES = [
     name:'City of Knoxville Bid / Contracting Opportunities',
     url:'https://www.knoxvilletn.gov/cms/One.aspx?pageId=177206&portalId=109562',
     kind:'knoxville'
+  },
+  {
+    name:'City of Oak Ridge Bid Postings',
+    url:'https://www.oakridgetn.gov/Bids.aspx',
+    kind:'oak-ridge'
+  },
+  {
+    name:'Blount County Bid Postings',
+    url:'https://www.blounttn.gov/Bids.aspx',
+    kind:'blount-county'
+  },
+  {
+    name:'Loudon County Purchasing Solicitations',
+    url:'https://loudoncounty-tn.gov/purchasing/',
+    kind:'loudon-county'
+  },
+  {
+    name:'City of Sevierville Bid Postings',
+    url:'https://www.seviervilletn.org/Bids.aspx',
+    kind:'sevierville'
   }
 ];
 
