@@ -80,6 +80,19 @@ async function fetchText(url) {
     return await r.text();
   } finally { clearTimeout(timer); }
 }
+function requirementFlags(text) {
+  const t=String(text).toLowerCase();
+  const flags=[];
+  if (/mandatory.{0,30}(pre[- ]?bid|site visit|conference)|required.{0,30}(pre[- ]?bid|site visit)/i.test(text)) flags.push('mandatory pre-bid/site visit');
+  if (/bid bond|performance bond|payment bond|bonding/i.test(text)) flags.push('bonding');
+  if (/contractor.?s? license|licensed contractor|license number/i.test(text)) flags.push('contractor license');
+  if (/certificate of insurance|proof of insurance|insurance requirement/i.test(text)) flags.push('insurance');
+  if (/prevailing wage|davis[- ]bacon/i.test(text)) flags.push('prevailing wage');
+  if (/set[- ]aside|small business|dbe|mbe|wbe|sdvosb|hubzone/i.test(text)) flags.push('certification/set-aside');
+  if (/sealed bid|sealed proposal|submit.{0,20}copies|hard cop/i.test(text)) flags.push('physical/sealed submission');
+  if (/addendum|amendment/i.test(text)) flags.push('addenda posted');
+  return [...new Set(flags)].slice(0,8);
+}
 function scoreOpportunity(text, profile) {
   const hay=String(text).toLowerCase();
   const kws=profile.keywords.length ? profile.keywords : DEFAULT_KEYWORDS;
@@ -101,7 +114,7 @@ function parseRows(html, source, profile) {
     const {score,hits}=scoreOpportunity(text,profile);
     if (score < profile.minScore) continue;
     const rowLinks=getLinks(rowHtml,source.url);
-    rows.push({source:source.name,title:cells.slice(0,4).join(' — ').slice(0,320),details:text.slice(0,800),score,hits,url:rowLinks[0]?.url || source.url});
+    rows.push({source:source.name,title:cells.slice(0,4).join(' — ').slice(0,320),details:text.slice(0,800),score,hits,flags:requirementFlags(text),url:rowLinks[0]?.url || source.url});
   }
   if (rows.length) return rows;
   const links=getLinks(html,source.url);
@@ -109,7 +122,7 @@ function parseRows(html, source, profile) {
     const {score,hits}=scoreOpportunity(link.text,profile);
     if (score < profile.minScore) continue;
     if (!/bid|rfp|rfq|itb|proposal|construction|repair|maintenance|grant|solicitation|project/i.test(link.text)) continue;
-    rows.push({source:source.name,title:link.text.slice(0,320),details:link.text,score,hits,url:link.url});
+    rows.push({source:source.name,title:link.text.slice(0,320),details:link.text,score,hits,flags:requirementFlags(link.text),url:link.url});
   }
   return rows.slice(0,80);
 }
@@ -160,7 +173,7 @@ function page(opts={}) {
   <section id="demo" class="demo"><h2>Live Tennessee opportunity radar</h2><p class="muted">Try your own trade keywords. Example: roofing, electrical, concrete, painting, landscaping.</p><div class="controls"><input id="kw" value="${escapeHtml(presetKeywords)}"><input id="score" type="number" min="0" max="100" value="25"><button onclick="run()">Scan now</button></div><div id="status" class="muted" style="margin-top:12px"></div><div id="results"></div></section>
   <div class="sources">Initial official sources: Tennessee GO-BID grant postings, Tennessee STREAM RFPs, Tennessee CPO RFPs, and City of Knoxville procurement pages. BidLens is an independent alerting/filtering service and is not affiliated with those agencies. Always verify deadlines and submission requirements at the official source.</div></div><script>
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  async function run(){const kw=document.getElementById('kw').value,ms=document.getElementById('score').value;document.getElementById('status').textContent='Scanning official sources…';document.getElementById('results').innerHTML='';try{const r=await fetch('/api/opportunities?keywords='+encodeURIComponent(kw)+'&min_score='+encodeURIComponent(ms));const j=await r.json();document.getElementById('status').textContent=j.opportunities.length+' matching opportunities found';document.getElementById('results').innerHTML=j.opportunities.map(x=>'<div class="result"><span class="score">'+x.score+'/100</span><b>'+esc(x.title)+'</b><div class="muted">'+esc(x.source)+'</div><p>'+esc(x.details)+'</p><div class="tiny">Matched: '+esc((x.hits||[]).join(', ')||'general fit')+'</div><p><a href="'+esc(x.url)+'" target="_blank" rel="noopener" style="color:#58a6ff">Open official source ↗</a></p></div>').join('')||'<div class="result">No strong matches at this threshold. Try broader keywords or a lower score.</div>'}catch(e){document.getElementById('status').textContent='Scan failed. Try again shortly.'}}
+  async function run(){const kw=document.getElementById('kw').value,ms=document.getElementById('score').value;document.getElementById('status').textContent='Scanning official sources…';document.getElementById('results').innerHTML='';try{const r=await fetch('/api/opportunities?keywords='+encodeURIComponent(kw)+'&min_score='+encodeURIComponent(ms));const j=await r.json();document.getElementById('status').textContent=j.opportunities.length+' matching opportunities found';document.getElementById('results').innerHTML=j.opportunities.map(x=>'<div class="result"><span class="score">'+x.score+'/100</span><b>'+esc(x.title)+'</b><div class="muted">'+esc(x.source)+'</div><p>'+esc(x.details)+'</p><div class="tiny">Matched: '+esc((x.hits||[]).join(', ')||'general fit')+'</div>'+((x.flags||[]).length?'<div class="tiny" style="margin-top:6px">Check before bidding: '+esc(x.flags.join(' · '))+'</div>':'')+'<p><a href="'+esc(x.url)+'" target="_blank" rel="noopener" style="color:#58a6ff">Open official source ↗</a></p></div>').join('')||'<div class="result">No strong matches at this threshold. Try broader keywords or a lower score.</div>'}catch(e){document.getElementById('status').textContent='Scan failed. Try again shortly.'}}
   run();
   </script></body></html>`;
 }
