@@ -183,6 +183,18 @@ function profileFromUrl(u) {
 function toolsPage() {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RevenueOS Practical Tools</title><meta name="description" content="Low-cost practical tools for contractors and people pressure-testing business ideas."><style>body{font-family:Inter,system-ui,Arial;background:#0d1117;color:#e6edf3;margin:0}.wrap{max-width:880px;margin:auto;padding:52px 22px}h1{font-size:46px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}.card{background:#161b22;border:1px solid #30363d;border-radius:14px;padding:22px}.price{font-size:32px;font-weight:900}.btn{display:inline-block;background:#f0f6fc;color:#0d1117;padding:13px 18px;border-radius:8px;text-decoration:none;font-weight:800}.muted{color:#8b949e}</style></head><body><div class="wrap"><p><a href="/" style="color:#58a6ff">← BidLens Radar</a></p><h1>Practical tools that save time.</h1><p class="muted">No consulting call required. Pick the result you need and check out securely with Stripe.</p><div class="grid"><div class="card"><h2>Handyman Quote & Scope Kit</h2><div class="price">$9</div><p>Reusable estimate and scope structure for small contracting and handyman jobs: scope, exclusions, materials, change orders, payment schedule, acceptance and closeout.</p><a class="btn" href="${LIVE_OFFERS.handymanKit}">Get the kit</a></div><div class="card"><h2>AI Business Idea Stress Test</h2><div class="price">$19</div><p>Submit one business or side-hustle idea and your first goal. Receive a practical pressure test covering demand, competition, monetization, risks and the fastest low-cost validation path.</p><a class="btn" href="${LIVE_OFFERS.ideaStressTest}">Stress-test my idea</a></div></div><p class="muted" style="margin-top:32px">Secure checkout is handled by Stripe. Digital delivery follows purchase.</p></div></body></html>`;
 }
+function offerPage({title,headline,description,price,bullets,checkoutUrl,canonical,cta}) {
+  const list=bullets.map(x=>'<li>'+escapeHtml(x)+'</li>').join('');
+  const schema=JSON.stringify({
+    '@context':'https://schema.org',
+    '@type':'Product',
+    name:title,
+    description,
+    offers:{'@type':'Offer',priceCurrency:'USD',price:String(price),availability:'https://schema.org/InStock',url:checkoutUrl}
+  }).replace(/</g,'\\u003c');
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} — RevenueOS</title><meta name="description" content="${escapeHtml(description)}"><link rel="canonical" href="${escapeHtml(canonical)}"><script type="application/ld+json">${schema}</script><style>body{font-family:Inter,system-ui,Arial;background:#0d1117;color:#e6edf3;margin:0}.wrap{max-width:820px;margin:auto;padding:60px 22px}.eyebrow{color:#8b949e;text-transform:uppercase;letter-spacing:.12em;font-size:12px}h1{font-size:clamp(38px,7vw,64px);line-height:1.02;margin:12px 0}.lead{font-size:20px;line-height:1.55;color:#b7c0ca}.price{font-size:38px;font-weight:900;margin:28px 0 8px}.btn{display:inline-block;background:#f0f6fc;color:#0d1117;padding:15px 20px;border-radius:9px;text-decoration:none;font-weight:850}.box{margin-top:36px;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:22px}li{margin:10px 0}.fine{color:#8b949e;font-size:13px;margin-top:24px}</style></head><body><div class="wrap"><div class="eyebrow">RevenueOS · practical digital tool</div><h1>${escapeHtml(headline)}</h1><p class="lead">${escapeHtml(description)}</p><div class="price">${price}</div><a class="btn" href="${escapeHtml(checkoutUrl)}">${escapeHtml(cta)}</a><div class="box"><h2>What you get</h2><ul>${list}</ul></div><p class="fine">Secure checkout is handled by Stripe. This is a digital product/service. No social account connection is required.</p></div></body></html>`;
+}
+
 function handymanKitPage() {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Handyman Quote & Scope Kit</title><style>body{font-family:Inter,system-ui,Arial;color:#17202a;background:#f7f7f5;margin:0}.wrap{max-width:850px;margin:auto;background:#fff;padding:44px 48px;box-sizing:border-box}h1{font-size:36px}h2{margin-top:32px;border-bottom:2px solid #222;padding-bottom:7px}.box{border:1px solid #bbb;padding:16px;margin:12px 0;border-radius:6px}li{margin:7px 0}.small{font-size:13px;color:#555}@media print{body{background:#fff}.wrap{max-width:none;padding:0}}</style></head><body><div class="wrap"><h1>Handyman Quote & Scope Kit</h1><p>Use this as a reusable structure for small contracting, repair, installation and improvement work. Copy it into your estimating system or print this page to PDF.</p><h2>1. Estimate / Proposal Structure</h2><div class="box"><b>Customer:</b> ____________________<br><b>Project address:</b> ____________________<br><b>Date / Quote #:</b> ____________________<br><b>Project:</b> ____________________</div><div class="box"><b>Scope Includes</b><ul><li>Describe the exact work area and finished result.</li><li>List demolition/prep separately from installation.</li><li>State who supplies each major material.</li><li>State cleanup/disposal responsibility.</li><li>State ordinary caulk, touch-up and testing included in the price.</li></ul></div><div class="box"><b>Total Project Price:</b> $__________<br><b>Deposit / first payment:</b> $__________ due __________<br><b>Progress payment:</b> $__________ due __________<br><b>Final payment:</b> $__________ due at substantial completion.</div><h2>2. Scope-Writing Checklist</h2><ul><li>Quantity, dimensions and location.</li><li>Existing-condition assumptions.</li><li>Preparation and protection of adjacent surfaces.</li><li>Fasteners, sealants, blocking, trim or minor consumables included.</li><li>Testing/adjustment required before completion.</li><li>Normal jobsite cleanup.</li></ul><h2>3. Exclusions / Assumptions</h2><div class="box">Unless specifically listed in the scope, price excludes concealed damage, structural engineering, major electrical/plumbing/HVAC relocation, asbestos/lead/mold remediation, permits and fees, code upgrades outside the described work, owner-requested changes, material defects in customer-supplied products, and repairs to areas not disturbed by the stated scope.</div><h2>4. Customer-Supplied Material Language</h2><div class="box">Customer-supplied materials must be onsite, complete and suitable for installation when work begins. Delays, missing components, incompatible materials, defects or replacement materials may affect schedule and price. Contractor is not responsible for manufacturer defects or warranty coverage on customer-purchased materials.</div><h2>5. Hidden-Condition / Change-Order Language</h2><div class="box">Pricing is based on visible and reasonably accessible conditions at the time of estimate. If concealed damage, unsafe conditions or work outside this scope is discovered, work affecting that condition will pause and the customer will receive revised scope/pricing before additional work proceeds. Customer-requested additions or changes are treated as change orders.</div><h2>6. Acceptance</h2><div class="box">Customer accepts the scope, price, exclusions and payment schedule above and authorizes the described work.<br><br>Customer signature: ____________________ Date: __________<br>Contractor signature: ____________________ Date: __________</div><h2>7. Closeout / Paid Receipt Checklist</h2><ul><li>Project name and address.</li><li>Original contract amount + approved change orders.</li><li>Total paid and payment date.</li><li>Balance: $0.00 when fully paid.</li><li>Short description of completed work.</li><li>Warranty or manufacturer-document handoff where applicable.</li></ul><p class="small">Template only; adapt it to the project, your licensing status, local law, permit requirements and insurance. This is not legal, tax, engineering or licensing advice.</p></div></body></html>`;
 }
@@ -214,6 +226,32 @@ const server=http.createServer(async(req,res)=>{
     try { const result=await scanCached(profileFromUrl(u)); res.writeHead(200,{'content-type':'application/json','cache-control':'public,max-age=300'}); return res.end(JSON.stringify(result)); }
     catch(e){ res.writeHead(500,{'content-type':'application/json'}); return res.end(JSON.stringify({ok:false,error:'scan_failed'})); }
   }
+  if (u.pathname==='/handyman-quote-scope-template') {
+    res.writeHead(200,{'content-type':'text/html; charset=utf-8'});
+    return res.end(offerPage({
+      title:'Handyman Quote & Scope Kit',
+      headline:'Stop losing money to vague handyman estimates.',
+      description:'A reusable $9 quote and scope kit for handyman and small contracting jobs, including scope language, exclusions, customer-supplied material terms, change-order language, payment structure, acceptance and closeout.',
+      price:9,
+      bullets:['Reusable estimate/proposal structure','Scope-writing checklist','Exclusions and assumptions language','Customer-supplied material terms','Hidden-condition and change-order language','Payment schedule and acceptance structure','Paid-receipt and closeout checklist'],
+      checkoutUrl:LIVE_OFFERS.handymanKit,
+      canonical:'https://bidlens-radar.onrender.com/handyman-quote-scope-template',
+      cta:'Get the kit — $9'
+    }));
+  }
+  if (u.pathname==='/business-idea-stress-test') {
+    res.writeHead(200,{'content-type':'text/html; charset=utf-8'});
+    return res.end(offerPage({
+      title:'AI Business Idea Stress Test',
+      headline:'Find the weak point before you waste a month building.',
+      description:'Submit one business or side-hustle idea and get a practical $19 pressure test covering demand, competition, monetization, major risks, the fastest low-cost validation test, a first-revenue path and a 7-day action plan.',
+      price:19,
+      bullets:['Demand and buyer reality check','Competition and substitute analysis','Monetization path','Major execution risks','Fastest $0/low-cost validation test','First-revenue path','7-day action plan'],
+      checkoutUrl:LIVE_OFFERS.ideaStressTest,
+      canonical:'https://bidlens-radar.onrender.com/business-idea-stress-test',
+      cta:'Stress-test my idea — $19'
+    }));
+  }
   if (u.pathname==='/tools') { res.writeHead(200,{'content-type':'text/html; charset=utf-8'}); return res.end(toolsPage()); }
   if (u.pathname===HANDYMAN_KIT_PATH) { res.writeHead(200,{'content-type':'text/html; charset=utf-8','x-robots-tag':'noindex, nofollow'}); return res.end(handymanKitPage()); }
   if (u.pathname===`/${INDEXNOW_KEY}.txt`) {
@@ -225,7 +263,7 @@ const server=http.createServer(async(req,res)=>{
     return res.end('User-agent: *\nAllow: /\nSitemap: https://bidlens-radar.onrender.com/sitemap.xml\n');
   }
   if (u.pathname==='/sitemap.xml') {
-    const urls=['',...Object.keys(CATEGORY_PAGES).map(x=>'bids/'+x),...Object.keys(LOCAL_PAGES).map(x=>'bids/'+x)];
+    const urls=['','tools','handyman-quote-scope-template','business-idea-stress-test',...Object.keys(CATEGORY_PAGES).map(x=>'bids/'+x),...Object.keys(LOCAL_PAGES).map(x=>'bids/'+x)];
     const xml='<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+urls.map(x=>'<url><loc>https://bidlens-radar.onrender.com/'+x+'</loc></url>').join('')+'</urlset>';
     res.writeHead(200,{'content-type':'application/xml; charset=utf-8'});
     return res.end(xml);
