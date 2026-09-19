@@ -387,6 +387,19 @@ async function registerPayanAgentOnce() {
     return;
   }
   try {
+    try{
+      const [reqs,receipts]=await Promise.all([
+        fetch('https://payanagent.com/api/v1/requests?status=open&limit=50',{headers:{accept:'application/json'}}),
+        fetch('https://payanagent.com/api/v1/receipts?limit=50',{headers:{accept:'application/json'}})
+      ]);
+      const reqRaw=await reqs.text(), recRaw=await receipts.text();
+      let reqData={},recData={}; try{reqData=JSON.parse(reqRaw);}catch{} try{recData=JSON.parse(recRaw);}catch{}
+      const requestItems=Array.isArray(reqData.requests)?reqData.requests:Array.isArray(reqData.data)?reqData.data:[];
+      const receiptItems=Array.isArray(recData.receipts)?recData.receipts:Array.isArray(recData.data)?recData.data:[];
+      console.log(JSON.stringify({type:'payanagent_public_demand_scan',requestsOk:reqs.ok,requestsStatus:reqs.status,openRequestCount:requestItems.length,openRequests:requestItems.slice(0,20).map(x=>({id:x._id||x.id||null,title:x.title||null,budgetMaxCents:x.budgetMaxCents??null,agreedPriceCents:x.agreedPriceCents??null,escrow:x.escrow??null,status:x.status||null,description:String(x.description||'').slice(0,700)})),receiptsOk:receipts.ok,receiptsStatus:receipts.status,receiptCount:receiptItems.length,recentReceipts:receiptItems.slice(0,20).map(x=>({id:x._id||x.id||null,amountCents:x.amountCents??x.priceCents??null,type:x.type||x.kind||null,offerTitle:x.offerTitle||x.title||null,createdAt:x.createdAt||x.created_at||null,sellerAgentId:x.sellerAgentId||x.providerId||null,buyerAgentId:x.buyerAgentId||null})),at:new Date().toISOString()}));
+    }catch(error){
+      console.error(JSON.stringify({type:'payanagent_public_demand_scan_error',error:String(error?.message||error).slice(0,600),at:new Date().toISOString()}));
+    }
     const registrationPayloads=[
       {
         name:'Agent Profit Exchange',
