@@ -157,6 +157,64 @@ async function superteamFeed() {
   return data;
 }
 
+function taskRows(data) {
+  if (Array.isArray(data)) return data;
+  for (const key of ['data','tasks','items','results']) {
+    if (Array.isArray(data?.[key])) return data[key];
+    if (Array.isArray(data?.data?.[key])) return data.data[key];
+  }
+  return [];
+}
+
+function safeTaskBountyCandidate(row = {}) {
+  const id = String(row.id || row.task_id || row.taskId || '').trim().slice(0,120) || null;
+  const title = String(row.title || row.name || row.summary || row.description || 'TaskBounty task').trim().slice(0,300);
+  const payoutRaw = row.payout_usdc ?? row.reward_usdc ?? row.reward ?? row.payout ?? row.amount_usdc ?? row.amount ?? row.bounty;
+  const payout = Number(payoutRaw);
+  const bondRaw = row.bond_usdc ?? row.bond ?? row.required_bond ?? row.solver_bond ?? row.deposit ?? 0;
+  const bond = Number(bondRaw);
+  const deadline = String(row.deadline || row.expires_at || row.expiresAt || row.submission_deadline || row.submissionDeadline || '').trim().slice(0,100) || null;
+  const state = String(row.state || row.status || 'open').trim().slice(0,60);
+  const platform = String(row.platform || row.source_platform || '').trim().slice(0,80) || null;
+  const language = String(row.language || row.programming_language || '').trim().slice(0,80) || null;
+  const verifier = String(row.verifier || row.verification || row.acceptance_rule || row.acceptance || '').trim().slice(0,500) || null;
+  const repo = String(row.repo_url || row.repository_url || row.repository || '').trim().slice(0,500) || null;
+  const sourceUrl = String(row.url || row.task_url || row.link || '').trim().slice(0,500) || (id ? `https://www.task-bounty.com/tasks/${encodeURIComponent(id)}` : 'https://www.task-bounty.com/');
+  return {
+    id,
+    title,
+    payout_usdc:Number.isFinite(payout) ? payout : null,
+    bond_usdc:Number.isFinite(bond) && bond > 0 ? bond : 0,
+    deadline,
+    status:state,
+    platform,
+    language,
+    verifier,
+    repository_url:repo,
+    source_url:sourceUrl,
+    funded:Boolean(row.funded === true || row.escrowed === true || row.funding_status === 'funded' || row.fundingStatus === 'funded'),
+    funding_evidence:row.funded === true || row.escrowed === true || row.funding_status === 'funded' || row.fundingStatus === 'funded' ? 'taskbounty-reported-funded' : null
+  };
+}
+
+async function taskBountyFeed() {
+  const status = await vault.status();
+  if (!status.connected) return { ok:false, connected:false, candidates:[], checkedAt:new Date().toISOString() };
+  const token = await vault.getToken();
+  if (!token) return { ok:false, connected:true, authReady:false, candidates:[], checkedAt:new Date().toISOString() };
+  const check = await fetchJson(`${TASKBOUNTY_API}/tasks?state=open&limit=50`, { headers: { authorization: `Bearer ${token}` } }, 30000);
+  if (check.ok) await vault.markVerified();
+  return {
+    ok:check.ok,
+    connected:true,
+    authReady:check.ok,
+    source:'TaskBounty',
+    candidates:check.ok ? taskRows(check.data).map(safeTaskBountyCandidate).slice(0,50) : [],
+    authHttpStatus:check.status,
+    checkedAt:new Date().toISOString()
+  };
+}
+
 async function taskBountyStatus() {
   const status = await vault.status();
   if (!status.connected) return { ...status, authReady: false, openTaskCount: null };
@@ -287,6 +345,12 @@ async function handleSolver(req, res, url) {
 }
 
 async function handleVault(req, res, path) {
+  if (path === '/apx/taskbounty-feed' && req.method === 'GET') {
+    const feed = await taskBountyFeed().catch(error => ({ ok:false, connected:true, authReady:false, candidates:[], error:String(error?.message || error).slice(0,300), checkedAt:new Date().toISOString() }));
+    sendJson(res, 200, feed);
+    return true;
+  }
+
   if (path === '/apx/superteam-feed' && req.method === 'GET') {
     const feed = await superteamFeed().catch(error => ({ ok:false, connected:true, candidates:[], error:String(error?.message || error).slice(0,300), checkedAt:new Date().toISOString() }));
     sendJson(res, 200, feed);
