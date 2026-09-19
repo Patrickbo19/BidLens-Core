@@ -16,7 +16,7 @@ const directoryBootTimers = new Set([
 ]);
 const sellerCoreSetTimeout = global.setTimeout;
 global.setTimeout = function income2NoDirectoryBootTimers(callback, delay, ...args) {
-  if (directoryBootTimers.has(callback?.name)) {
+  if (directoryBootTimers.has(callback?.name) && String(process.env.INCOME2_ALLOW_DIRECTORY_BOOT || '') !== '1') {
     console.log(JSON.stringify({
       type: 'directory_registration_skipped',
       registrar: callback.name,
