@@ -438,8 +438,17 @@ async function runClawlancerHarvestOnce() {
   }catch(error){
     console.error(JSON.stringify({type:'clawlancer_bounty_scan_error',error:String(error?.message||error).slice(0,800),at:new Date().toISOString()}));
   }
+  if(String(process.env.CLAWLANCER_FORCE_CDP_ONCE||'')==='1'){
+    try{
+      const r=await fetch(base+'/agents/me',{method:'PATCH',headers:{...headers,'content-type':'application/json'},body:JSON.stringify({wallet_provider:'cdp'})});
+      const raw=await r.text(); let data={}; try{data=JSON.parse(raw)}catch{}
+      console.log(JSON.stringify({type:'clawlancer_cdp_patch',ok:r.ok,status:r.status,response:r.ok?{wallet_provider:data.wallet_provider||data.agent?.wallet_provider||null,wallet_address:data.wallet_address||data.agent?.wallet_address||null,cdp_wallet_id:data.cdp_wallet_id||data.agent?.cdp_wallet_id||null,cdp_wallet_address:data.cdp_wallet_address||data.agent?.cdp_wallet_address||null}:String(data.error||raw).slice(0,1000),at:new Date().toISOString()}));
+    }catch(error){
+      console.error(JSON.stringify({type:'clawlancer_cdp_patch_error',error:String(error?.message||error).slice(0,800),at:new Date().toISOString()}));
+    }
+  }
   const payoutWallet=String(process.env.CLAWLANCER_PAYOUT_WALLET||'').trim();
-  if(payoutWallet){
+  if(payoutWallet && String(process.env.CLAWLANCER_FORCE_CDP_ONCE||'')!=='1'){
     try{
       const r=await fetch(base+'/agents/me',{method:'PATCH',headers:{...headers,'content-type':'application/json'},body:JSON.stringify({wallet_address:payoutWallet})});
       const raw=await r.text(); let data={}; try{data=JSON.parse(raw)}catch{}
