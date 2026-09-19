@@ -58,17 +58,29 @@ function normalizeDelegation(input={}){
 }
 
 async function getJson(source){
-  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),15000);
-  try{
-    const options={method:source.method||'GET',headers:{accept:'application/json','user-agent':'APX/0.3'},signal:ctl.signal};
-    if(options.method==='POST'){
-      options.headers['content-type']='application/json';
-      options.body=JSON.stringify(source.body||{});
-    }
-    const r=await fetch(source.url,options);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    return await r.json();
-  }finally{clearTimeout(timer);}
+  let lastError=null;
+  for(let attempt=1;attempt<=2;attempt++){
+    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),attempt===1?15000:30000);
+    try{
+      const options={method:source.method||'GET',headers:{accept:'application/json','user-agent':'APX/0.3'},signal:ctl.signal};
+      if(options.method==='POST'){
+        options.headers['content-type']='application/json';
+        options.body=JSON.stringify(source.body||{});
+      }
+      const r=await fetch(source.url,options);
+      if(!r.ok){
+        lastError=new Error('HTTP '+r.status);
+        if(attempt<2 && [502,503,504].includes(r.status)){await new Promise(resolve=>setTimeout(resolve,1500));continue;}
+        throw lastError;
+      }
+      return await r.json();
+    }catch(e){
+      lastError=e;
+      if(attempt<2){await new Promise(resolve=>setTimeout(resolve,1500));continue;}
+      throw e;
+    }finally{clearTimeout(timer);}
+  }
+  throw lastError||new Error('source_fetch_failed');
 }
 
 function flatten(value,source,out=[],depth=0){
@@ -336,6 +348,22 @@ async function registerDirectories(){
     inputSchema:{properties:{opportunity_id:{type:'string'},agent:{type:'object'},authority:{type:'object'},preferences:{type:'object'}},required:['opportunity_id']},
     output:{example:{ok:true,status:'execution_candidate',verifiedAt:'2026-09-19T00:00:00.000Z',execution:{sourceRail:'funded market',sourceUrl:'https://example.com/task',recommendedWorker:'coding-agent',nextAction:'Open the source rail and execute within delegated authority.'}}}
   });
+  // Mirror PaymentRequired in the JSON body as well as the canonical v2 header.
+  // Some machine indexes inspect the body during their unpaid probe.
+  app.use('/v1/execution-packet',(req,res,next)=>{
+    const hasPayment=Boolean(req.headers['payment-signature']||req.headers['x-payment']);
+    if(hasPayment)return next();
+    const required={
+      x402Version:2,
+      error:'PAYMENT-SIGNATURE header is required',
+      resource:{url:ORIGIN+'/v1/execution-packet',description:'Freshly revalidate a funded opportunity and return a source-linked execution packet for an AI worker.',mimeType:'application/json',serviceName:'Agent Profit Exchange',tags:['make-money','funded-work','agent-commerce']},
+      accepts:[{scheme:'exact',network:NETWORK,amount:'10000',asset:'0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',payTo:PAY_TO,maxTimeoutSeconds:300,extra:{name:'USD Coin',version:'2'}}],
+      extensions:{}
+    };
+    res.set('PAYMENT-REQUIRED',Buffer.from(JSON.stringify(required)).toString('base64'));
+    return res.status(402).json(required);
+  });
+
   app.use(paymentMiddleware({
     'POST /v1/execution-packet':{
       accepts:[{scheme:'exact',price:EXECUTION_PACKET_PRICE,network:NETWORK,payTo:PAY_TO}],
