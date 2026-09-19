@@ -88,7 +88,7 @@ function flatten(value,source,out=[],depth=0){
   const url=text(value.url||value.link||value.href||value.source_url||value.claim_url);
   const status=text(value.status||value.state||value.availability);
   const fundingEvidence=text(value.funding_evidence||value.fundingEvidence);
-  const funded=value.funded===true||Boolean(fundingEvidence)||/funded|open|ready|active/i.test(status);
+  const funded=value.funded===true||Boolean(fundingEvidence);
   const verifier=text(value.verifier||value.verification||value.acceptance||value.acceptance_rule);
   const blockers=Array.isArray(value.blockers)?value.blockers.map(x=>text(x)).filter(Boolean).slice(0,12):[];
   const deadline=text(value.deadline||value.submission_deadline||value.submissionDeadline)||null;
