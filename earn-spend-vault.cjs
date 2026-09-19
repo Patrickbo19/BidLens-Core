@@ -4,8 +4,8 @@ try { ({ Pool } = require('pg')); } catch { Pool = null; }
 
 const DATABASE_URL = String(process.env.DATABASE_URL || '').trim();
 const VAULT_KEY_RAW = String(process.env.TASKBOUNTY_VAULT_KEY || '').trim();
-const OWNER_CAP_USDC = 2.0;
-const DEFAULT_ACTION_CAP_USDC = 2.0;
+const OWNER_CAP_USDC = 10.5;
+const DEFAULT_ACTION_CAP_USDC = 10.5;
 const NETWORK = 'eip155:8453';
 const USDC_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 const BASE_RPC_URL = String(process.env.EARN_BASE_RPC_URL || 'https://mainnet.base.org').trim();
@@ -201,7 +201,7 @@ async function reserveSpend({ amountUsdc, opportunityId, reason, targetUrl, payT
       return { reused: true, row: existing.rows[0] };
     }
     const usage = await budgetUsage(client);
-    if (usage.usedUsdc + amountUsdc > OWNER_CAP_USDC + 1e-9) throw new Error('2 USDC owner-principal cap exceeded');
+    if (usage.usedUsdc + amountUsdc > OWNER_CAP_USDC + 1e-9) throw new Error('10.5 USDC owner-principal cap exceeded');
     const id = crypto.randomUUID();
     await client.query(`
       INSERT INTO earn_spend_ledger
