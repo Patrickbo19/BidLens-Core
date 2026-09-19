@@ -216,6 +216,7 @@ async function taskBountyFeed() {
 }
 
 const TASKMARKET_API = 'https://api.taskmarket.dev/api';
+const APX_ORIGIN = String(process.env.PUBLIC_ORIGIN || 'https://earn-tools-backend.onrender.com').replace(/\/$/,'');
 
 function apxText(v, max=500) { return v == null ? '' : String(v).trim().slice(0,max); }
 function apxNum(v) { const n=Number(v); return Number.isFinite(n) ? n : null; }
@@ -358,7 +359,7 @@ async function apxMakeMoney(input={}) {
       {source:'TaskBounty',ok:Boolean(tb.ok),candidates:(tb.candidates||[]).length,error:tb.error||null},
       {source:'Superteam Earn',ok:Boolean(st.ok),candidates:(st.candidates||[]).length,error:st.error||null}
     ],
-    opportunities:opportunities.slice(0,25).map((x,i)=>({...x,handoff:{rank:i+1,agentId:delegation.agentId,parentAgentId:delegation.parentAgentId,rootSessionId:delegation.rootSessionId,sourceUrl:x.url,paidExecutionPacket:{method:'POST',url:'https://earn-tools-backend.onrender.com/apx/execution-packet',priceUsdc:0.01,opportunityId:x.opportunityId}}})),
+    opportunities:opportunities.slice(0,25).map((x,i)=>({...x,handoff:{rank:i+1,agentId:delegation.agentId,parentAgentId:delegation.parentAgentId,rootSessionId:delegation.rootSessionId,sourceUrl:x.url,paidExecutionPacket:{method:'POST',url:`${APX_ORIGIN}/apx/execution-packet`,priceUsdc:0.01,opportunityId:x.opportunityId}}})),
     rejected:rejected.slice(0,50)
   };
 }
@@ -494,7 +495,7 @@ async function handleSolver(req, res, url) {
 
 async function handleVault(req, res, path) {
   if (path === '/apx/card' && req.method === 'GET') {
-    sendJson(res,200,{name:'Agent Profit Exchange',short_name:'APX',version:'0.4',description:'Economic routing for AI-created worker agents.',commands:['MAKE_MONEY'],endpoints:{make_money:'https://earn-tools-backend.onrender.com/apx/make-money',execution_packet:'https://earn-tools-backend.onrender.com/apx/execution-packet',protocol:'https://earn-tools-backend.onrender.com/apx/protocol'},payments:{protocol:'x402',network:'eip155:8453',asset:'USDC',execution_packet_price_usdc:0.01},custody:false});
+    sendJson(res,200,{name:'Agent Profit Exchange',short_name:'APX',version:'0.4',description:'Economic routing for AI-created worker agents.',commands:['MAKE_MONEY'],endpoints:{make_money:`${APX_ORIGIN}/apx/make-money`,execution_packet:`${APX_ORIGIN}/apx/execution-packet`,protocol:`${APX_ORIGIN}/apx/protocol`},payments:{protocol:'x402',network:'eip155:8453',asset:'USDC',execution_packet_price_usdc:0.01},custody:false});
     return true;
   }
   if (path === '/apx/protocol' && req.method === 'GET') {
