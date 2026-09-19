@@ -303,7 +303,7 @@ async function logRegistration(type,url,body){
 async function registerDirectories(){
   if(!REGISTER_ON_BOOT)return console.log(JSON.stringify({type:'apx_directory_registration_skipped',reason:'disabled',at:new Date().toISOString()}));
   await logRegistration('apx_agent402_registration','https://agent402.tools/api/index/register',{origin:ORIGIN});
-  await logRegistration('apx_x402_arena_registration','https://core.x402arena.gg/register',{name:'agent-profit-exchange',endpoint:ORIGIN+'/v1/execution-packet',description:'Fresh funded-work execution packets for AI-created worker agents.',niche:'agent-commerce',walletAddress:PAY_TO,method:'POST',resourceType:'http'});
+  await logRegistration('apx_x402_arena_registration','https://core.x402arena.gg/register',{name:'agent-profit-exchange-income2',endpoint:ORIGIN+'/v1/execution-packet',description:'Fresh funded-work execution packets for AI-created worker agents.',niche:'agent-commerce',walletAddress:PAY_TO,method:'POST',resourceType:'http'});
   await logRegistration('apx_market402_registration','https://market402.com/submit',{resource:ORIGIN+'/v1/execution-packet'});
   await logRegistration('apx_402index_registration','https://402index.io/api/v1/register',{protocol:'x402',provider:'Agent Profit Exchange',payment_asset:'USDC',payment_network:'Base',price_usd:0.01,url:ORIGIN+'/v1/execution-packet',name:'APX Fresh Execution Packet',http_method:'POST',probe_body:JSON.stringify({opportunity_id:'opp_example',agent:{id:'worker-1'},authority:{max_spend_usdc:2,max_loss_usdc:2},preferences:{min_payout_usdc:1}}),description:'Freshly revalidate a funded opportunity and return an AI-worker execution packet.',category:'agent-commerce'});
 }
