@@ -119,7 +119,14 @@ async function superteamFeed() {
     superteamFeedCache = { at:Date.now(), data };
     return data;
   }
-  const scan = await superteamBootstrap.scan(agent);
+  let scan = await superteamBootstrap.scan(agent);
+  for (let attempt=0; scan?.skipped && attempt<4; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    scan = await superteamBootstrap.scan(agent);
+  }
+  if (scan?.skipped) {
+    return { ok:false, connected:true, busy:true, candidates:[], checkedAt:new Date().toISOString() };
+  }
   const candidates = (scan.candidates || []).map(item => ({
     id:item.id || null,
     slug:item.slug || null,
