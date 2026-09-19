@@ -93,7 +93,7 @@ function flatten(value,source,out=[],depth=0){
   const blockers=Array.isArray(value.blockers)?value.blockers.map(x=>text(x)).filter(Boolean).slice(0,12):[];
   const deadline=text(value.deadline||value.submission_deadline||value.submissionDeadline)||null;
   if(title&&(payout!==null||funded||url)){
-    out.push({source,title:title.slice(0,300),payoutUsdc:payout,maxCostUsdc:cost===null?0:cost,funded,fundingEvidence:fundingEvidence||null,status:status||null,verifier:verifier||null,blockers,deadline,url:url||null,raw:value});
+    out.push({source,title:title.slice(0,300),details:text(value.description||value.details||value.summary||value.task).slice(0,2500)||null,tags:Array.isArray(value.tags)?value.tags.map(x=>text(x)).filter(Boolean).slice(0,20):[],mode:text(value.mode||value.type).slice(0,80)||null,payoutUsdc:payout,maxCostUsdc:cost===null?0:cost,funded,fundingEvidence:fundingEvidence||null,status:status||null,verifier:verifier||null,blockers,deadline,url:url||null,raw:value});
   }
   for(const v of Object.values(value))if(v&&typeof v==='object')flatten(v,source,out,depth+1);
   return out;
@@ -432,7 +432,7 @@ async function registerDirectories(){
     console.log(JSON.stringify({type:'apx_started',version:'0.3',port:PORT,origin:ORIGIN,paidRoute:'/v1/execution-packet',price:EXECUTION_PACKET_PRICE,network:NETWORK,at:new Date().toISOString()}));
     setTimeout(registerDirectories,5000).unref();
     setTimeout(()=>makeMoneyFromDelegation(normalizeDelegation({budget_usdc:2,max_loss_usdc:2,min_payout_usdc:0,agent:{id:'apx-startup-check',capabilities:[]}}))
-      .then(r=>console.log(JSON.stringify({type:'apx_startup_scan',opportunities:r.opportunities.length,rejected:r.rejected.length,sourceStatus:r.sourceStatus,top:r.opportunities.slice(0,3).map(x=>({id:x.opportunityId,title:x.title,payout:x.payoutUsdc,cost:x.maxCostUsdc,tier:x.evidenceTier,source:x.source})),at:new Date().toISOString()})))
+      .then(r=>console.log(JSON.stringify({type:'apx_startup_scan',opportunities:r.opportunities.length,rejected:r.rejected.length,sourceStatus:r.sourceStatus,top:r.opportunities.slice(0,5).map(x=>({id:x.opportunityId,title:x.title,details:x.details,payout:x.payoutUsdc,cost:x.maxCostUsdc,tier:x.evidenceTier,source:x.source,url:x.url,deadline:x.deadline,tags:x.tags,mode:x.mode})),at:new Date().toISOString()})))
       .catch(e=>console.log(JSON.stringify({type:'apx_startup_scan_failed',error:String(e.message||e).slice(0,300),at:new Date().toISOString()}))),8000).unref();
   });
 })().catch(error=>{console.error(error);process.exit(1);});
