@@ -31,7 +31,7 @@ async function worker(){
   }
   const {privateKeyToAccount}=await import('viem/accounts');
   const account=privateKeyToAccount(PRIVATE_KEY);
-  const workerAddress=workerAddress.toLowerCase();
+  const workerAddress=account.address.toLowerCase();
   const listing=await json(`${TASKMARKET_API}/tasks?status=open&limit=50&sort=reward_desc`);
   if(!listing.ok) throw new Error(`task list failed (${listing.status})`);
   const tasks=rows(listing.data);
