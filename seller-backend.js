@@ -6,7 +6,7 @@ if (String(process.env.APX_SERVICE_MODE || '') === '1') {
   require('./income2-agent-network-bridge.cjs').install();
   require('./income2-agent-wallet.cjs').install();
   require('./income2-personal-gateway.cjs').install();
-  require('./taskmarket-autosubmit.cjs').launch();
+  // Taskmarket submission completed; autosubmit intentionally disabled to prevent duplicate entries.
   require('./seller-backend-core.js');
   launchTruth.finalize();
   require('./income2-agent-network-selftest.cjs').schedule();
