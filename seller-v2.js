@@ -438,6 +438,16 @@ async function runClawlancerHarvestOnce() {
   }catch(error){
     console.error(JSON.stringify({type:'clawlancer_bounty_scan_error',error:String(error?.message||error).slice(0,800),at:new Date().toISOString()}));
   }
+  const payoutWallet=String(process.env.CLAWLANCER_PAYOUT_WALLET||'').trim();
+  if(payoutWallet){
+    try{
+      const r=await fetch(base+'/agents/me',{method:'PATCH',headers:{...headers,'content-type':'application/json'},body:JSON.stringify({wallet_address:payoutWallet})});
+      const raw=await r.text(); let data={}; try{data=JSON.parse(raw)}catch{}
+      console.log(JSON.stringify({type:'clawlancer_wallet_patch',ok:r.ok,status:r.status,wallet:payoutWallet,response:r.ok?data:String(data.error||raw).slice(0,1000),at:new Date().toISOString()}));
+    }catch(error){
+      console.error(JSON.stringify({type:'clawlancer_wallet_patch_error',error:String(error?.message||error).slice(0,800),at:new Date().toISOString()}));
+    }
+  }
   const welcome=String(process.env.CLAWLANCER_WELCOME_BOUNTY_ID||'');
   if(!welcome) return;
   try{
