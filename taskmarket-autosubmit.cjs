@@ -31,26 +31,32 @@ async function worker(){
   }
   const {privateKeyToAccount}=await import('viem/accounts');
   const account=privateKeyToAccount(PRIVATE_KEY);
+  const workerAddress=workerAddress.toLowerCase();
   const listing=await json(`${TASKMARKET_API}/tasks?status=open&limit=50&sort=reward_desc`);
   if(!listing.ok) throw new Error(`task list failed (${listing.status})`);
   const tasks=rows(listing.data);
   const task=tasks.find(isTarget);
   if(!task){
-    console.log(JSON.stringify({type:'taskmarket_autosubmit_skipped',reason:'target_not_found',openTasks:tasks.length,workerAddress:account.address,at:new Date().toISOString()}));
+    console.log(JSON.stringify({type:'taskmarket_autosubmit_skipped',reason:'target_not_found',openTasks:tasks.length,workerAddress:workerAddress,at:new Date().toISOString()}));
     return;
   }
   const taskId=String(task.id||task.taskId||task.task_id||'').trim();
   if(!taskId) throw new Error('target task missing id');
-  const mine=await json(`${TASKMARKET_API}/submissions/mine?workerAddress=${encodeURIComponent(account.address)}`);
+  const mine=await json(`${TASKMARKET_API}/submissions/mine?workerAddress=${encodeURIComponent(workerAddress)}`);
   const mineRows=rows(mine.data);
   if(mine.ok && mineRows.some(x=>String(x.taskId||x.task_id||'')===taskId)){
-    console.log(JSON.stringify({type:'taskmarket_autosubmit_skipped',reason:'already_submitted',taskId,workerAddress:account.address,at:new Date().toISOString()}));
+    console.log(JSON.stringify({type:'taskmarket_autosubmit_skipped',reason:'already_submitted',taskId,workerAddress:workerAddress,at:new Date().toISOString()}));
     return;
   }
-  const signature=await account.signMessage({message:`taskmarket:submit:${taskId}`});
+  const message=`taskmarket:submit:${taskId}`;
+  const signature=await account.signMessage({message});
+  const {recoverMessageAddress}=await import('viem');
+  const recovered=(await recoverMessageAddress({message,signature})).toLowerCase();
+  console.log(JSON.stringify({type:'taskmarket_signature_preflight',taskId,workerAddress,recovered,matches:recovered===workerAddress,at:new Date().toISOString()}));
+  if(recovered!==workerAddress) throw new Error('local signature recovery mismatch');
   const payload={
     taskId,
-    workerAddress:account.address,
+    workerAddress:workerAddress,
     artifacts:[{fileName:'verification.md',mimeType:'text/markdown',role:'final',file:VERIFICATION_MD_B64}],
     signature
   };
@@ -60,7 +66,7 @@ async function worker(){
   if(!submit.ok) throw new Error(`submission failed (${submit.status}): ${JSON.stringify(submit.data).slice(0,500)}`);
   console.log(JSON.stringify({
     type:'taskmarket_submission_created',taskId,submissionId:submit.data?.submissionId||submit.data?.data?.submissionId||null,
-    workerAddress:account.address,rewardBaseUnits:task.reward||null,netRewardBaseUnits:task.netReward||null,
+    workerAddress:workerAddress,rewardBaseUnits:task.reward||null,netRewardBaseUnits:task.netReward||null,
     expiryTime:task.expiryTime||null,at:new Date().toISOString()
   }));
 }
