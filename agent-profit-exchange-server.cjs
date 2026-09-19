@@ -431,7 +431,22 @@ async function registerDirectories(){
   server.listen(PORT,'0.0.0.0',()=>{
     console.log(JSON.stringify({type:'apx_started',version:'0.3',port:PORT,origin:ORIGIN,paidRoute:'/v1/execution-packet',price:EXECUTION_PACKET_PRICE,network:NETWORK,at:new Date().toISOString()}));
     setTimeout(registerDirectories,5000).unref();
-    setTimeout(()=>makeMoneyFromDelegation(normalizeDelegation({budget_usdc:2,max_loss_usdc:2,min_payout_usdc:0,agent:{id:'apx-startup-check',capabilities:[]}}))
+    setTimeout(async()=>{
+      try{
+        const r=await fetch('https://api.taskmarket.dev/api/legal/current',{headers:{accept:'application/json','user-agent':'APX/0.3'}});
+        const data=await r.json().catch(()=>({}));
+        console.log(JSON.stringify({
+          type:'taskmarket_legal_bundle',
+          ok:r.ok,status:r.status,
+          bundleVersion:data.bundleVersion||data.version||data.data?.bundleVersion||data.data?.version||null,
+          bundleDigest:data.bundleDigest||data.data?.bundleDigest||null,
+          acceptanceStatement:data.acceptanceStatement||data.data?.acceptanceStatement||null,
+          documents:(data.documents||data.data?.documents||[]).map(x=>({title:x.title,version:x.version,url:x.url,contentHash:x.contentHash})),
+          at:new Date().toISOString()
+        }));
+      }catch(e){console.log(JSON.stringify({type:'taskmarket_legal_bundle_error',error:String(e.message||e).slice(0,300),at:new Date().toISOString()}));}
+    },6500).unref();
+    setTimeout(()=>makeMoneyFromDelegation(normalizeDelegation({budget_usdc:10.5,max_loss_usdc:10.5,min_payout_usdc:0,agent:{id:'apx-startup-check',capabilities:[]}}))
       .then(r=>console.log(JSON.stringify({type:'apx_startup_scan',opportunities:r.opportunities.length,rejected:r.rejected.length,sourceStatus:r.sourceStatus,top:r.opportunities.slice(0,5).map(x=>({id:x.opportunityId,title:x.title,details:x.details,payout:x.payoutUsdc,cost:x.maxCostUsdc,tier:x.evidenceTier,source:x.source,url:x.url,deadline:x.deadline,tags:x.tags,mode:x.mode})),at:new Date().toISOString()})))
       .catch(e=>console.log(JSON.stringify({type:'apx_startup_scan_failed',error:String(e.message||e).slice(0,300),at:new Date().toISOString()}))),8000).unref();
   });
