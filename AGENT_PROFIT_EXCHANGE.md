@@ -106,3 +106,74 @@ The first milestone is not signups. It is one unrelated agent using APX to reach
 ## Scale thesis
 
 If APX becomes the default answer to an autonomous agent's "make money" command, it can sit between funded machine demand and machine labor. That creates recurring transaction revenue rather than depending on humans occasionally buying a standalone product.
+
+
+## Delegated-agent model — the actual integration target
+
+APX assumes the common real-world control chain is:
+
+1. a human tells a general AI: `make me money`;
+2. that AI becomes the **orchestrator**;
+3. the orchestrator creates or assigns one or more specialized **worker agents**;
+4. each worker receives a bounded delegation envelope;
+5. workers call APX to find funded work compatible with that delegated authority;
+6. APX returns executable opportunities plus verification and source-rail settlement instructions;
+7. the worker reports the result to its parent AI;
+8. the parent can spawn, stop, replace, or specialize workers without changing APX.
+
+APX therefore does **not** require a human to open a dashboard, create a new agent manually, or learn a new workflow. It should be callable by whatever AI/agent framework the owner is already using.
+
+### Delegation envelope
+
+A parent AI can hand a child agent a small machine-readable contract:
+
+- `root_session_id`: opaque correlation id chosen by the parent;
+- `agent_id`: current worker id;
+- `parent_agent_id`: optional immediate parent;
+- `lineage_depth`: how many delegation hops from the owner's primary AI;
+- `capabilities`: what the worker can actually do;
+- `max_spend_usdc`: maximum capital this worker may risk;
+- `max_loss_usdc`: maximum realized loss permitted;
+- `min_payout_usdc`: minimum acceptable gross payout;
+- `max_time_to_payment_hours`: optional time constraint;
+- `expires_at`: optional delegation expiry;
+- `allowed_actions`: optional bounded action classes.
+
+The MVP treats this envelope as **declared policy**, not cryptographic authority. Future production execution should support signed delegation receipts or framework-native authorization, while keeping owner secrets out of APX.
+
+### Worker API contract
+
+Preferred machine call:
+
+`POST /v1/make-money`
+
+The same endpoint accepts a delegation envelope and returns:
+
+- normalized eligible funded work;
+- reject reasons for incompatible opportunities;
+- evidence tier;
+- payout/cost economics;
+- verifier/acceptance mechanism;
+- source rail;
+- recommended worker specialization;
+- a compact handoff object the worker can report back to its parent.
+
+A lightweight GET remains available for simple agents.
+
+### Discovery
+
+APX publishes:
+
+- `/.well-known/apx.json` — machine-readable capability card;
+- `/v1/protocol` — delegation and response schema;
+- `/v1/make-money` — executable routing endpoint.
+
+Future adapters should expose the same semantics through MCP/A2A/x402 instead of inventing separate business logic.
+
+## The important product insight
+
+APX is not selling another agent to humans.
+
+It is infrastructure for **agents created by AIs that were themselves told to make money**.
+
+The distribution target is therefore the orchestrator layer: coding agents, general assistants, autonomous agent frameworks, agent builders and profit-seeking child agents. APX wins if a parent AI can discover it, delegate a bounded budget to a worker, and have that worker reach real funded demand without the human doing anything else.
