@@ -1,0 +1,30 @@
+name: earn-relay-ci
+
+on:
+  push:
+    paths:
+      - "earn-relay/**"
+      - ".github/workflows/earn-relay-ci.yml"
+  pull_request:
+    paths:
+      - "earn-relay/**"
+      - ".github/workflows/earn-relay-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: earn-relay
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: earn-relay/package.json
+      - run: npm install
+      - run: npm run build
+      - run: npm test
+      - run: npm run demo
