@@ -635,6 +635,14 @@ function proxy(req, res) {
 
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`INCOME 2 seller gateway listening on ${PORT}; core=${CORE_PORT}; vault=postgres; solverBridge=${SOLVER_KEY ? 'enabled' : 'disabled'}`);
+    setTimeout(() => apxMakeMoney({
+      budget_usdc:10.5,max_loss_usdc:10.5,min_payout_usdc:0,
+      agent:{id:'apx-live-scout',capabilities:['coding','research','analysis','data']}
+    }).then(result => console.log(JSON.stringify({
+      type:'apx_live_scan',sourceStatus:result.sourceStatus,eligibleCount:result.opportunities.length,
+      top:result.opportunities.slice(0,10).map(x=>({opportunityId:x.opportunityId,sourceTaskId:x.sourceTaskId,source:x.source,title:x.title,payoutUsdc:x.payoutUsdc,maxCostUsdc:x.maxCostUsdc,deadline:x.deadline,url:x.url,tags:x.tags,mode:x.mode})),
+      at:new Date().toISOString()
+    }))).catch(error=>console.error(JSON.stringify({type:'apx_live_scan_error',error:String(error?.message||error).slice(0,500),at:new Date().toISOString()}))),15000).unref();
   });
 
   const stop = () => {
