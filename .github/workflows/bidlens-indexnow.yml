@@ -1,0 +1,53 @@
+name: BidLens IndexNow
+
+on:
+  push:
+    branches:
+      - bidlens-radar-pivot
+    paths:
+      - 'bidlens-radar/**'
+      - '.github/workflows/bidlens-indexnow.yml'
+  workflow_dispatch:
+
+jobs:
+  notify-indexnow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Render auto-deploy
+        run: sleep 75
+
+      - name: Verify live site and IndexNow key
+        env:
+          KEY: 3eb268fc05803ae628a14eeba6944827
+        run: |
+          set -euo pipefail
+          curl --retry 6 --retry-delay 10 --fail --silent --show-error https://bidlens-radar.onrender.com/health
+          test "$(curl --retry 6 --retry-delay 10 --fail --silent --show-error "https://bidlens-radar.onrender.com/$KEY.txt")" = "$KEY"
+
+      - name: Notify IndexNow
+        env:
+          KEY: 3eb268fc05803ae628a14eeba6944827
+        run: |
+          set -euo pipefail
+          urls=(
+            "https://bidlens-radar.onrender.com/"
+            "https://bidlens-radar.onrender.com/tools"
+            "https://bidlens-radar.onrender.com/handyman-quote-scope-template"
+            "https://bidlens-radar.onrender.com/business-idea-stress-test"
+            "https://bidlens-radar.onrender.com/bids/construction-bids-tennessee"
+            "https://bidlens-radar.onrender.com/bids/roofing-bids-tennessee"
+            "https://bidlens-radar.onrender.com/bids/painting-bids-tennessee"
+            "https://bidlens-radar.onrender.com/bids/electrical-bids-tennessee"
+            "https://bidlens-radar.onrender.com/bids/concrete-bids-tennessee"
+            "https://bidlens-radar.onrender.com/bids/landscaping-bids-tennessee"
+            "https://bidlens-radar.onrender.com/bids/knoxville-contractor-bids"
+            "https://bidlens-radar.onrender.com/bids/oak-ridge-contractor-bids"
+            "https://bidlens-radar.onrender.com/bids/blount-county-contractor-bids"
+            "https://bidlens-radar.onrender.com/bids/loudon-county-contractor-bids"
+            "https://bidlens-radar.onrender.com/bids/sevierville-contractor-bids"
+          )
+          for u in "${urls[@]}"; do
+            code=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}"               --get "https://api.indexnow.org/indexnow"               --data-urlencode "url=$u"               --data-urlencode "key=$KEY")
+            echo "$code $u"
+            test "$code" = "200" -o "$code" = "202"
+          done
