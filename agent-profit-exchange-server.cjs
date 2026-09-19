@@ -10,13 +10,7 @@ const EXECUTION_PACKET_PRICE = '$0.01';
 const REGISTER_ON_BOOT = String(process.env.APX_DIRECTORY_REGISTER_ON_BOOT || '') === '1';
 
 const SOURCES = [
-  {
-    name:'EARN Opportunity Router',
-    url:'https://earn-router.onrender.com/api/opportunities',
-    method:'POST',
-    body:{userId:'apx_public_router',country:'US',device:'windows',zeroSpendOnly:false}
-  },
-  {name:'TaskBounty',url:'https://earn-tools-backend.onrender.com/taskbounty/status',method:'GET'},
+  {name:'TaskBounty',url:'https://earn-tools-backend.onrender.com/apx/taskbounty-feed',method:'GET'},
   {name:'Superteam Earn',url:'https://earn-tools-backend.onrender.com/apx/superteam-feed',method:'GET'}
 ];
 
