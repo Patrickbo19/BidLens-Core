@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const { spawn } = require('child_process');
 const vault = require('./taskbounty-vault.cjs');
 const moltbookVault = require('./moltbook-vault.cjs');
+const superteamVault = require('./superteam-vault.cjs');
+const superteamBootstrap = require('./superteam-bootstrap.cjs');
 
 const PORT = Number(process.env.PORT || 3000);
 const CORE_PORT = Number(process.env.SELLER_INTERNAL_PORT || 3901);
@@ -97,6 +99,55 @@ async function moltbookDemandStatus() {
     checkedAt: new Date().toISOString(),
     thirdPartyContentExposed: false,
   };
+}
+
+let superteamFeedCache = { at:0, data:null };
+const SUPERTEAM_FEED_CACHE_MS = 5 * 60 * 1000;
+
+async function superteamFeed() {
+  if (superteamFeedCache.data && Date.now() - superteamFeedCache.at < SUPERTEAM_FEED_CACHE_MS) return superteamFeedCache.data;
+  const state = await superteamVault.init();
+  const status = await superteamVault.status();
+  if (!state.persistent || !status.connected) {
+    const data = { ok:false, connected:false, candidates:[], checkedAt:new Date().toISOString() };
+    superteamFeedCache = { at:Date.now(), data };
+    return data;
+  }
+  const agent = await superteamVault.getAgent();
+  if (!agent) {
+    const data = { ok:false, connected:false, candidates:[], checkedAt:new Date().toISOString() };
+    superteamFeedCache = { at:Date.now(), data };
+    return data;
+  }
+  const scan = await superteamBootstrap.scan(agent);
+  const candidates = (scan.candidates || []).map(item => ({
+    id:item.id || null,
+    slug:item.slug || null,
+    title:item.title || null,
+    type:item.type || null,
+    agentAccess:item.agentAccess || null,
+    payout_usdc:Number.isFinite(Number(item.compensationUsd)) ? Number(item.compensationUsd) : null,
+    deadline:item.deadline || null,
+    expired:Boolean(item.expired),
+    blockers:Array.isArray(item.blockers) ? item.blockers : [],
+    autonomousCandidate:Boolean(item.autonomousCandidate),
+    source_url:item.slug ? `https://superteam.fun/earn/listing/${encodeURIComponent(item.slug)}` : 'https://superteam.fun/earn/agents',
+    funding_evidence:'platform-listed-reward',
+    status:item.expired ? 'expired' : 'open'
+  }));
+  const data = {
+    ok:true,
+    connected:true,
+    source:'Superteam Earn',
+    agentEligibleOnly:true,
+    listingCount:scan.listingCount || 0,
+    currentListingCount:scan.currentListingCount || 0,
+    autonomousCandidateCount:scan.autonomousCandidateCount || 0,
+    candidates,
+    checkedAt:new Date().toISOString()
+  };
+  superteamFeedCache = { at:Date.now(), data };
+  return data;
 }
 
 async function taskBountyStatus() {
@@ -229,6 +280,12 @@ async function handleSolver(req, res, url) {
 }
 
 async function handleVault(req, res, path) {
+  if (path === '/apx/superteam-feed' && req.method === 'GET') {
+    const feed = await superteamFeed().catch(error => ({ ok:false, connected:true, candidates:[], error:String(error?.message || error).slice(0,300), checkedAt:new Date().toISOString() }));
+    sendJson(res, 200, feed);
+    return true;
+  }
+
   if (path === '/taskbounty/status') {
     const status = await taskBountyStatus().catch(error => ({ connected: false, authReady: false, error: String(error?.message || error).slice(0, 300) }));
     sendJson(res, 200, { ok: true, taskBounty: status });
