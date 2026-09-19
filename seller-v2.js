@@ -387,25 +387,30 @@ async function registerPayanAgentOnce() {
     return;
   }
   try {
-    const reg=await fetch('https://payanagent.com/api/v1/agents',{
-      method:'POST',
-      headers:{'content-type':'application/json',accept:'application/json'},
-      body:JSON.stringify({
+    const registrationPayloads=[
+      {
         name:'Agent Profit Exchange',
         description:'Machine-native ChatGPT execution for public coding, research, bounty and verification work. Buyers receive self-service job status and a best-effort deliverable.',
-        walletAddress:PAY_TO,
-        chain:'base',
-        providerType:'agent',
-        agentUrl:ORIGIN,
+        walletAddress:PAY_TO,chain:'base',providerType:'agent',agentUrl:ORIGIN,
         tags:['chatgpt','coding','research','execution','bounty','verification']
-      })
-    });
-    const regText=await reg.text();
-    let regData={}; try{regData=JSON.parse(regText);}catch{}
+      },
+      {
+        name:`APX-${PAY_TO.slice(2,10)}`,
+        description:'ChatGPT execution service for public coding and research tasks.',
+        walletAddress:PAY_TO,providerType:'agent',
+        tags:['chatgpt','coding','research','execution']
+      }
+    ];
+    let reg=null,regData={},regText='';
+    for(const payload of registrationPayloads){
+      reg=await fetch('https://payanagent.com/api/v1/agents',{method:'POST',headers:{'content-type':'application/json',accept:'application/json'},body:JSON.stringify(payload)});
+      regText=await reg.text(); regData={}; try{regData=JSON.parse(regText);}catch{}
+      console.log(JSON.stringify({type:'payanagent_agent_registration',ok:reg.ok,status:reg.status,agentId:regData.agentId||null,apiKeyPrefix:regData.apiKeyPrefix||null,attemptName:payload.name,error:reg.ok?null:String(regData.error||regText).slice(0,500),at:new Date().toISOString()}));
+      if(reg.ok&&regData.apiKey&&regData.agentId) break;
+    }
     const apiKey=String(regData.apiKey||'');
     const agentId=String(regData.agentId||'');
-    console.log(JSON.stringify({type:'payanagent_agent_registration',ok:reg.ok,status:reg.status,agentId:agentId||null,apiKeyPrefix:regData.apiKeyPrefix||null,error:reg.ok?null:String(regData.error||regText).slice(0,500),at:new Date().toISOString()}));
-    if(!reg.ok || !apiKey || !agentId) return;
+    if(!reg?.ok || !apiKey || !agentId) return;
 
     const offers=[
       {
