@@ -10,6 +10,7 @@ const EXECUTION_PACKET_PRICE = '$0.01';
 const REGISTER_ON_BOOT = String(process.env.APX_DIRECTORY_REGISTER_ON_BOOT || '') === '1';
 
 const SOURCES = [
+  {name:'Taskmarket',url:'https://api.taskmarket.dev/api/tasks?status=open&limit=50&sort=reward_desc',method:'GET',transform:'taskmarket'},
   {name:'TaskBounty',url:'https://earn-tools-backend.onrender.com/apx/taskbounty-feed',method:'GET'},
   {name:'Superteam Earn',url:'https://earn-tools-backend.onrender.com/apx/superteam-feed',method:'GET'}
 ];
@@ -145,11 +146,36 @@ function score(x,delegation){
   return{eligible:true,reason:null,score:Math.round(s),expectedGrossUsdc:payout,maxCostUsdc:cost,expectedSpreadUsdc:payout-cost,evidenceTier:tier};
 }
 
+function transformSource(json,source){
+  if(source.transform==='taskmarket'){
+    const tasks=Array.isArray(json?.tasks)?json.tasks:[];
+    return {
+      candidates:tasks.map(task=>({
+        id:task.id||null,
+        title:String(task.description||'Taskmarket task').split('\n')[0].slice(0,300),
+        description:task.description||null,
+        payout_usdc:Number.isFinite(Number(task.reward)) ? Number(task.reward)/1e6 : null,
+        cost_usdc:0,
+        funded:Boolean(task.escrowTxHash),
+        funding_evidence:task.escrowTxHash ? 'base-usdc-escrow:'+task.escrowTxHash : null,
+        status:task.status||null,
+        deadline:task.expiryTime||null,
+        verifier:task.mode==='benchmark' ? 'metric/benchmark settlement' : 'requester acceptance under Taskmarket contract lifecycle',
+        source_url:task.id ? 'https://api.taskmarket.dev/api/tasks/'+encodeURIComponent(task.id) : 'https://taskmarket.dev',
+        tags:Array.isArray(task.tags)?task.tags:[],
+        mode:task.mode||null,
+        requesterAgentId:task.requesterAgentId||null
+      }))
+    };
+  }
+  return json;
+}
+
 async function collect(){
   const collected=[],sourceStatus=[];
   await Promise.all(SOURCES.map(async source=>{
     try{
-      const json=await getJson(source);
+      const json=transformSource(await getJson(source),source);
       const found=flatten(json,source.name);
       collected.push(...found);
       sourceStatus.push({source:source.name,ok:true,candidates:found.length});
