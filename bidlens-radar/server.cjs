@@ -3,6 +3,7 @@ const { URL } = require('url');
 
 const PORT = process.env.PORT || 10000;
 const CHECKOUT_URL = String(process.env.BIDLENS_CHECKOUT_URL || '').trim();
+const INDEXNOW_KEY = '3eb268fc05803ae628a14eeba6944827';
 const DEFAULT_KEYWORDS = ['construction','repair','maintenance','renovation','roof','roofing','paint','painting','electrical','concrete','landscaping','hvac','demolition','remodel','building','facility'];
 const LIVE_OFFERS = {
   handymanKit: 'https://buy.stripe.com/5kQfZb8WA2zKfEs4jT0kE00',
@@ -215,6 +216,10 @@ const server=http.createServer(async(req,res)=>{
   }
   if (u.pathname==='/tools') { res.writeHead(200,{'content-type':'text/html; charset=utf-8'}); return res.end(toolsPage()); }
   if (u.pathname===HANDYMAN_KIT_PATH) { res.writeHead(200,{'content-type':'text/html; charset=utf-8','x-robots-tag':'noindex, nofollow'}); return res.end(handymanKitPage()); }
+  if (u.pathname===`/${INDEXNOW_KEY}.txt`) {
+    res.writeHead(200,{'content-type':'text/plain; charset=utf-8','cache-control':'public,max-age=86400'});
+    return res.end(INDEXNOW_KEY);
+  }
   if (u.pathname==='/robots.txt') {
     res.writeHead(200,{'content-type':'text/plain; charset=utf-8'});
     return res.end('User-agent: *\nAllow: /\nSitemap: https://bidlens-radar.onrender.com/sitemap.xml\n');
