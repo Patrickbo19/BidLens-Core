@@ -16,7 +16,8 @@ const SOURCES = [
     method:'POST',
     body:{userId:'apx_public_router',country:'US',device:'windows',zeroSpendOnly:false}
   },
-  {name:'TaskBounty',url:'https://earn-tools-backend.onrender.com/taskbounty/status',method:'GET'}
+  {name:'TaskBounty',url:'https://earn-tools-backend.onrender.com/taskbounty/status',method:'GET'},
+  {name:'Superteam Earn',url:'https://earn-tools-backend.onrender.com/apx/superteam-feed',method:'GET'}
 ];
 
 const opportunityCache = new Map();
@@ -75,14 +76,17 @@ function flatten(value,source,out=[],depth=0){
   if(Array.isArray(value)){for(const x of value)flatten(x,source,out,depth+1);return out;}
   if(!value||typeof value!=='object')return out;
   const title=text(value.title||value.name||value.summary||value.task||value.description);
-  const payout=num(value.payout_usdc??value.reward_usdc??value.reward??value.payout??value.amount_usdc??value.amount);
+  const payout=num(value.payout_usdc??value.compensationUsd??value.reward_usdc??value.reward??value.payout??value.amount_usdc??value.amount);
   const cost=num(value.cost_usdc??value.max_cost_usdc??value.spend_usdc??value.bond_usdc??value.bond??0);
   const url=text(value.url||value.link||value.href||value.source_url||value.claim_url);
   const status=text(value.status||value.state||value.availability);
-  const funded=value.funded===true||/funded|open|ready|active/i.test(status);
+  const fundingEvidence=text(value.funding_evidence||value.fundingEvidence);
+  const funded=value.funded===true||Boolean(fundingEvidence)||/funded|open|ready|active/i.test(status);
   const verifier=text(value.verifier||value.verification||value.acceptance||value.acceptance_rule);
+  const blockers=Array.isArray(value.blockers)?value.blockers.map(x=>text(x)).filter(Boolean).slice(0,12):[];
+  const deadline=text(value.deadline||value.submission_deadline||value.submissionDeadline)||null;
   if(title&&(payout!==null||funded||url)){
-    out.push({source,title:title.slice(0,300),payoutUsdc:payout,maxCostUsdc:cost===null?0:cost,funded,status:status||null,verifier:verifier||null,url:url||null,raw:value});
+    out.push({source,title:title.slice(0,300),payoutUsdc:payout,maxCostUsdc:cost===null?0:cost,funded,fundingEvidence:fundingEvidence||null,status:status||null,verifier:verifier||null,blockers,deadline,url:url||null,raw:value});
   }
   for(const v of Object.values(value))if(v&&typeof v==='object')flatten(v,source,out,depth+1);
   return out;
@@ -108,8 +112,21 @@ function capabilityFit(x,capabilities){
     (capabilities.some(c=>/code|software|developer/i.test(c))&&/code|github|bug|api|software|repository|developer/i.test(hay))||
     (capabilities.some(c=>/research|analysis|data/i.test(c))&&/research|analysis|data|report|document/i.test(hay));
 }
+function blockerAllowed(blocker,allowedActions){
+  const a=(allowedActions||[]).map(x=>String(x).toLowerCase());
+  if(blocker==='social_account_or_content') return a.some(x=>['social_content','social_posting','use_social_account'].includes(x));
+  if(blocker==='human_identity_or_signing') return a.includes('human_gate_available');
+  if(blocker==='manual_human_interaction') return a.includes('human_interaction_available');
+  if(blocker==='telegram_required') return a.includes('telegram_available');
+  if(blocker==='owner_funds_or_trading') return false;
+  if(blocker==='expired_deadline') return false;
+  return false;
+}
 function score(x,delegation){
   const payout=x.payoutUsdc??0,cost=x.maxCostUsdc??0;
+  const blocked=(x.blockers||[]).filter(b=>!blockerAllowed(b,delegation.allowedActions));
+  if(blocked.length)return{eligible:false,reason:'delegation_blocked:'+blocked.join(','),score:-1};
+  if(x.deadline && Number.isFinite(Date.parse(x.deadline)) && Date.parse(x.deadline)<=Date.now()) return{eligible:false,reason:'expired_deadline',score:-1};
   if(cost>delegation.maxSpendUsdc)return{eligible:false,reason:'cost_above_owner_budget',score:-1};
   if(cost>delegation.maxLossUsdc&&delegation.maxLossUsdc>0)return{eligible:false,reason:'loss_exposure_above_owner_limit',score:-1};
   if(payout<delegation.minPayoutUsdc)return{eligible:false,reason:'payout_below_minimum',score:-1};
