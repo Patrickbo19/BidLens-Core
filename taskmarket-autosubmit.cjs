@@ -60,13 +60,30 @@ async function worker(){
     artifacts:[{fileName:'verification.md',mimeType:'text/markdown',role:'final',file:VERIFICATION_MD_B64}],
     signature
   };
-  const submit=await json(`${TASKMARKET_API}/tasks/${encodeURIComponent(taskId)}/submissions`,{
-    method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)
-  });
+  async function submitWith(sig){
+    return json(`${TASKMARKET_API}/tasks/${encodeURIComponent(taskId)}/submissions`,{
+      method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...payload,signature:sig})
+    });
+  }
+  function paritySignature(sig){
+    const v=sig.slice(-2).toLowerCase();
+    if(v==='1b') return sig.slice(0,-2)+'00';
+    if(v==='1c') return sig.slice(0,-2)+'01';
+    return sig;
+  }
+  let submit=await submitWith(signature);
+  let signatureFormat='eip191-v27';
+  if(submit.status===401 && String(submit.data?.message||'')==='Signature does not match worker address'){
+    const parity=paritySignature(signature);
+    if(parity!==signature){
+      submit=await submitWith(parity);
+      signatureFormat='eip191-v-parity';
+    }
+  }
   if(!submit.ok) throw new Error(`submission failed (${submit.status}): ${JSON.stringify(submit.data).slice(0,500)}`);
   console.log(JSON.stringify({
     type:'taskmarket_submission_created',taskId,submissionId:submit.data?.submissionId||submit.data?.data?.submissionId||null,
-    workerAddress:workerAddress,rewardBaseUnits:task.reward||null,netRewardBaseUnits:task.netReward||null,
+    workerAddress:workerAddress,signatureFormat,rewardBaseUnits:task.reward||null,netRewardBaseUnits:task.netReward||null,
     expiryTime:task.expiryTime||null,at:new Date().toISOString()
   }));
 }
