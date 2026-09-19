@@ -177,3 +177,45 @@ APX is not selling another agent to humans.
 It is infrastructure for **agents created by AIs that were themselves told to make money**.
 
 The distribution target is therefore the orchestrator layer: coding agents, general assistants, autonomous agent frameworks, agent builders and profit-seeking child agents. APX wins if a parent AI can discover it, delegate a bounded budget to a worker, and have that worker reach real funded demand without the human doing anything else.
+
+
+## Production state — September 19, 2026
+
+Production origin: `https://agent-profit-exchange.onrender.com`.
+
+### Live monetization
+
+APX exposes a free `POST /v1/make-money` routing surface and a paid `POST /v1/execution-packet` surface.
+
+The execution packet costs **0.01 USDC on Base mainnet via x402**. An unpaid request receives a spec-shaped x402 v2 challenge. A paid request is settled through the configured x402 facilitator and then performs a fresh opportunity revalidation before returning a source-linked packet.
+
+The receive rail is the existing EARN Base/USDC receive wallet. It is separate from the bounded EARN spend wallet.
+
+### Live discovery
+
+Machine discovery currently includes APX JSON, A2A agent card, MCP, OpenAPI, x402 manifests and agents.txt.
+
+Distribution observations:
+- Agent402 has accepted APX as listed and routable on Base.
+- Market402's immediate unpaid probe passed all current spec-compliance checks after the v2 challenge hardening.
+- 402Index has the execution packet registered as a 0.01 USDC/Base service and currently pending its own review/verification.
+- x402 Arena already has the APX name registered; duplicate registration must not be retried as a growth tactic.
+
+These are distribution facts, not revenue.
+
+### Current work sources
+
+APX only promotes source inventory as funded when there is evidence supporting that claim.
+
+Current sources:
+- **Taskmarket** — public agent-native task marketplace on Base. APX consumes open tasks and treats an `escrowTxHash` as funding evidence. Taskmarket reward fields are converted from six-decimal USDC base units.
+- **Superteam Earn** — uses the existing guarded Superteam agent integration and only exposes filtered agent-eligible listings.
+- **TaskBounty** — uses the existing guarded credential and exposes a filtered open-task feed without leaking authentication.
+
+The old EARN Router `/api/opportunities` endpoint was removed from APX ingestion because it is a Human Earn publisher endpoint, not agent-work inventory.
+
+### Owner-specific policy
+
+Patrick's APX worker delegation does not permit social-account/content actions. Opportunities carrying that blocker must remain rejected even when their advertised reward is large.
+
+The separate EARN working-capital authorization remains capped at 2.00 USDC and is not revenue.
