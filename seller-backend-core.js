@@ -215,6 +215,154 @@ async function taskBountyFeed() {
   };
 }
 
+const TASKMARKET_API = 'https://api.taskmarket.dev/api';
+
+function apxText(v, max=500) { return v == null ? '' : String(v).trim().slice(0,max); }
+function apxNum(v) { const n=Number(v); return Number.isFinite(n) ? n : null; }
+function apxId(parts) { return 'opp_' + crypto.createHash('sha256').update(parts.join('|')).digest('hex').slice(0,24); }
+function apxDelegation(input={}) {
+  const agent=input.agent && typeof input.agent==='object' ? input.agent : {};
+  const authority=input.authority && typeof input.authority==='object' ? input.authority : input;
+  const preferences=input.preferences && typeof input.preferences==='object' ? input.preferences : input;
+  return {
+    rootSessionId:apxText(input.root_session_id || agent.root_session_id,160) || null,
+    agentId:apxText(agent.id || input.agent_id,160) || 'anonymous-worker',
+    parentAgentId:apxText(agent.parent_id || input.parent_agent_id,160) || null,
+    lineageDepth:Math.max(0,Math.min(32,Math.floor(apxNum(agent.lineage_depth ?? input.lineage_depth) || 0))),
+    capabilities:Array.isArray(agent.capabilities || input.capabilities) ? (agent.capabilities || input.capabilities).map(x=>apxText(x,80)).filter(Boolean).slice(0,50) : [],
+    maxSpendUsdc:Math.max(0,Math.min(100000,apxNum(authority.max_spend_usdc ?? input.budget_usdc) || 0)),
+    maxLossUsdc:Math.max(0,Math.min(100000,apxNum(authority.max_loss_usdc) || 0)),
+    minPayoutUsdc:Math.max(0,Math.min(100000,apxNum(preferences.min_payout_usdc ?? input.min_payout_usdc) || 0)),
+    maxTimeToPaymentHours:Math.max(0,Math.min(8760,apxNum(preferences.max_time_to_payment_hours ?? input.max_time_to_payment_hours) || 0)) || null,
+    expiresAt:apxText(authority.expires_at || input.expires_at,100) || null,
+    allowedActions:Array.isArray(authority.allowed_actions || input.allowed_actions) ? (authority.allowed_actions || input.allowed_actions).map(x=>apxText(x,80)).filter(Boolean).slice(0,50) : []
+  };
+}
+function apxCapabilityFit(item,caps) {
+  if (!caps.length) return true;
+  const hay=[item.title,item.description,item.language,item.platform,...(item.tags||[])].join(' ').toLowerCase();
+  return caps.some(c=>hay.includes(c.toLowerCase())) ||
+    (caps.some(c=>/code|software|developer/i.test(c)) && /code|github|software|developer|cuda|program|repo|verification/i.test(hay)) ||
+    (caps.some(c=>/research|analysis|data/i.test(c)) && /research|analysis|data|report|document|benchmark/i.test(hay));
+}
+function apxBlockerAllowed(blocker,allowed) {
+  const a=(allowed||[]).map(x=>String(x).toLowerCase());
+  if (blocker==='social_account_or_content') return a.some(x=>['social_content','social_posting','use_social_account'].includes(x));
+  if (blocker==='human_identity_or_signing') return a.includes('human_gate_available');
+  if (blocker==='manual_human_interaction') return a.includes('human_interaction_available');
+  if (blocker==='telegram_required') return a.includes('telegram_available');
+  return false;
+}
+function apxEvaluate(item,d) {
+  const payout=Number(item.payoutUsdc || 0), cost=Number(item.maxCostUsdc || 0);
+  const blockers=(item.blockers||[]).filter(x=>!apxBlockerAllowed(x,d.allowedActions));
+  if (blockers.length) return {...item,eligible:false,reason:'delegation_blocked:'+blockers.join(','),score:-1};
+  if (item.deadline && Number.isFinite(Date.parse(item.deadline)) && Date.parse(item.deadline)<=Date.now()) return {...item,eligible:false,reason:'expired_deadline',score:-1};
+  if (cost>d.maxSpendUsdc) return {...item,eligible:false,reason:'cost_above_owner_budget',score:-1};
+  if (d.maxLossUsdc>0 && cost>d.maxLossUsdc) return {...item,eligible:false,reason:'loss_exposure_above_owner_limit',score:-1};
+  if (payout<d.minPayoutUsdc) return {...item,eligible:false,reason:'payout_below_minimum',score:-1};
+  if (!apxCapabilityFit(item,d.capabilities)) return {...item,eligible:false,reason:'capability_mismatch',score:-1};
+  if (!item.funded) return {...item,eligible:false,reason:'funding_not_verified',score:-1};
+  if (payout<=cost) return {...item,eligible:false,reason:'payout_does_not_cover_cost',score:-1};
+  const tier=item.verifier ? 'VALIDATED' : 'SIGNAL';
+  const roi=payout/Math.max(0.01,cost||0.01);
+  const score=Math.min(100,Math.round((tier==='VALIDATED'?35:15)+Math.min(40,Math.log10(Math.max(1,roi))*18)+Math.min(25,payout)));
+  return {...item,eligible:true,reason:null,evidenceTier:tier,score,expectedGrossUsdc:payout,expectedSpreadUsdc:payout-cost};
+}
+async function taskmarketFeed() {
+  const r=await fetchJson(`${TASKMARKET_API}/tasks?status=open&limit=50&sort=reward_desc`,{},30000);
+  const tasks=Array.isArray(r.data?.tasks)?r.data.tasks:[];
+  return {
+    ok:r.ok,
+    source:'Taskmarket',
+    candidates:tasks.map(task=>{
+      const payout=apxNum(task.reward);
+      const escrow=apxText(task.escrowTxHash,180);
+      const taskId=apxText(task.id,180);
+      return {
+        source:'Taskmarket',
+        sourceTaskId:taskId||null,
+        title:apxText(task.description || 'Taskmarket task',300).split('\n')[0],
+        description:apxText(task.description,3000)||null,
+        tags:Array.isArray(task.tags)?task.tags.map(x=>apxText(x,80)).filter(Boolean).slice(0,20):[],
+        mode:apxText(task.mode,80)||null,
+        payoutUsdc:payout===null?null:payout/1e6,
+        maxCostUsdc:0,
+        funded:Boolean(escrow),
+        fundingEvidence:escrow ? 'base-usdc-escrow:'+escrow : null,
+        verifier:task.mode==='benchmark' ? 'Taskmarket benchmark/metric settlement' : 'Taskmarket requester acceptance / contract settlement',
+        deadline:apxText(task.expiryTime,100)||null,
+        blockers:[],
+        url:taskId ? `${TASKMARKET_API}/tasks/${encodeURIComponent(taskId)}` : 'https://taskmarket.dev'
+      };
+    }),
+    checkedAt:new Date().toISOString()
+  };
+}
+function superteamApxItems(feed) {
+  return (feed.candidates||[]).map(x=>({
+    source:'Superteam Earn',
+    sourceTaskId:x.id||x.slug||null,
+    title:apxText(x.title,300)||'Superteam opportunity',
+    description:null,
+    tags:[],
+    mode:apxText(x.type,80)||null,
+    payoutUsdc:apxNum(x.payout_usdc),
+    maxCostUsdc:0,
+    funded:false,
+    fundingEvidence:null,
+    verifier:null,
+    deadline:x.deadline||null,
+    blockers:Array.isArray(x.blockers)?x.blockers:[],
+    url:x.source_url||null
+  }));
+}
+function taskBountyApxItems(feed) {
+  return (feed.candidates||[]).map(x=>({
+    source:'TaskBounty',
+    sourceTaskId:x.id||null,
+    title:apxText(x.title,300)||'TaskBounty task',
+    description:null,
+    tags:[x.language,x.platform].filter(Boolean),
+    mode:'bounty',
+    payoutUsdc:apxNum(x.payout_usdc),
+    maxCostUsdc:Math.max(0,apxNum(x.bond_usdc)||0),
+    funded:Boolean(x.funded),
+    fundingEvidence:x.funding_evidence||null,
+    verifier:x.verifier||null,
+    deadline:x.deadline||null,
+    blockers:[],
+    url:x.source_url||null
+  }));
+}
+async function apxMakeMoney(input={}) {
+  const delegation=apxDelegation(input);
+  const [tm,tb,st]=await Promise.all([
+    taskmarketFeed().catch(error=>({ok:false,source:'Taskmarket',candidates:[],error:String(error?.message||error).slice(0,250)})),
+    taskBountyFeed().catch(error=>({ok:false,source:'TaskBounty',candidates:[],error:String(error?.message||error).slice(0,250)})),
+    superteamFeed().catch(error=>({ok:false,source:'Superteam Earn',candidates:[],error:String(error?.message||error).slice(0,250)}))
+  ]);
+  const items=[...(tm.candidates||[]),...taskBountyApxItems(tb),...superteamApxItems(st)].map(x=>({...x,opportunityId:apxId([x.source,x.sourceTaskId||'',x.title,x.url||'',String(x.payoutUsdc??'')])}));
+  const evaluated=items.map(x=>apxEvaluate(x,delegation));
+  const opportunities=evaluated.filter(x=>x.eligible).sort((a,b)=>b.score-a.score || (b.payoutUsdc||0)-(a.payoutUsdc||0));
+  const rejected=evaluated.filter(x=>!x.eligible);
+  return {
+    ok:true,
+    product:'Agent Profit Exchange',
+    version:'0.4',
+    command:'MAKE_MONEY',
+    generatedAt:new Date().toISOString(),
+    delegation,
+    sourceStatus:[
+      {source:'Taskmarket',ok:Boolean(tm.ok),candidates:(tm.candidates||[]).length,error:tm.error||null},
+      {source:'TaskBounty',ok:Boolean(tb.ok),candidates:(tb.candidates||[]).length,error:tb.error||null},
+      {source:'Superteam Earn',ok:Boolean(st.ok),candidates:(st.candidates||[]).length,error:st.error||null}
+    ],
+    opportunities:opportunities.slice(0,25).map((x,i)=>({...x,handoff:{rank:i+1,agentId:delegation.agentId,parentAgentId:delegation.parentAgentId,rootSessionId:delegation.rootSessionId,sourceUrl:x.url,paidExecutionPacket:{method:'POST',url:'https://earn-tools-backend.onrender.com/apx/execution-packet',priceUsdc:0.01,opportunityId:x.opportunityId}}})),
+    rejected:rejected.slice(0,50)
+  };
+}
+
 async function taskBountyStatus() {
   const status = await vault.status();
   if (!status.connected) return { ...status, authReady: false, openTaskCount: null };
@@ -345,6 +493,28 @@ async function handleSolver(req, res, url) {
 }
 
 async function handleVault(req, res, path) {
+  if (path === '/apx/card' && req.method === 'GET') {
+    sendJson(res,200,{name:'Agent Profit Exchange',short_name:'APX',version:'0.4',description:'Economic routing for AI-created worker agents.',commands:['MAKE_MONEY'],endpoints:{make_money:'https://earn-tools-backend.onrender.com/apx/make-money',execution_packet:'https://earn-tools-backend.onrender.com/apx/execution-packet',protocol:'https://earn-tools-backend.onrender.com/apx/protocol'},payments:{protocol:'x402',network:'eip155:8453',asset:'USDC',execution_packet_price_usdc:0.01},custody:false});
+    return true;
+  }
+  if (path === '/apx/protocol' && req.method === 'GET') {
+    sendJson(res,200,{name:'Agent Profit Exchange',version:'0.4',controlChain:['human_owner','primary_ai_orchestrator','worker_agent','APX','funded_source_rail'],preferredCall:{method:'POST',path:'/apx/make-money'},delegationFields:['root_session_id','agent.id','agent.parent_id','agent.capabilities','authority.max_spend_usdc','authority.max_loss_usdc','authority.allowed_actions','preferences.min_payout_usdc','preferences.max_time_to_payment_hours'],paidExecutionPacket:{method:'POST',path:'/apx/execution-packet',priceUsdc:0.01,payment:'x402 Base USDC'}});
+    return true;
+  }
+  if (path === '/apx/make-money' && (req.method === 'POST' || req.method === 'GET')) {
+    let input={};
+    if (req.method === 'POST') {
+      try { input=JSON.parse((await readBody(req,128000))||'{}'); }
+      catch { sendJson(res,400,{ok:false,message:'invalid JSON'}); return true; }
+    } else {
+      const u=new URL(req.url||'','http://localhost');
+      input={budget_usdc:u.searchParams.get('budget_usdc'),max_loss_usdc:u.searchParams.get('max_loss_usdc'),min_payout_usdc:u.searchParams.get('min_payout_usdc'),agent_id:u.searchParams.get('agent_id'),parent_agent_id:u.searchParams.get('parent_agent_id'),root_session_id:u.searchParams.get('root_session_id'),capabilities:String(u.searchParams.get('capabilities')||'').split(',').map(x=>x.trim()).filter(Boolean)};
+    }
+    const result=await apxMakeMoney(input).catch(error=>({ok:false,message:String(error?.message||error).slice(0,300)}));
+    sendJson(res,result.ok?200:503,result);
+    return true;
+  }
+
   if (path === '/apx/taskbounty-feed' && req.method === 'GET') {
     const feed = await taskBountyFeed().catch(error => ({ ok:false, connected:true, authReady:false, candidates:[], error:String(error?.message || error).slice(0,300), checkedAt:new Date().toISOString() }));
     sendJson(res, 200, feed);
